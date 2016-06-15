@@ -199,6 +199,8 @@ def descendants_from_tree(tree,sublink_id):
     mass = [tree['SubhaloMass'][sl_ind[0]]]
     #mstar = [tree['SubhaloMassInRadType'][sl_ind[0],4]]
     mstar = [tree['SubhaloStellarPhotometricsMassInRad'][sl_ind[0]]]
+    sfid = [tree['SubfindID'][sl_ind[0]]]
+    sfr = [tree['SubhaloSFR'][sl_ind[0]]]
 
     desc_sli = sublink_id
 
@@ -210,7 +212,10 @@ def descendants_from_tree(tree,sublink_id):
             snap.append(tree['SnapNum'][sl_ind])
             mass.append(tree['SubhaloMass'][sl_ind])
             mstar.append(tree['SubhaloMassInRadType'][sl_ind,4])
-    return np.asarray(desc,dtype='int64'),np.asarray(snap),rootid,np.asarray(mass)*(1.0e10)/ilh,np.asarray(mstar)*(1.0e10)/ilh
+            sfid.append(tree['SubfindID'][sl_ind])
+            sfr.append(tree['SubhaloSFR'][sl_ind])
+
+    return np.asarray(desc,dtype='int64'),np.asarray(snap),rootid,np.asarray(mass)*(1.0e10)/ilh,np.asarray(mstar)*(1.0e10)/ilh, np.asarray(sfid), np.asarray(sfr)
 
 
 def mainprogs_from_tree(tree,sublink_id):
@@ -225,6 +230,8 @@ def mainprogs_from_tree(tree,sublink_id):
     mass = [tree['SubhaloMass'][sl_ind[0]]]
     #mstar = [tree['SubhaloMassInRadType'][sl_ind[0],4]]
     mstar = [tree['SubhaloStellarPhotometricsMassInRad'][sl_ind[0]]]
+    sfid = [tree['SubfindID'][sl_ind[0]]]
+    sfr = [tree['SubhaloSFR'][sl_ind[0]]]
 
     desc_sli = sublink_id
 
@@ -236,21 +243,30 @@ def mainprogs_from_tree(tree,sublink_id):
             snap.append(tree['SnapNum'][sl_ind])
             mass.append(tree['SubhaloMass'][sl_ind])
             mstar.append(tree['SubhaloMassInRadType'][sl_ind,4])
+            sfid.append(tree['SubfindID'][sl_ind])
+            sfr.append(tree['SubhaloSFR'][sl_ind])
 
-    return np.asarray(desc,dtype='int64'),np.asarray(snap),rootid,np.asarray(mass)*(1.0e10)/ilh,np.asarray(mstar)*(1.0e10)/ilh
+    return np.asarray(desc,dtype='int64'),np.asarray(snap),rootid,np.asarray(mass)*(1.0e10)/ilh,np.asarray(mstar)*(1.0e10)/ilh, np.asarray(sfid), np.asarray(sfr)
 
 
 def mmpb_from_tree(tree,sublink_id):
 
-    desc1,snap1,rootid1,mass1,mstar1 = descendants_from_tree(tree,sublink_id)
-    desc2,snap2,rootid2,mass2,mstar2 = mainprogs_from_tree(tree,sublink_id)
+    desc1,snap1,rootid1,mass1,mstar1,sfid1,sfr1 = descendants_from_tree(tree,sublink_id)
+    desc2,snap2,rootid2,mass2,mstar2,sfid2,sfr2 = mainprogs_from_tree(tree,sublink_id)
     
     sli = np.concatenate((np.flipud(desc2),desc1[1:]))
     snap = np.concatenate((np.flipud(snap2),snap1[1:]))
     mass = np.concatenate((np.flipud(mass2),mass1[1:]))
     mstar = np.concatenate((np.flipud(mstar2),mstar1[1:]))
+    sfid = np.concatenate((np.flipud(sfid2),sfid1[1:]))
+    sfr = np.concatenate((np.flipud(sfr2),sfr1[1:]))
 
-    return sli,snap,mass,mstar,rootid1,rootid2
+    times = np.zeros_like(mstar)
+    for i,sn in enumerate(snap):
+        times[i]=age_at_snap(sn)
+
+    return sli,snap,mass,mstar,rootid1,rootid2,sfid,sfr,times
+
 
 def evaluate_primary(basepath,primary_snap,primary_sfid,ratio = 4.0):
     hasMajorMerger = False
