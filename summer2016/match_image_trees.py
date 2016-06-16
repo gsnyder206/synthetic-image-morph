@@ -117,29 +117,14 @@ def get_merger_quantities(t,times,snaps,sfids,mass,mstar,sfr,snap,sfid,time_span
     snap_latest = snaps[i_span[i_latest]]
     sfid_latest = sfids[i_span[i_latest]]
 
-    '''merger_history_dir = os.path.join(basepath,'MERGER_HISTORY')
-    merger_file_this = os.path.join(merger_history_dir,'merger_history_{:03d}'.format(snap)+'.hdf5')
-    merger_file_latest = os.path.join(merger_history_dir,'merger_history_{:03d}'.format(snap_latest)+'.hdf5')
 
-    merger_dict = {}
-    merger_cat_this = h5py.File(merger_file_this)
-    merger_cat_latest = h5py.File(merger_file_latest)
-    
-    keys = merger_cat_this.keys()
-    for f in keys:
-        merger_dict['this_'+f]=(merger_cat_this[f].value)[sfid]
-        merger_dict['latest_'+f]=(merger_cat_latest[f].value)[sfid_latest]
-    '''
     return snap_latest, sfid_latest
 
 
-def match_progdesc(snap, sfid, snapkeys, latest_snap, latest_span=0.5,basepath='/astro/snyder_lab2/Illustris/Illustris-1'):
+def match_progdesc(snap, sfid, snapnums_int, latest_snap, latest_span=0.5,basepath='/astro/snyder_lab2/Illustris/Illustris-1'):
     this_snap_int = np.int32(snap[-3:])
-    snaplist = []
-    for s in snapkeys:
-        snaplist.append(s[-3:])
 
-    snaps_int = np.int64(np.asarray(snaplist))
+    snaps_int = snapnums_int #np.int64(np.asarray(snaplist))
 
     sublink_id,tree_id,mstar,sfr = gsu.sublink_id_from_subhalo(basepath,this_snap_int,sfid)
     tree = gsu.load_full_tree(basepath,tree_id)
@@ -175,7 +160,11 @@ if __name__=="__main__":
     basepath = bp
 
     catalogfile = "/astro/snyder_lab2/Illustris/MorphologyAnalysis/nonparmorphs_SB25_12filters_morestats.hdf5"   #morphology catalog file
+    mergerdatafile = "/astro/snyder_lab2/Illustris/MorphologyAnalysis/imagedata_mergerinfo.hdf5"
 
+    mdf = h5py.File(mergerdatafile,'w')
+    grp = mdf.create_group('mergerinfo')
+    
     sfid_dict = {}
 
     morphcat = h5py.File(catalogfile)
@@ -187,12 +176,23 @@ if __name__=="__main__":
 
     merger_span = 0.5 #gyr range to forward-search for mergers
 
+    snapnums_int = np.zeros(len(snapkeys),dtype=np.int32)
+    for i,sk in enumerate(snapkeys):
+        sni = np.int32(sk[-3:])
+        snapnums_int[i]=sni
+
+    snapnums_int = np.append(snapnums_int,135)
+    
     for s,snapkey in enumerate(snapkeys):
         print snapkey
         print morphcat[topkey][snapkey].keys()
         subfind_id = morphcat[topkey][snapkey]['SubfindID'].value
         print subfind_id.shape
-        this_snap_treesfid = np.zeros((subfind_id.shape[0],len(snapkeys)),dtype=np.int64 )-1
+
+        sgrp = grp.create_group(snapkey)
+        sgrp.create_dataset('SubfindID',data=np.int64(subfind_id))
+        
+        this_snap_treesfid = np.zeros((subfind_id.shape[0],len(snapnums_int)),dtype=np.int64 )-1
         latest_snap_treesfid = np.zeros((subfind_id.shape[0]),dtype=np.int64 )-1
 
         print this_snap_treesfid.shape
@@ -210,7 +210,7 @@ if __name__=="__main__":
         print latest_snap, latest_i, latest_time, this_snap_time, this_snap_int
 
 
-        for i,sfid in enumerate(subfind_id[0:10]):
+        for i,sfid in enumerate(subfind_id):
             existing_line=None
             if last_sfid_grid is not None:
                 tbi = np.where(last_sfid_grid[:,s]==sfid)[0]
@@ -220,15 +220,25 @@ if __name__=="__main__":
                 this_snap_treesfid[i,:]=existing_line
                 print 'line exists:', sfid,existing_line
             else:
-                slid_grid,sfid_grid,sublink_id,snap_latest,sfid_latest = match_progdesc(snapkey,sfid,snapkeys,latest_snap)
+                slid_grid,sfid_grid,sublink_id,snap_latest,sfid_latest = match_progdesc(snapkey,sfid,snapnums_int,latest_snap)
                 print 'new line: ', sfid,sfid_grid
                 this_snap_treesfid[i,:]=sfid_grid
-                latest_snap_treesfid[i]=sfid_latest
+                if sfid_latest.shape[0]==1:
+                    latest_snap_treesfid[i]=sfid_latest
+                else:
+                    latest_snap_treesfid[i]=-1
 
+                    
         sfid_dict[snapkey]=this_snap_treesfid
         last_sfid_grid = this_snap_treesfid
-        
 
+        sgrp.create_dataset('SnapNums',data=np.int32(snapnums_int))
+        sgrp.create_dataset('Tree_SFID_grid',data=np.int64(this_snap_treesfid))
+        sgrp.create_dataset('LatestTree_SFID',data=np.int64(latest_snap_treesfid))
+        sgrp.create_dataset('merger_span_gyr',data=merger_span)
+        sgrp.create_dataset('LatestTree_snapnum',data=latest_snap)
+
+        
         merger_history_dir = os.path.join(basepath,'MERGER_HISTORY')
         merger_file_this = os.path.join(merger_history_dir,'merger_history_{:03d}'.format(this_snap_int)+'.hdf5')
         merger_file_latest = os.path.join(merger_history_dir,'merger_history_{:03d}'.format(latest_snap)+'.hdf5')
@@ -241,8 +251,16 @@ if __name__=="__main__":
         for f in keys:
             merger_dict['this_'+f]=(merger_cat_this[f].value)[subfind_id]
             merger_dict['latest_'+f]=(merger_cat_latest[f].value)[latest_snap_treesfid]
+
+            sgrp.create_dataset('this_'+f,data=(merger_cat_this[f].value)[subfind_id])
+            sgrp.create_dataset('latest_'+f,data=(merger_cat_latest[f].value)[latest_snap_treesfid])
             print 'latest_'+f, merger_dict['latest_'+f][0:10]
 
+
+
+
+    mdf.close()
+    
     z1key = 'snapshot_085'
     catalogkeys = morphcat[topkey][z1key].keys()
     stellar_mass = morphcat[topkey][z1key]['Mstar_Msun'].value
