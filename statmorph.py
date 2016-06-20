@@ -1427,6 +1427,14 @@ class galdata:
 
         return self
 
+
+    
+    ##work-in-progress
+    def init_from_panstarrs_image(self):
+        return self
+
+
+    
     def compute_scale_invariant_moments(self):
         scale_inv_moments = np.zeros_like(self.photutils_central_moments)
         mu_00 = self.photutils_central_moments[0,0]
@@ -1615,3 +1623,15 @@ def morph_from_synthetic_image(data_hdu,segmap_hdu,photutils_hdu,cm_hdu,extname=
     outobject = copy.copy(galdataobject)
 
     return morph_hdu, rpa_seg_hdu
+
+
+
+
+
+#work-in-progress
+def morph_from_panstarrs_image():
+
+
+
+
+    return
