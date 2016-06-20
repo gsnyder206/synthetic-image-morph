@@ -1629,9 +1629,30 @@ def morph_from_synthetic_image(data_hdu,segmap_hdu,photutils_hdu,cm_hdu,extname=
 
 
 #work-in-progress
-def morph_from_panstarrs_image():
+def morph_from_panstarrs_image(image_hdu,segmap_hdu,se_catalog,extname='StatMorphMeasurements',idl_filename=None,python_outfile=None,outobject=None):
+
+    
+    galdataobject = galdata()
+    galdataobject = galdataobject.init_from_panstarrs_image(image_hdu,segmap_hdu,se_catalog,extname='StatMorphMeasurements')
 
 
+    result = galdataobject.run_lotz_morphs()
+        
+
+    morph_hdu = galdataobject.return_measurement_HDU()
+    morph_hdu.header['EXTNAME']=extname
+
+    rpa_seg_hdu = galdataobject.return_rpa_segmap_hdu()
+
+    if idl_filename is not None and galdataobject.flag==0:
+        galdataobject.write_idl_input_line(idl_filename)
 
 
-    return
+    #also write output files?
+    if python_outfile is not None and galdataobject.flag==0:
+        galdataobject.write_py_output_line(python_outfile)
+
+    outobject = copy.copy(galdataobject)
+
+    return morph_hdu, rpa_seg_hdu
+
