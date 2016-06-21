@@ -1,0 +1,63 @@
+
+catalog['nonparmorphs']['snapshot_085']['WFC3-F160W'].keys()
+[u'CAMERA0', u'CAMERA1', u'CAMERA2', u'CAMERA3']
+
+List of camera names (4 mock sources per galaxy).  Same for each subhalo.
+
+
+
+catalog['nonparmorphs']['snapshot_085']['WFC3-F160W']['CAMERA0'].keys()
+[u'APPROXPSF_ARCSEC', u'ASYM', u'AXC', u'AYC', u'CC', u'CC_ERR', u'CFLAG', u'ELONG', u'FLAG', u'GINI', u'M20', u'MAG', u'MAG_ERR', u'MID1_A1', u'MID1_A2', u'MID1_AREA', u'MID1_DSTAT', u'MID1_GINI', u'MID1_ISTAT', u'MID1_M20', u'MID1_MPRIME', u'MID1_SNP', u'MID2_A1', u'MID2_A2', u'MID2_DSTAT', u'MID2_ISTAT', u'MID2_MPRIME', u'M_A', u'M_I2', u'ORIENT', u'PIX_ARCSEC', u'REDSHIFT', u'RHALF', u'RHALF_ERR', u'RMS', u'RP', u'RP_ERR', u'SEG_AREA', u'SEG_ECCENT', u'SEG_ELLIPT', u'SEG_EQRAD', u'SEG_SMAJSIG', u'SEG_SMINSIG', u'SNPIX', u'SUNRISE_ABSMAG']
+
+
+
+APPROXPSF_ARCSEC	Approximate telescope point-spread function full-width half-max (FWHM) in arcseconds, for given filter.
+ASYM			Asymmetry parameter as measured in Lotz et al. (2004; hereafter L04)
+AXC			Location of center in x direction, based on asymmetry minimization of L04
+AYC			Location of center in y direction, based on asymmetry minimization of L04
+CC
+CC_ERR
+CFLAG
+ELONG
+FLAG
+GINI
+M20
+MAG
+MAG_ERR
+MID1_A1
+MID1_A2
+MID1_AREA
+MID1_DSTAT
+MID1_GINI
+MID1_ISTAT
+MID1_M20
+MID1_MPRIME
+MID1_SNP
+MID2_A1
+MID2_A2
+MID2_DSTAT
+MID2_ISTAT
+MID2_MPRIME
+M_A
+M_I2
+ORIENT
+PIX_ARCSEC
+REDSHIFT
+RHALF
+RHALF_ERR
+RMS
+RP
+RP_ERR
+SEG_AREA
+SEG_ECCENT
+SEG_ELLIPT
+SEG_EQRAD
+SEG_SMAJSIG
+SEG_SMINSIG
+SNPIX
+SUNRISE_ABSMAG
+
+
+
+
+
