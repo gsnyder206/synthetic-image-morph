@@ -1,3 +1,21 @@
+catalog.keys()
+[u’nonparmorphs’]
+
+top-level catalog container
+
+catalog['nonparmorphs’].keys()
+[u'snapshot_035', u'snapshot_038', u'snapshot_041', u'snapshot_045', u'snapshot_049', u'snapshot_054', u'snapshot_060', u'snapshot_064', u'snapshot_068', u'snapshot_075', u'snapshot_085', u'snapshot_103']
+
+Image dataset snapshot/timestep names, also on Illustris/data/specifications website.
+
+
+catalog['nonparmorphs']['snapshot_085’].keys()
+[u'ACS-F435W', u'ACS-F606W', u'ACS-F814W', u'Cameras', u'Filters', u'Mstar_Msun', u'NC-F115W', u'NC-F150W', u'NC-F200W', u'NC-F277W', u'NC-F356W', u'NC-F444W', u'SFR_Msunperyr', u'SubfindID', u'WFC3-F105W', u'WFC3-F160W', u'WFC3-F336W']
+
+List of data associated with this snapshot.  Filter names contain the morphology and shape catalogs (see below).  Cameras, Filters list the names of available cameras and filters.  Mstar_Msun is the total mass of stars in the subhalo at the center of the image, via SubFind halo catalogs [in solar masses].  SFR_Msunperyr is the star formation rate (in Msun/yr).  SubfindID is is the SubFind ID (index) number for this subhalo in the Illustris galaxy catalogs.  This number is critical both for linking these measurements to the other simulation analyses, and also for linking the subhalos over cosmic time, i.e. how galaxies evolve over time.  
+
+For each snapshot there are hundreds or thousands of “galaxies” or “subhalos” (for this, they mean the same thing), each with its own Mass, SFR, and SubfindID.  Call this number N.  N is the length of each data array in the catalog, including Mstar_Msun, SFR, and SubfindID and also each camera/morphology pair (below).  For each galaxy there are 4 cameras for a total of 4xN “sources” for each snapshot (we may sometimes treat the 4 images of 1 subhalo as independent, but this is a somewhat open question).  
+
 
 catalog['nonparmorphs']['snapshot_085']['WFC3-F160W'].keys()
 [u'CAMERA0', u'CAMERA1', u'CAMERA2', u'CAMERA3']
@@ -9,53 +27,53 @@ List of camera names (4 mock sources per galaxy).  Same for each subhalo.
 catalog['nonparmorphs']['snapshot_085']['WFC3-F160W']['CAMERA0'].keys()
 [u'APPROXPSF_ARCSEC', u'ASYM', u'AXC', u'AYC', u'CC', u'CC_ERR', u'CFLAG', u'ELONG', u'FLAG', u'GINI', u'M20', u'MAG', u'MAG_ERR', u'MID1_A1', u'MID1_A2', u'MID1_AREA', u'MID1_DSTAT', u'MID1_GINI', u'MID1_ISTAT', u'MID1_M20', u'MID1_MPRIME', u'MID1_SNP', u'MID2_A1', u'MID2_A2', u'MID2_DSTAT', u'MID2_ISTAT', u'MID2_MPRIME', u'M_A', u'M_I2', u'ORIENT', u'PIX_ARCSEC', u'REDSHIFT', u'RHALF', u'RHALF_ERR', u'RMS', u'RP', u'RP_ERR', u'SEG_AREA', u'SEG_ECCENT', u'SEG_ELLIPT', u'SEG_EQRAD', u'SEG_SMAJSIG', u'SEG_SMINSIG', u'SNPIX', u'SUNRISE_ABSMAG']
 
-
+A subset of the morphology and shape measurements made on the image, as follows:
 
 APPROXPSF_ARCSEC	Approximate telescope point-spread function full-width half-max (FWHM) in arcseconds, for given filter.
 ASYM			Asymmetry parameter as measured in Lotz et al. (2004; hereafter L04)
-AXC			Location of center in x direction, based on asymmetry minimization of L04
-AYC			Location of center in y direction, based on asymmetry minimization of L04
-CC
-CC_ERR
-CFLAG
-ELONG
-FLAG
-GINI
-M20
-MAG
-MAG_ERR
-MID1_A1
-MID1_A2
-MID1_AREA
-MID1_DSTAT
-MID1_GINI
-MID1_ISTAT
-MID1_M20
-MID1_MPRIME
-MID1_SNP
-MID2_A1
-MID2_A2
-MID2_DSTAT
-MID2_ISTAT
-MID2_MPRIME
-M_A
-M_I2
-ORIENT
-PIX_ARCSEC
-REDSHIFT
-RHALF
-RHALF_ERR
-RMS
-RP
-RP_ERR
-SEG_AREA
-SEG_ECCENT
-SEG_ELLIPT
-SEG_EQRAD
-SEG_SMAJSIG
-SEG_SMINSIG
-SNPIX
-SUNRISE_ABSMAG
+AXC			Location [pix] of center in x direction, based on asymmetry minimization of L04
+AYC			Location [pix] of center in y direction, based on asymmetry minimization of L04
+CC			Concentration parameter as by L04 (and Conselice 2003);   C = 5*log(r_80/r_20) , r_x = radius containing x percent of total light
+CC_ERR			1-sigma measurement uncertainty in concentration parameter (via noise propagation)
+CFLAG			Concentration flag (0= OK, 1= problem/undefined)
+ELONG			Elongation parameter, from PhotUtils.  Ratio of semi-minor to semi-major axis of galaxy light profile.
+FLAG			Morphology flag indicating success of L04 Gini/M20 measurements (0=good, 1=bad)
+GINI			Gini parameter as used by L04
+M20			M20 parameter as used by L04
+MAG			Observed absolute filter magnitude of object, in AB system
+MAG_ERR			Magnitude 1-sigma measurement uncertainty
+MID1_A1			Area [pix] of larger segment for Multimode (M) merger statistic computation (Freeman et al. 2013; hereafter F13)
+MID1_A2			Area [pix] of smaller segment for M statistic computation (F13)
+MID1_AREA		Area [pix] of F13 segmentation map
+MID1_DSTAT		Deviation (D) merger statistic from F13
+MID1_GINI		Gini parameter measured in the F13 segmentation map
+MID1_ISTAT		Intensity (I) merger statistic from F13
+MID1_M20		M20 parameter measured in the F13 segmentation map
+MID1_MPRIME		Multimode (M) prime statistic, as used in Peth et al. (2016; hereafter P16), closely related to M statistic of F13
+MID1_SNP		Average signal-to-noise ratio of pixels in the F13 segmentation map ( >~ 3 is good, less is bad)
+MID2_A1			A1 parameter using the L04 segmentation map (same as original GINI, M20 params)
+MID2_A2			A2 in L04 segmentation map
+MID2_DSTAT		D statistic of F13 using L04 segmentation map
+MID2_ISTAT		I statistic of F13 using L04 segmentation map
+MID2_MPRIME		M prime statistic of F13/P16 using L04 segmentation map
+M_A			Invariant Asymmetric moments parameter (new)
+M_I2			Invariant 2nd- order moments parameter (new)
+ORIENT			Position angle of galaxy light profile, from PhotUtils
+PIX_ARCSEC		Size of each pixel, in arcseconds
+REDSHIFT		Redshift of the source (highly redundant for now)
+RHALF			Non-parametric half-light radius as measured by L04
+RHALF_ERR		1-sigma measurement uncertainty on RHALF
+RMS			Root-mean-square noise level, equal to sigma of Normal distribution of pixel noise values
+RP			Petrosian radius as measured by L04  (closer to a total size rather than a half-light size)
+RP_ERR			1-sigma measurement uncertainty on Petrosian radius
+SEG_AREA		Area of PhotUtils segmentation map [in pixels]
+SEG_ECCENT		Eccentricity of source inside PhotUtils segmap
+SEG_ELLIPT		Ellipticity of source inside PhotUtils segmap
+SEG_EQRAD		Equivalent radius of source inside PhotUtils segmap
+SEG_SMAJSIG		Major axis sigma of best-fitting 2D Normal distribution 
+SEG_SMINSIG		Minor axis sigma of best-fitting 2D Normal distribution 
+SNPIX			Average signal-to-noise ratio of pixels in the L04 segmentation map ( >~3 is good, less is bad)
+SUNRISE_ABSMAG		Absolute AB filter magnitude measured directly from Sunrise output images (entire image, not just central object)
 
 
 
