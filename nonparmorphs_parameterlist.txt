@@ -61,10 +61,10 @@ M_I2			Invariant 2nd- order moments parameter (new)
 ORIENT			Position angle of galaxy light profile, from PhotUtils
 PIX_ARCSEC		Size of each pixel, in arcseconds
 REDSHIFT		Redshift of the source (highly redundant for now)
-RHALF			Non-parametric half-light radius as measured by L04
+RHALF			Non-parametric half-light radius as measured by L04   (elliptical, i.e. a semi-major half light axis)
 RHALF_ERR		1-sigma measurement uncertainty on RHALF
 RMS			Root-mean-square noise level, equal to sigma of Normal distribution of pixel noise values
-RP			Petrosian radius as measured by L04  (closer to a total size rather than a half-light size)
+RP			Petrosian radius as measured by L04  (closer to a total size rather than a half-light size)   (elliptical, i.e. a semi-major petrosian axis)
 RP_ERR			1-sigma measurement uncertainty on Petrosian radius
 SEG_AREA		Area of PhotUtils segmentation map [in pixels]
 SEG_ECCENT		Eccentricity of source inside PhotUtils segmap
