@@ -47,7 +47,6 @@ import datetime
 def analyze_morphology(gbandfile,):
 
 
-
     
 
     return
@@ -56,6 +55,8 @@ def analyze_morphology(gbandfile,):
 
 def process_single_object():
 
+    #do a check if segmap already exists.  if so, just run morphology (start here for tests)
+
 
     return
 
@@ -63,6 +64,7 @@ def process_single_object():
 
 def process_directory():
 
-
+    #assign individual objects into separate processes
+    
 
     return
