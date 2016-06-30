@@ -38,7 +38,10 @@ def prep_mock_image(groupfile=None,output_dir='/home/gsnyder/oasis_project/PanST
         filter_text.write(fname+'\n')
     filter_text.close()
 
-    return
+    stub_files = np.asarray(glob.glob(os.path.join(stubfolder,"*")))
+    for sf in stub_files:
+        shutil.copy(sf,'.')
+
 
     n='16'      #how many total processors do you want?
     tile='16'   #how many processors do you want to reserve per node?#location="~gsnyder/sunrise/bin_Apr13_2012"
@@ -80,7 +83,6 @@ def prep_mock_image(groupfile=None,output_dir='/home/gsnyder/oasis_project/PanST
     #bsubf.write('mv /scratch/$USER/$PBS_JOBID/broadband_'+base_name+'.fits .\n')
     bsubf.close()
 
-    z = float(box_redshift[index])
     sf = open(sfile,'w')
     sf.write('#Lightcone Cylinder Parameter File for Sunrise, sfrhist\n')
     sf.write('include_file\t\t sfrhist_base.stub\n')
