@@ -75,7 +75,7 @@ def prep_mock_image(groupfile=None,output_dir='/home/gsnyder/oasis_project/PanST
 
     bsubf.write(location+'/sfrhist '+sfile+' 1> sfrhist_'+base_name+'.out 2>&1\n')
     bsubf.write(location+'/mcrx '+mfile+' 1> mcrx_'+base_name+'.out 2>&1\n')
-    bsubf.write('ln -s /scratch/$USER/$PBS_JOBID/mcrx_'+base_name+'.fits .\n')
+    #bsubf.write('ln -s /scratch/$USER/$PBS_JOBID/mcrx_'+base_name+'.fits .\n')
     bsubf.write(location+'/broadband '+bfile+' 1> broadband_'+base_name+'.out 2>&1\n')
     bsubf.write('rm -f /scratch/$USER/$PBS_JOBID/mcrx_'+base_name+'.fits\n')
     bsubf.write('rm -f /scratch/$USER/$PBS_JOBID/sfrhist_'+base_name+'.fits\n')
@@ -110,7 +110,7 @@ def prep_mock_image(groupfile=None,output_dir='/home/gsnyder/oasis_project/PanST
     bf = open(bfile,'w')
     bf.write('#Lightcone Cylinder Parameter File for Sunrise, broadband\n')
     bf.write('include_file\t\t broadband_base.stub\n')
-    bf.write('input_file\t\t /scratch/$USER/$PBS_JOBID/mcrx_'+base_name+'.fits\n')
+    bf.write('input_file\t\t mcrx_'+base_name+'.fits\n')
     bf.write('output_file\t\t broadband_'+base_name+'.fits\n')
     bf.write('redshift\t\t {:10.6f}\n'.format(float(redshift)))
     bf.close()
