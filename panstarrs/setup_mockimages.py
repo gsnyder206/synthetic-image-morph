@@ -9,6 +9,8 @@ def prep_mock_image(galfile=None,output_dir='/home/gsnyder/oasis_project/PanSTAR
 
     base_name = os.path.basename(galfile).rstrip('.hdf5')
     image_folder = os.path.join(output_dir,base_name+'_images')
+    print image_folder
+
     if not os.path.lexists(image_folder):
         os.mkdir(image_folder)
 
@@ -16,7 +18,7 @@ def prep_mock_image(galfile=None,output_dir='/home/gsnyder/oasis_project/PanSTAR
 
 
 
-return
+    return
 
 
 
