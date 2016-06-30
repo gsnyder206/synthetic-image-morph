@@ -117,4 +117,4 @@ def prep_mock_image(groupfile=None,output_dir='/home/gsnyder/oasis_project/PanST
 
 
 if __name__=="__main__":
-    prep_mock_image(galfile='/home/gsnyder/oasis_project/PanSTARRS/GroupParsedSnapshots/snapshot_135/subfolder_001/group_150.hdf5')
+    prep_mock_image(groupfile='/home/gsnyder/oasis_project/PanSTARRS/GroupParsedSnapshots/snapshot_135/subfolder_001/group_150.hdf5')
