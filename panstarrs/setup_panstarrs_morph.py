@@ -108,7 +108,7 @@ def process_directory(directory,Np=2,maxq=10000,lim=None):
 
 
         
-    for i,segfile in enumerate(segs):
+    for i,segfile in enumerate(segs[0:lim+1]):
         base = segfile.rstrip('_white_cold_seg.fits')
         gfile = base+'_g.fits'
         wtfile = base+'_g.wt.fits'
@@ -117,7 +117,7 @@ def process_directory(directory,Np=2,maxq=10000,lim=None):
         else:
             print "Processing... ", gfile
             task = (analyze_morphology,(gfile,wtfile,segfile))
-            if i <= maxq and i < lim:
+            if i <= maxq:
                 task_queue.put(task)
                 TASKS.append(task)
             else:
