@@ -1443,7 +1443,7 @@ class galdata:
         #self.imagefile=data_hdu.header['THISFILE']
         self.image = data_hdu.data
         self.segmap = segmap_hdu.data  #general segmap containing multiple objects/labels
-        self.clabel = se_catalog[0]['Number'] #label corresponding to targeted object
+        self.clabel = se_catalog[0]['NUMBER'] #label corresponding to targeted object
         #setting for doing sigma clip on internal segmap.  Not very efficient in SciPy versus IDL (why?)
         #avoid if simulated images -- not necessary if we don't expect awful pixels
         self.filter_segmap = False
