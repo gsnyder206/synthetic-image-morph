@@ -94,7 +94,7 @@ def process_directory(directory,Np=2,maxq=10000,lim=None):
     segs = np.sort(np.asarray(glob.glob('*_white_cold_seg.fits')))
     print 'Number of seg files:', segs.shape
     print segs[0]
-
+    N_objects = segs.shape[0]
 
     NUMBER_OF_PROCESSES=Np
     task_queue = Queue()
