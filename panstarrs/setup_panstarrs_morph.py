@@ -55,6 +55,8 @@ def analyze_morphology(gbandfile,gwtfile,whiteseg,se_catalog):
     seghdu = pyfits.open(whiteseg)[0]
     se_cat = ascii.read(se_catalog)
 
+    outobj = object()
+
     result_hdu,newseg_hdu = statmorph.morph_from_panstarrs_image(ghdu,wthdu,seghdu,se_cat,outobj=obj)
     obj.gfile = gbandfile
     obj.wtfile = gwtfile
