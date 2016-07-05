@@ -42,6 +42,9 @@ import skimage.transform
 import copy
 import region_grow
 
+def arcsec_per_radian():
+    return 3600.0*(180.0/math.pi)
+
 def mad_value(array_input):
     return msbs.MAD(array_input)
 
@@ -1430,8 +1433,82 @@ class galdata:
 
     
     ##work-in-progress
-    def init_from_panstarrs_image(self):
+    def init_from_panstarrs_image(self,data_hdu,weight_hdu,segmap_hdu,se_catalog):
+        self.morphtype='PanSTARRS Image'
+
+        #inputs required by IDL code:
+        #    morph_input_obj.write('# IMAGE  NPIX   PSF   SCALE   SKY  XC YC A/B PA SKYBOX   MAG   MAGER   DM   RPROJ[arcsec]   ZEROPT[mag?] \n')
+        
+        #image FITS filename 
+        #self.imagefile=data_hdu.header['THISFILE']
+        self.image = data_hdu.data
+        self.segmap = segmap_hdu.data  #general segmap containing multiple objects/labels
+        self.clabel = se_catalog[0]['Number'] #label corresponding to targeted object
+        #setting for doing sigma clip on internal segmap.  Not very efficient in SciPy versus IDL (why?)
+        #avoid if simulated images -- not necessary if we don't expect awful pixels
+        self.filter_segmap = False
+        #final input for lotzmorph
+        self.galaxy_segmap = np.where(self.segmap==self.clabel,self.segmap,np.zeros_like(self.segmap))
+        #final image masks other objects
+        self.galaxy_image = np.where(np.logical_or(self.segmap==self.clabel,self.segmap==0),self.image,np.zeros_like(self.image))
+        #number of pixels in image
+        self.npix = self.image.shape[0]
+        xi = np.float32(np.arange(self.npix))+0.50  #center locations of pixels
+        self.pixel_xpos,self.pixel_ypos = np.meshgrid(xi,xi)
+        #psf in arcsec
+        self.psf_fwhm_arcsec = 1.4 #data_hdu.header['APROXPSF']
+        #scale = pixel size in arcsec
+        self.pixelscale_arcsec = np.abs( data_hdu.header['CD1_1']*arcsec_per_radian() )
+        self.psf_fwhm_pixels = self.psf_fwhm_arcsec/self.pixelscale_arcsec
+        #physical scale in kpc, for funsies
+        self.kpc_per_arcsec = None #data_hdu.header['PSCALE']
+        #sky = background level in image
+        self.sky = 0.0 #data_hdu.header['SKY']
+        #x and y positions. MUST CONFIRM PYTHON ORDERING/locations, 0,1 as x,y seem ok for now
+        self.xcentroid = se_catalog[0]['X_IMAGE'] #segmap_hdu.header['POS0']
+        self.ycentroid = se_catalog[0]['Y_IMAGE'] #segmap_hdu.header['POS1']
+        self.thisband_xcentroid = self.xcentroid*1.0 #photutils_hdu.header['XCENTR']
+        self.thisband_ycentroid = self.ycentroid*1.0 #photutils_hdu.header['YCENTR']
+        #a/b I'm guessing this is the elongation parameter?
+        self.elongation = se_catalog[0]['ELONGATION']
+        assert (self.elongation > 0.0)
+        #PA position angle.  WHAT UNITS?
+        self.pa_radians = se_catalog[0]['THETA_IMAGE'] #this looks like it's in radians, counterclockwise (photutils)
+        #skybox.  do we need this if we know skysig?
+        self.skysig = 0.0 #data_hdu.header['SKYSIG']
+        #create arbitrary perfect noise image matching synthetic image properties
+        #this is okay if noise is perfectly uniform gaussian right?
+        self.skybox = self.skysig*np.random.randn(50,50)
+        bc1 = float(self.skybox.shape[0]-1)/2.0
+        bc2 = float(self.skybox.shape[1]-1)/2.0
+        self.rot_skybox = skimage.transform.rotate(self.skybox,180.0,center=(bc1,bc2),mode='constant',cval=0.0,preserve_range=True)
+        #AB magnitude best ... "observed" ?  aperture mags?  segment mags?
+        #self.magtot_intrinsic = data_hdu.header['MAG']
+        #self.magtot_observed = data_hdu.header['NEWMAG']  #-1 = bad
+        self.magseg = se_catalog[0]['MAG_AUTO'] #-1 = bad
+        self.magseg_err = se_catalog[0]['MAGERR_AUTO'] #-1 = bad
+        #distance modulus
+        self.dm = None #data_hdu.header['DISTMOD']
+        #redshift, because why not
+        self.redshift = None #data_hdu.header['REDSHIFT']
+        #rproj (arcsec)
+        #self.rproj_pix = photutils_hdu.header['EQ_RAD'] #pixels
+        #self.rproj_arcsec = self.rproj_pix*self.pixelscale_arcsec
+        #AB magnitude zeropoint
+        self.abzp = None #data_hdu.header['ABZP']
+
+
+        dummy_array = np.asarray([0.0])
+
+        self.morph_hdu = pyfits.ImageHDU(dummy_array)
+        self.morph_hdu.header['Image']=('dummy', 'What data does this image contain?')
+
+        self.morph_hdu.header['DESC']=(self.description)
+        self.morph_hdu.header['TYPE']=(self.morphtype,'What kind of image was analyzed?')
+        self.morph_hdu.header['Date']=(datetime.datetime.now().date().isoformat())
+
         return self
+
 
 
     
@@ -1629,11 +1706,11 @@ def morph_from_synthetic_image(data_hdu,segmap_hdu,photutils_hdu,cm_hdu,extname=
 
 
 #work-in-progress
-def morph_from_panstarrs_image(image_hdu,segmap_hdu,se_catalog,extname='StatMorphMeasurements',idl_filename=None,python_outfile=None,outobject=None):
+def morph_from_panstarrs_image(image_hdu,weight_hdu,segmap_hdu,se_catalog,extname='StatMorphMeasurements',idl_filename=None,python_outfile=None,outobject=None):
 
     
     galdataobject = galdata()
-    galdataobject = galdataobject.init_from_panstarrs_image(image_hdu,segmap_hdu,se_catalog,extname='StatMorphMeasurements')
+    galdataobject = galdataobject.init_from_panstarrs_image(image_hdu,weight_hdu,segmap_hdu,se_catalog)
 
 
     result = galdataobject.run_lotz_morphs()

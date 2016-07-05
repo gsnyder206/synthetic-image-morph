@@ -48,10 +48,14 @@ from multiprocessing import Process, Queue, current_process
 import time
 
 
-def analyze_morphology(gbandfile,gwtfile,whiteseg):
+def analyze_morphology(gbandfile,gwtfile,whiteseg,se_catalog):
 
+    ghdu = pyfits.open(gbandfile)[0]
+    wthdu = pyfits.open(gwtfile)[0]
+    seghdu = pyfits.open(whiteseg)[0]
+    se_cat = ascii.read(se_catalog)
 
-    obj = statmorph.galdata()
+    result_hdu,newseg_hdu = statmorph.morph_from_panstarrs_image(ghdu,wthdu,seghdu,se_cat,outobj=obj)
     obj.gfile = gbandfile
     obj.wtfile = gwtfile
     obj.whiteseg = whiteseg
@@ -112,11 +116,13 @@ def process_directory(directory,Np=2,maxq=10000,lim=None):
         base = segfile.rstrip('_white_cold_seg.fits')
         gfile = base+'_g.fits'
         wtfile = base+'_g.wt.fits'
-        if not os.path.lexists(gfile) or not os.path.lexists(wtfile):
+        se_file = base+'_white_cold.cat'
+
+        if not os.path.lexists(gfile) or not os.path.lexists(wtfile) or not os.path.lexists(se_file):
             print "Missing a file, skipping... ", segfile
         else:
             print "Processing... ", gfile
-            task = (analyze_morphology,(gfile,wtfile,segfile))
+            task = (analyze_morphology,(gfile,wtfile,segfile,se_file))
             if i <= maxq:
                 task_queue.put(task)
                 TASKS.append(task)
