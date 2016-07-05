@@ -138,19 +138,24 @@ def process_directory(directory,Np=2,maxq=10000,lim=None):
         finished_objs.append(done_queue.get())
 
     print len(finished_objs)
-    print finished_objs[1:5].whiteseg
-    
+    print finished_objs[1].whiteseg
 
     for p in range(NUMBER_OF_PROCESSES):
         task_queue.put('STOP')
 
+
+
+        
     os.chdir(cwd)
-    return 0
+    return finished_objs
 
 
 def do_nonmerger_test():
     analysis_dir = "/home/gsnyder/oasis_project/PanSTARRS/nonmergers"
-    result = process_directory(analysis_dir,Np=2,maxq=10000,lim=500)
+    objects = process_directory(analysis_dir,Np=2,maxq=10000,lim=500)
+    for go in objects:
+        print "Finished.. ", go.gfile, go.whiteseg
+    
     return
 
     
