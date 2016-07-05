@@ -1492,12 +1492,12 @@ class galdata:
         #redshift, because why not
         self.redshift = None #data_hdu.header['REDSHIFT']
         #rproj (arcsec)
-        #self.rproj_pix = photutils_hdu.header['EQ_RAD'] #pixels
-        #self.rproj_arcsec = self.rproj_pix*self.pixelscale_arcsec
+        self.rproj_pix = 5.0 #photutils_hdu.header['EQ_RAD'] #pixels
+        self.rproj_arcsec = self.rproj_pix*self.pixelscale_arcsec
         #AB magnitude zeropoint
         self.abzp = None #data_hdu.header['ABZP']
 
-
+        self.m_a = 0.0
         dummy_array = np.asarray([0.0])
 
         self.morph_hdu = pyfits.ImageHDU(dummy_array)
