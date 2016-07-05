@@ -54,7 +54,7 @@ def analyze_morphology(gbandfile,gwtfile,whiteseg):
     obj = statmorph.galdata()
     obj.gfile = gbandfile
     obj.wtfile = gwtfile
-    obj.whiteseg = whitseg
+    obj.whiteseg = whiteseg
     
     return obj
 
