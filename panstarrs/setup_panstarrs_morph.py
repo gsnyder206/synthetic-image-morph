@@ -57,7 +57,7 @@ def analyze_morphology(gbandfile,gwtfile,whiteseg,se_catalog):
 
     obj = object()
 
-    result_hdu,newseg_hdu = statmorph.morph_from_panstarrs_image(ghdu,wthdu,seghdu,se_cat,outobj=obj)
+    result_hdu,newseg_hdu = statmorph.morph_from_panstarrs_image(ghdu,wthdu,seghdu,se_cat,outobject=obj)
     obj.gfile = gbandfile
     obj.wtfile = gwtfile
     obj.whiteseg = whiteseg
