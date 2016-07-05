@@ -81,13 +81,19 @@ def process_single_object():
 
 
 
-def process_directory():
+def process_directory(directory):
 
     #assign individual objects into separate processes
-
-    segs = np.sort(np.asarray(glob.glob('*_white_cold_seg.fits')))
+    cwd = os.path.abspath(os.curdir)
     
-
+    os.chdir(directory)
+    
+    segs = np.sort(np.asarray(glob.glob('*_white_cold_seg.fits')))
+    print 'Number of seg files:', segs.shape
+    print segs[0]
+    
+    
+    os.chdir(cwd)
     return 0
 
 
