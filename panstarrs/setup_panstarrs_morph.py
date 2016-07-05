@@ -28,10 +28,10 @@ import shutil
 import cosmocalc
 import congrid
 import astropy.io.ascii as ascii
-import sunpy__load
-import sunpy__plot
-import sunpy__synthetic_image
-from sunpy.sunpy__plot import *
+#import sunpy__load
+#import sunpy__plot
+#import sunpy__synthetic_image
+#from sunpy.sunpy__plot import *
 import warnings
 import subprocess
 import photutils
@@ -48,12 +48,15 @@ from multiprocessing import Process, Queue, current_process
 import time
 
 
-def analyze_morphology(gbandfile,whiteseg):
+def analyze_morphology(gbandfile,gwtfile,whiteseg):
 
 
+    obj = statmorph.galdata()
+    obj.gfile = gbandfile
+    obj.wtfile = gwtfile
+    obj.whiteseg = whitseg
     
-
-    return
+    return obj
 
 
 def worker(input,output,**kwargs):
@@ -81,7 +84,7 @@ def process_single_object():
 
 
 
-def process_directory(directory):
+def process_directory(directory,Np=2,maxq=10000,lim=None):
 
     #assign individual objects into separate processes
     cwd = os.path.abspath(os.curdir)
@@ -91,15 +94,63 @@ def process_directory(directory):
     segs = np.sort(np.asarray(glob.glob('*_white_cold_seg.fits')))
     print 'Number of seg files:', segs.shape
     print segs[0]
+
+
+    NUMBER_OF_PROCESSES=Np
+    task_queue = Queue()
+    done_queue = Queue()
+    TASKS = []
+    TASKS_DONE = []
+    TASKS_LEFT = []
+
+    if lim is None:
+        lim=np.int64(N_objects)
+
+
+        
+    for i,segfile in enumerate(segs):
+        base = segfile.rstrip('_white_cold_seg.fits')
+        gfile = base+'_g.fits'
+        wtfile = base+'_g.wt.fits'
+        if not os.path.lexists(gfile) or not os.path.lexists(wtfile):
+            print "Missing a file, skipping... ", segfile
+        else:
+            print "Processing... ", gfile
+            task = (analyze_morphology,(gfile,wtfile,segfile))
+            if i <= maxq:
+                task_queue.put(task)
+                TASKS.append(task)
+            else:
+                TASKS_LEFT.append(task)
+
+
+    for p in range(NUMBER_OF_PROCESSES):
+        Process(target=worker,args=(task_queue,done_queue)).start()
+
+    finished_objs = []
+        
+    while len(TASKS_LEFT) > 0:
+        finished_objs.append(done_queue.get())
+        newtask = TASKS_LEFT.pop()
+        task_queue.put(newtask)
+
+    for i in range(min(maxq,lim)):
+        finished_objs.append(done_queue.get())
+
+    print len(finished_objs)
+    print finished_objs[1:5].whiteseg
     
-    
+
+    for p in range(NUMBER_OF_PROCESSES):
+        task_queue.put('STOP')
+
     os.chdir(cwd)
     return 0
 
 
 def do_nonmerger_test():
     analysis_dir = "/home/gsnyder/oasis_project/PanSTARRS/nonmergers"
-    result = process_directory(analysis_dir)
+    result = process_directory(analysis_dir,Np=2,maxq=10000,lim=500)
     return
 
     
