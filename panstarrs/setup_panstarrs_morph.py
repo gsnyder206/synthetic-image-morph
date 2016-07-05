@@ -42,14 +42,33 @@ from astropy.visualization import *
 import astropy.io.fits as pyfits
 import statmorph
 import datetime
+import h5py
+import requests
+from multiprocessing import Process, Queue, current_process
+import time
 
 
-def analyze_morphology(gbandfile,):
+def analyze_morphology(gbandfile,whiteseg):
 
 
     
 
     return
+
+
+def worker(input,output,**kwargs):
+    for func, args in iter(input.get,'STOP'):
+        f = calculate(func,args,**kwargs)
+        output.put(f)
+
+def calculate(func,args,**kwargs):
+    result = func(*args,**kwargs)
+    #return '%s was given %s and got %s' % \
+    #         (current_process().name, args, result)
+    return result
+
+
+
 
 
 
@@ -65,6 +84,27 @@ def process_single_object():
 def process_directory():
 
     #assign individual objects into separate processes
+
+    segs = np.sort(np.asarray(glob.glob('*_white_cold_seg.fits')))
     
 
+    return 0
+
+
+def do_nonmerger_test():
+    analysis_dir = "/home/gsnyder/oasis_project/PanSTARRS/nonmergers"
+    result = process_directory(analysis_dir)
     return
+
+    
+if __name__=="__main__":
+
+
+    #cProfile.run('test_10107()','profiler_stats_10107')
+    #p = pstats.Stats('profiler_stats_10107')
+    #p.strip_dirs().sort_stats('time').print_stats(45)
+
+    cProfile.run('do_nonmerger_test()','profiler_stats_nonmerger_test')
+    p = pstats.Stats('profiler_stats_nonmerger_test')
+    p.strip_dirs().sort_stats('time').print_stats(45)
+    

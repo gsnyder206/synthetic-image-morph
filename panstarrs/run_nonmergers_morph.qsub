@@ -1,0 +1,15 @@
+#!/bin/bash
+#PBS -q normal
+#PBS -N StatMorphs
+#PBS -l nodes=1:ppn=16:native
+#PBS -l walltime=00:30:00
+#PBS -o statmorph_pbs.out
+#PBS -e statmorph_pbs.err
+#PBS -A hsc100
+#PBS -m abe 
+#PBS -M gsnyder@stsci.edu 
+#PBS -V
+
+cd /oasis/scratch/$USER/temp_project/nonmergers
+
+python $HOME/PythonCode/synthetic_image_morph/panstarrs/setup_panstarrs_morph.py 1> statmorph_output.txt 2> statmorph_output.err
