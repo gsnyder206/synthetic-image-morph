@@ -58,6 +58,7 @@ def analyze_morphology(gbandfile,gwtfile,whiteseg,se_catalog):
     #decide here which se number to study
     mags = se_cat['MAG_AUTO']
     magi = np.argmin(mags)
+    #brightest NOT best -- use also class_star and seg at image center!
     
     se_cat = se_cat[magi]  #0 for testing
 
