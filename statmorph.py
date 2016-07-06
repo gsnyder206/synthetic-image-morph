@@ -1150,7 +1150,7 @@ class galdata:
             frac_overlap_125r = photutils.geometry.circular_overlap_grid(xmin,xmax,ymin,ymax,self.npix,self.npix,r+1.0,1,3)
             
             area_in_r = np.sum(frac_overlap_r)
-            print frac_overlap_r.shape, np.max(frac_overlap_r), area_in_r, i, r, xcenter
+            #print frac_overlap_r.shape, np.max(frac_overlap_r), area_in_r, i, r, xcenter
             
             
             avg_flux_in_r = np.sum(analyze_image*frac_overlap_r)/area_in_r
@@ -1465,7 +1465,8 @@ class galdata:
 
         
         self.clabel = se_catalog['NUMBER'] #label corresponding to targeted object
-
+        print self.segmap.shape
+        
         print np.max( self.segmap), new_xmin, new_xmax, new_ymin, new_ymax, self.imagefile, self.clabel
 
         
