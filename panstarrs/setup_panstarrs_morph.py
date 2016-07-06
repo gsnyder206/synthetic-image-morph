@@ -56,7 +56,10 @@ def analyze_morphology(gbandfile,gwtfile,whiteseg,se_catalog):
     se_cat = ascii.read(se_catalog)
 
     #decide here which se number to study
-    se_cat = se_cat[0]  #0 for testing
+    mags = se_cat['MAG_AUTO']
+    magi = np.argmin(mags)
+    
+    se_cat = se_cat[magi]  #0 for testing
 
     obj = object()
 
