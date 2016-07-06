@@ -1465,7 +1465,7 @@ class galdata:
 
         
         self.clabel = se_catalog['NUMBER'] #label corresponding to targeted object
-        print self.segmap.shape
+        print self.segmap.shape, new_xmin, new_xmax, new_ymin, new_ymax, self.imagefile, self.clabel
         
         print np.max( self.segmap), new_xmin, new_xmax, new_ymin, new_ymax, self.imagefile, self.clabel
 
