@@ -10,6 +10,6 @@
 #PBS -M gsnyder@stsci.edu 
 #PBS -V
 
-cd /oasis/scratch/$USER/temp_project/nonmergers
+cd /home/gsnyder/oasis_project/PanSTARRS/nonmergers
 
 python $HOME/PythonCode/synthetic_image_morph/panstarrs/setup_panstarrs_morph.py 1> statmorph_output.txt 2> statmorph_output.err
