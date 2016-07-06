@@ -55,12 +55,15 @@ def analyze_morphology(gbandfile,gwtfile,whiteseg,se_catalog):
     seghdu = pyfits.open(whiteseg)[0]
     se_cat = ascii.read(se_catalog)
 
+    #decide here which se number to study
+    se_cat = se_cat[0]  #0 for testing
+
     obj = object()
 
     result_hdu,newseg_hdu = statmorph.morph_from_panstarrs_image(ghdu,wthdu,seghdu,se_cat,outobject=obj)
-    obj.gfile = gbandfile
-    obj.wtfile = gwtfile
-    obj.whiteseg = whiteseg
+    #obj.gfile = gbandfile
+    #obj.wtfile = gwtfile
+    #obj.whiteseg = whiteseg
     
     return obj
 
@@ -123,7 +126,7 @@ def process_directory(directory,Np=2,maxq=10000,lim=None):
         if not os.path.lexists(gfile) or not os.path.lexists(wtfile) or not os.path.lexists(se_file):
             print "Missing a file, skipping... ", segfile
         else:
-            print "Processing... ", gfile
+            print "Processing... ", gfile, pyfits.open(gfile)[0].data.shape[0]
             task = (analyze_morphology,(gfile,wtfile,segfile,se_file))
             if i <= maxq:
                 task_queue.put(task)
@@ -162,7 +165,7 @@ def do_nonmerger_test():
     analysis_dir = "/home/gsnyder/oasis_project/PanSTARRS/nonmergers"
     objects = process_directory(analysis_dir,Np=2,maxq=10000,lim=10)
     for go in objects:
-        print "Finished.. ", go.gfile, go.whiteseg
+        print "Finished.. ", go.gini, go.rp_ellip
     
     return
 

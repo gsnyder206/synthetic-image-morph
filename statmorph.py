@@ -1438,11 +1438,26 @@ class galdata:
 
         #inputs required by IDL code:
         #    morph_input_obj.write('# IMAGE  NPIX   PSF   SCALE   SKY  XC YC A/B PA SKYBOX   MAG   MAGER   DM   RPROJ[arcsec]   ZEROPT[mag?] \n')
-        
+
+        xmin = se_catalog[0]['XMIN_IMAGE']
+        xmax = se_catalog[0]['XMAX_IMAGE']
+        ymin = se_catalog[0]['YMIN_IMAGE']
+        ymax = se_catalog[0]['YMAX_IMAGE']
+        #assume object is at center with significant buffer
+        xspan = xmax-xmin
+        yspan = ymax-ymin
+        span = np.max(np.asarray([xspan,yspan]))+50
+        new_xmin = xmin - 25
+        new_xmax = new_xmin + span
+        new_ymin = ymin - 25
+        new_ymax = new_ymin + span
+
         #image FITS filename 
         #self.imagefile=data_hdu.header['THISFILE']
-        self.image = data_hdu.data
-        self.segmap = segmap_hdu.data  #general segmap containing multiple objects/labels
+        self.image = data_hdu.data[new_xmin:new_xmax,new_ymin:new_ymax]
+        self.segmap = segmap_hdu.data[new_xmin:new_xmax,new_ymin:new_ymax]  #general segmap containing multiple objects/labels
+
+
         self.clabel = se_catalog[0]['NUMBER'] #label corresponding to targeted object
         #setting for doing sigma clip on internal segmap.  Not very efficient in SciPy versus IDL (why?)
         #avoid if simulated images -- not necessary if we don't expect awful pixels
