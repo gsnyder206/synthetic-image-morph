@@ -1456,11 +1456,11 @@ class galdata:
         new_ymax = new_ymin + span
 
         #image FITS filename 
-        #self.imagefile=data_hdu.header['THISFILE']
+        self.imagefile= data_hdu.fileinfo()['file'].name  #data_hdu.header['THISFILE']
         self.image = data_hdu.data[new_xmin:new_xmax,new_ymin:new_ymax]
         self.segmap = segmap_hdu.data[new_xmin:new_xmax,new_ymin:new_ymax]  #general segmap containing multiple objects/labels
 
-        print np.max( self.segmap)
+        print np.max( self.segmap), new_xmin, new_xmax, new_ymin, new_ymax, self.imagefile
         
         self.clabel = se_catalog['NUMBER'] #label corresponding to targeted object
 
