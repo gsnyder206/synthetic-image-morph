@@ -699,7 +699,7 @@ class galdata:
         seg = segmap.flatten()
         ap = np.where(seg > 0.0)[0]
         n = np.sum(np.ones_like(ap))
-        
+        print n, self.skysig
         s2n = np.sum( im[ap]/((self.skysig**2)**0.5))/n
 
         return s2n
