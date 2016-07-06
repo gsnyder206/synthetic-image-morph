@@ -1150,7 +1150,7 @@ class galdata:
             frac_overlap_125r = photutils.geometry.circular_overlap_grid(xmin,xmax,ymin,ymax,self.npix,self.npix,r+1.0,1,3)
             
             area_in_r = np.sum(frac_overlap_r)
-            print frac_overlap_r.shape, np.max(frac_overlap_r), area_in_r, i, r
+            print frac_overlap_r.shape, np.max(frac_overlap_r), area_in_r, i, r, xcenter
             
             
             avg_flux_in_r = np.sum(analyze_image*frac_overlap_r)/area_in_r
@@ -1492,10 +1492,10 @@ class galdata:
         #sky = background level in image
         self.sky = 0.0 #data_hdu.header['SKY']
         #x and y positions. MUST CONFIRM PYTHON ORDERING/locations, 0,1 as x,y seem ok for now
-        self.xcentroid = se_catalog['Y_IMAGE'] #segmap_hdu.header['POS0']
-        self.ycentroid = se_catalog['X_IMAGE'] #segmap_hdu.header['POS1']
-        self.thisband_xcentroid = self.ycentroid*1.0 #photutils_hdu.header['XCENTR']
-        self.thisband_ycentroid = self.xcentroid*1.0 #photutils_hdu.header['YCENTR']
+        self.xcentroid = se_catalog['Y_IMAGE']-new_ymin #segmap_hdu.header['POS0']
+        self.ycentroid = se_catalog['X_IMAGE']-new_xmin #segmap_hdu.header['POS1']
+        self.thisband_xcentroid = self.ycentroid*1.0-new_ymin #photutils_hdu.header['XCENTR']
+        self.thisband_ycentroid = self.xcentroid*1.0-new_xmin #photutils_hdu.header['YCENTR']
         #a/b I'm guessing this is the elongation parameter?
         self.elongation = se_catalog['ELONGATION']
         assert (self.elongation > 0.0)
