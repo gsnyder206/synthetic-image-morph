@@ -1498,7 +1498,7 @@ class galdata:
         self.elongation = se_catalog['ELONGATION']
         assert (self.elongation > 0.0)
         #PA position angle.  WHAT UNITS?
-        self.pa_radians = se_catalog['THETA_IMAGE'] #this looks like it's in radians, counterclockwise (photutils)
+        self.pa_radians = se_catalog['THETA_IMAGE']*(math.pi/180.0) #this looks like it's in radians, counterclockwise (photutils)
         #skybox.  do we need this if we know skysig?
         self.skysig = 1.0 #data_hdu.header['SKYSIG']
         #create arbitrary perfect noise image matching synthetic image properties
