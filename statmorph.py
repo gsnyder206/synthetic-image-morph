@@ -1457,8 +1457,9 @@ class galdata:
 
         #image FITS filename 
         self.imagefile= data_hdu.fileinfo()['file'].name  #data_hdu.header['THISFILE']
-        self.image = data_hdu.data[new_xmin:new_xmax,new_ymin:new_ymax]
-        self.segmap = segmap_hdu.data[new_xmin:new_xmax,new_ymin:new_ymax]  #general segmap containing multiple objects/labels
+        #SE = backwards indices than Python ?
+        self.image = data_hdu.data[new_ymin:new_ymax,new_xmin:new_xmax]
+        self.segmap = segmap_hdu.data[new_ymin:new_ymax,new_xmin:new_xmax]  #general segmap containing multiple objects/labels
 
         
         self.clabel = se_catalog['NUMBER'] #label corresponding to targeted object
