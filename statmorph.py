@@ -699,6 +699,8 @@ class galdata:
         seg = segmap.flatten()
         ap = np.where(seg > 0.0)[0]
         n = np.sum(np.ones_like(ap))
+        print im.shape, seg.shape, n
+        
         s2n = np.sum( im[ap]/((self.skysig**2)**0.5))/n
 
         return s2n
@@ -1461,7 +1463,7 @@ class galdata:
 
         self.clabel = se_catalog['NUMBER'] #label corresponding to targeted object
 
-        print self.image.shape, self.segmap.shape, self.clabel
+        #print self.image.shape, self.segmap.shape, self.clabel
         
         #setting for doing sigma clip on internal segmap.  Not very efficient in SciPy versus IDL (why?)
         #avoid if simulated images -- not necessary if we don't expect awful pixels
