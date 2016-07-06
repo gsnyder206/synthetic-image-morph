@@ -699,7 +699,6 @@ class galdata:
         seg = segmap.flatten()
         ap = np.where(seg > 0.0)[0]
         n = np.sum(np.ones_like(ap))
-        print im.shape, seg.shape, n
         
         s2n = np.sum( im[ap]/((self.skysig**2)**0.5))/n
 
@@ -1461,6 +1460,8 @@ class galdata:
         self.image = data_hdu.data[new_xmin:new_xmax,new_ymin:new_ymax]
         self.segmap = segmap_hdu.data[new_xmin:new_xmax,new_ymin:new_ymax]  #general segmap containing multiple objects/labels
 
+        print np.max( self.segmap)
+        
         self.clabel = se_catalog['NUMBER'] #label corresponding to targeted object
 
         #print self.image.shape, self.segmap.shape, self.clabel
