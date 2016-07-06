@@ -1436,13 +1436,15 @@ class galdata:
     def init_from_panstarrs_image(self,data_hdu,weight_hdu,segmap_hdu,se_catalog):
         self.morphtype='PanSTARRS Image'
 
+        #se_catalog is just a single-entry ascii table after deciphering SE calc
+
         #inputs required by IDL code:
         #    morph_input_obj.write('# IMAGE  NPIX   PSF   SCALE   SKY  XC YC A/B PA SKYBOX   MAG   MAGER   DM   RPROJ[arcsec]   ZEROPT[mag?] \n')
 
-        xmin = se_catalog[0]['XMIN_IMAGE']
-        xmax = se_catalog[0]['XMAX_IMAGE']
-        ymin = se_catalog[0]['YMIN_IMAGE']
-        ymax = se_catalog[0]['YMAX_IMAGE']
+        xmin = se_catalog['XMIN_IMAGE']
+        xmax = se_catalog['XMAX_IMAGE']
+        ymin = se_catalog['YMIN_IMAGE']
+        ymax = se_catalog['YMAX_IMAGE']
         #assume object is at center with significant buffer
         xspan = xmax-xmin
         yspan = ymax-ymin
@@ -1458,7 +1460,7 @@ class galdata:
         self.segmap = segmap_hdu.data[new_xmin:new_xmax,new_ymin:new_ymax]  #general segmap containing multiple objects/labels
 
 
-        self.clabel = se_catalog[0]['NUMBER'] #label corresponding to targeted object
+        self.clabel = se_catalog['NUMBER'] #label corresponding to targeted object
         #setting for doing sigma clip on internal segmap.  Not very efficient in SciPy versus IDL (why?)
         #avoid if simulated images -- not necessary if we don't expect awful pixels
         self.filter_segmap = False
@@ -1480,15 +1482,15 @@ class galdata:
         #sky = background level in image
         self.sky = 0.0 #data_hdu.header['SKY']
         #x and y positions. MUST CONFIRM PYTHON ORDERING/locations, 0,1 as x,y seem ok for now
-        self.xcentroid = se_catalog[0]['X_IMAGE'] #segmap_hdu.header['POS0']
-        self.ycentroid = se_catalog[0]['Y_IMAGE'] #segmap_hdu.header['POS1']
+        self.xcentroid = se_catalog['X_IMAGE'] #segmap_hdu.header['POS0']
+        self.ycentroid = se_catalog['Y_IMAGE'] #segmap_hdu.header['POS1']
         self.thisband_xcentroid = self.xcentroid*1.0 #photutils_hdu.header['XCENTR']
         self.thisband_ycentroid = self.ycentroid*1.0 #photutils_hdu.header['YCENTR']
         #a/b I'm guessing this is the elongation parameter?
-        self.elongation = se_catalog[0]['ELONGATION']
+        self.elongation = se_catalog['ELONGATION']
         assert (self.elongation > 0.0)
         #PA position angle.  WHAT UNITS?
-        self.pa_radians = se_catalog[0]['THETA_IMAGE'] #this looks like it's in radians, counterclockwise (photutils)
+        self.pa_radians = se_catalog['THETA_IMAGE'] #this looks like it's in radians, counterclockwise (photutils)
         #skybox.  do we need this if we know skysig?
         self.skysig = 1.0 #data_hdu.header['SKYSIG']
         #create arbitrary perfect noise image matching synthetic image properties
@@ -1500,8 +1502,8 @@ class galdata:
         #AB magnitude best ... "observed" ?  aperture mags?  segment mags?
         #self.magtot_intrinsic = data_hdu.header['MAG']
         #self.magtot_observed = data_hdu.header['NEWMAG']  #-1 = bad
-        self.magseg = se_catalog[0]['MAG_AUTO'] #-1 = bad
-        self.magseg_err = se_catalog[0]['MAGERR_AUTO'] #-1 = bad
+        self.magseg = se_catalog['MAG_AUTO'] #-1 = bad
+        self.magseg_err = se_catalog['MAGERR_AUTO'] #-1 = bad
         #distance modulus
         self.dm = None #data_hdu.header['DISTMOD']
         #redshift, because why not
