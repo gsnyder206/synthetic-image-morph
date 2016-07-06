@@ -1150,7 +1150,9 @@ class galdata:
             frac_overlap_125r = photutils.geometry.circular_overlap_grid(xmin,xmax,ymin,ymax,self.npix,self.npix,r+1.0,1,3)
             
             area_in_r = np.sum(frac_overlap_r)
-
+            print frac_overlap_r.shape, np.max(frac_overlap_r), area_in_r
+            
+            
             avg_flux_in_r = np.sum(analyze_image*frac_overlap_r)/area_in_r
             err_in_r = ((1.0/area_in_r)*self.skysig**2)**0.5  #error on average flux
 
