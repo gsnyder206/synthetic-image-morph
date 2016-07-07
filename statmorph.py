@@ -699,7 +699,7 @@ class galdata:
         seg = segmap.flatten()
         ap = np.where(seg > 0.0)[0]
         n = np.sum(np.ones_like(ap))
-        print n, self.skysig
+        #print n, self.skysig
         s2n = np.sum( im[ap]/((self.skysig**2)**0.5))/n
 
         return s2n
@@ -1452,14 +1452,17 @@ class galdata:
         xspan = xmax-xmin
         yspan = ymax-ymin
         span = np.max(np.asarray([xspan,yspan]))+80
-        new_xmin = xmin - 40
-        new_xmax = new_xmin + span
-        new_ymin = ymin - 40
-        new_ymax = new_ymin + span
+        ##TEMPORARY Assume image roughly centered
+        new_xmin = se_catalog['X_IMAGE'] - span/2
+        new_xmax = se_catalog['X_IMAGE'] + span/2
+        new_ymin = se_catalog['Y_IMAGE'] - span/2
+        new_ymax = se_catalog['Y_IMAGE'] + span/2
 
         #image FITS filename 
         self.imagefile= data_hdu.fileinfo()['file'].name  #data_hdu.header['THISFILE']
         #SE = backwards indices than Python ?
+        #confirmed with imshow/segmaps
+        
         self.image = data_hdu.data[new_ymin:new_ymax,new_xmin:new_xmax]
         self.segmap = segmap_hdu.data[new_ymin:new_ymax,new_xmin:new_xmax]  #general segmap containing multiple objects/labels
 
@@ -1495,6 +1498,8 @@ class galdata:
         #x and y positions. MUST CONFIRM PYTHON ORDERING/locations, 0,1 as x,y seem ok for now
         self.xcentroid = se_catalog['Y_IMAGE']-new_ymin #segmap_hdu.header['POS0']
         self.ycentroid = se_catalog['X_IMAGE']-new_xmin #segmap_hdu.header['POS1']
+        print self.xcentroid, self.ycentroid
+        
         self.thisband_xcentroid = self.ycentroid*1.0-new_ymin #photutils_hdu.header['XCENTR']
         self.thisband_ycentroid = self.xcentroid*1.0-new_xmin #photutils_hdu.header['YCENTR']
         #a/b I'm guessing this is the elongation parameter?
