@@ -198,5 +198,34 @@ if __name__=="__main__":
     
     cProfile.run('do_nonmerger_test(Np=1,lim=1)','profiler_stats_nonmerger_test_1_1')
     p = pstats.Stats('profiler_stats_nonmerger_test_1_1')
-    p.strip_dirs().sort_stats('time').print_stats(45)
+    p.strip_dirs().sort_stats('time').print_stats(15)
     
+    cProfile.run('do_nonmerger_test(Np=1,lim=10)','profiler_stats_nonmerger_test_1_10')
+    p = pstats.Stats('profiler_stats_nonmerger_test_1_10')
+    p.strip_dirs().sort_stats('time').print_stats(15)
+
+    cProfile.run('do_nonmerger_test(Np=2,lim=10)','profiler_stats_nonmerger_test_2_10')
+    p = pstats.Stats('profiler_stats_nonmerger_test_2_10')
+    p.strip_dirs().sort_stats('time').print_stats(15)
+    
+    cProfile.run('do_nonmerger_test(Np=2,lim=100)','profiler_stats_nonmerger_test_2_100')
+    p = pstats.Stats('profiler_stats_nonmerger_test_2_100')
+    p.strip_dirs().sort_stats('time').print_stats(15)
+
+    '''
+    cProfile.run('do_nonmerger_test(Np=4,lim=100)','profiler_stats_nonmerger_test_4_100')
+    p = pstats.Stats('profiler_stats_nonmerger_test_4_100')
+    p.strip_dirs().sort_stats('time').print_stats(15)
+
+    cProfile.run('do_nonmerger_test(Np=4,lim=1000)','profiler_stats_nonmerger_test_4_1000')
+    p = pstats.Stats('profiler_stats_nonmerger_test_4_1000')
+    p.strip_dirs().sort_stats('time').print_stats(15)
+
+    cProfile.run('do_nonmerger_test(Np=8,lim=1000)','profiler_stats_nonmerger_test_8_1000')
+    p = pstats.Stats('profiler_stats_nonmerger_test_8_1000')
+    p.strip_dirs().sort_stats('time').print_stats(15)
+
+    cProfile.run('do_nonmerger_test(Np=16,lim=1000)','profiler_stats_nonmerger_test_16_1000')
+    p = pstats.Stats('profiler_stats_nonmerger_test_16_1000')
+    p.strip_dirs().sort_stats('time').print_stats(15)
+    '''

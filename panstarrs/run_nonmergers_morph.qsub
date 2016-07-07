@@ -2,7 +2,7 @@
 #PBS -q normal
 #PBS -N StatMorphs
 #PBS -l nodes=1:ppn=16:native
-#PBS -l walltime=00:10:00
+#PBS -l walltime=01:00:00
 #PBS -o statmorph_pbs.out
 #PBS -e statmorph_pbs.err
 #PBS -A hsc100
