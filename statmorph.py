@@ -1764,5 +1764,5 @@ def morph_from_panstarrs_image(image_hdu,weight_hdu,segmap_hdu,se_catalog,extnam
 
     outobject = copy.copy(galdataobject)
 
-    return morph_hdu, rpa_seg_hdu
+    return morph_hdu, rpa_seg_hdu, galdataobject
 

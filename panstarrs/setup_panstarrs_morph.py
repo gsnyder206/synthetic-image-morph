@@ -74,9 +74,9 @@ def analyze_morphology(gbandfile,gwtfile,whiteseg,se_catalog):
     
     se_cat = se_cat[segi]  #0 for testing
 
-    obj = statmorph.galdata()
+    #obj = statmorph.galdata()
 
-    result_hdu,newseg_hdu = statmorph.morph_from_panstarrs_image(ghdu,wthdu,seghdu,se_cat,outobject=obj)
+    result_hdu,newseg_hdu,obj = statmorph.morph_from_panstarrs_image(ghdu,wthdu,seghdu,se_cat)
     #obj.gfile = gbandfile
     #obj.wtfile = gwtfile
     #obj.whiteseg = whiteseg
@@ -133,7 +133,7 @@ def process_directory(directory,Np=2,maxq=10000,lim=None):
 
 
         
-    for i,segfile in enumerate(segs[0:lim+1]):
+    for i,segfile in enumerate(segs[0:lim]):
         base = segfile.rstrip('_white_cold_seg.fits')
         gfile = base+'_g.fits'
         wtfile = base+'_g.wt.fits'
