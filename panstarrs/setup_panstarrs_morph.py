@@ -165,7 +165,7 @@ def process_directory(directory,Np=2,maxq=10000,lim=None):
         finished_objs.append(done_queue.get())
 
     print len(finished_objs)
-    print finished_objs[-1].imagefile
+    print finished_objs[0]
     
 
     for p in range(NUMBER_OF_PROCESSES):
@@ -196,7 +196,7 @@ if __name__=="__main__":
 
 
     
-    cProfile.run('do_nonmerger_test(Np=1,lim=10)','profiler_stats_nonmerger_test_1_10')
-    p = pstats.Stats('profiler_stats_nonmerger_test_1_10')
+    cProfile.run('do_nonmerger_test(Np=1,lim=1)','profiler_stats_nonmerger_test_1_1')
+    p = pstats.Stats('profiler_stats_nonmerger_test_1_1')
     p.strip_dirs().sort_stats('time').print_stats(45)
     

@@ -1468,9 +1468,9 @@ class galdata:
 
         
         self.clabel = se_catalog['NUMBER'] #label corresponding to targeted object
-        print self.segmap.shape, new_xmin, new_xmax, new_ymin, new_ymax, self.imagefile, self.clabel
+        #print self.segmap.shape, new_xmin, new_xmax, new_ymin, new_ymax, self.imagefile, self.clabel
         
-        print np.max( self.segmap), new_xmin, new_xmax, new_ymin, new_ymax, self.imagefile, self.clabel
+        #print np.max( self.segmap), new_xmin, new_xmax, new_ymin, new_ymax, self.imagefile, self.clabel
 
         
         #print self.image.shape, self.segmap.shape, self.clabel
@@ -1498,7 +1498,7 @@ class galdata:
         #x and y positions. MUST CONFIRM PYTHON ORDERING/locations, 0,1 as x,y seem ok for now
         self.xcentroid = se_catalog['Y_IMAGE']-new_ymin #segmap_hdu.header['POS0']
         self.ycentroid = se_catalog['X_IMAGE']-new_xmin #segmap_hdu.header['POS1']
-        print self.xcentroid, self.ycentroid
+        #print self.xcentroid, self.ycentroid
         
         self.thisband_xcentroid = self.ycentroid*1.0-new_ymin #photutils_hdu.header['XCENTR']
         self.thisband_ycentroid = self.xcentroid*1.0-new_xmin #photutils_hdu.header['YCENTR']
