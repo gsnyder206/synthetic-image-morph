@@ -1451,10 +1451,10 @@ class galdata:
         #assume object is at center with significant buffer
         xspan = xmax-xmin
         yspan = ymax-ymin
-        span = np.max(np.asarray([xspan,yspan]))+50
-        new_xmin = xmin - 25
+        span = np.max(np.asarray([xspan,yspan]))+80
+        new_xmin = xmin - 40
         new_xmax = new_xmin + span
-        new_ymin = ymin - 25
+        new_ymin = ymin - 40
         new_ymax = new_ymin + span
 
         #image FITS filename 
