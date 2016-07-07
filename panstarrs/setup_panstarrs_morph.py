@@ -80,6 +80,9 @@ def analyze_morphology(gbandfile,gwtfile,whiteseg,se_catalog):
     #obj.gfile = gbandfile
     #obj.wtfile = gwtfile
     #obj.whiteseg = whiteseg
+
+    sys.stdout.flush()
+    
     
     return obj
 
@@ -212,20 +215,17 @@ if __name__=="__main__":
     p = pstats.Stats('profiler_stats_nonmerger_test_2_100')
     p.strip_dirs().sort_stats('time').print_stats(15)
 
-    '''
+    
     cProfile.run('do_nonmerger_test(Np=4,lim=100)','profiler_stats_nonmerger_test_4_100')
     p = pstats.Stats('profiler_stats_nonmerger_test_4_100')
     p.strip_dirs().sort_stats('time').print_stats(15)
 
-    cProfile.run('do_nonmerger_test(Np=4,lim=1000)','profiler_stats_nonmerger_test_4_1000')
-    p = pstats.Stats('profiler_stats_nonmerger_test_4_1000')
-    p.strip_dirs().sort_stats('time').print_stats(15)
 
-    cProfile.run('do_nonmerger_test(Np=8,lim=1000)','profiler_stats_nonmerger_test_8_1000')
-    p = pstats.Stats('profiler_stats_nonmerger_test_8_1000')
+    cProfile.run('do_nonmerger_test(Np=16,lim=100)','profiler_stats_nonmerger_test_16_100')
+    p = pstats.Stats('profiler_stats_nonmerger_test_16_100')
     p.strip_dirs().sort_stats('time').print_stats(15)
 
     cProfile.run('do_nonmerger_test(Np=16,lim=1000)','profiler_stats_nonmerger_test_16_1000')
     p = pstats.Stats('profiler_stats_nonmerger_test_16_1000')
     p.strip_dirs().sort_stats('time').print_stats(15)
-    '''
+    
