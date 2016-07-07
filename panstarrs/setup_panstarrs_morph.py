@@ -182,7 +182,7 @@ def do_nonmerger_test(Np=1,lim=None):
     analysis_dir = "/home/gsnyder/oasis_project/PanSTARRS/nonmergers"
     objects = process_directory(analysis_dir,Np=Np,maxq=10000,lim=lim)
     for go in objects:
-        print "Finished.. ", go.gini, go.rp_ellip
+        print "Finished.. ", go.imagefile
     
     return
 
