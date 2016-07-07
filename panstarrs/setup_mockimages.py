@@ -6,7 +6,7 @@ import numpy as np
 
 
 
-def prep_mock_image(groupfile=None,output_dir='/home/gsnyder/oasis_project/PanSTARRS/mockimage_tests/',stubfolder='/home/gsnyder/sunrise_data/panstarrs_stubs/test',bindir='/home/gsnyder/bin', filters='/home/gsnyder/sunrise_data/sunrise_filters/lsst/'):
+def prep_mock_image(groupfile=None,output_dir='/home/gsnyder/oasis_project/PanSTARRS/mockimage_tests/',stubfolder='/home/gsnyder/sunrise_data/panstarrs_stubs/test',bindir='/home/gsnyder/bin', filters='/home/gsnyder/sunrise_data/sunrise_filters/panstarrs/'):
 
 
     base_name = os.path.basename(groupfile).rstrip('.hdf5')
