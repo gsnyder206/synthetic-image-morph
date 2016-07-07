@@ -56,11 +56,21 @@ def analyze_morphology(gbandfile,gwtfile,whiteseg,se_catalog):
     se_cat = ascii.read(se_catalog)
 
     #decide here which se number to study
-    mags = se_cat['MAG_AUTO']
-    magi = np.argmin(mags)
+    imn = ghdu.data.shape[0]
+    #assumes square
+    cl = imn/2 -2
+    ch = imn/2 +2
+    centersegvals = seghdu.data[cl:ch,cl:ch]
+    uniqueseg = np.unique(centersegvals)
+    n_uniq = uniqueseg.shape[0]
+    if not n_uniq==1 or uniqueseg[0]=0:
+        print "Unable to find unique central object, skipping: ", (seghdu.fileinfo()['file']).name
+    else:
+        segi = uniqueseg[0]
+            
     #brightest NOT best -- use also class_star and seg at image center!
     
-    se_cat = se_cat[magi]  #0 for testing
+    se_cat = se_cat[segi]  #0 for testing
 
     obj = object()
 
