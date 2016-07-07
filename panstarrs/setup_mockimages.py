@@ -118,6 +118,18 @@ def prep_mock_image(groupfile=None,output_dir='/home/gsnyder/oasis_project/PanST
     return
 
 
+def prep_subfolder(subdir='/home/gsnyder/oasis_project/PanSTARRS/GroupParsedSnapshots/snapshot_135/subfolder_001'):
+    groupfiles = np.sort(np.asarray(glob.glob(os.path.join(subdir,'group_*.hdf5'))))
+    for gf in groupfiles:
+        prep_mock_image(groupfile=gf)
+    
+    return
 
 if __name__=="__main__":
-    prep_mock_image(groupfile='/home/gsnyder/oasis_project/PanSTARRS/GroupParsedSnapshots/snapshot_135/subfolder_001/group_150.hdf5')
+    #prep_mock_image(groupfile='/home/gsnyder/oasis_project/PanSTARRS/GroupParsedSnapshots/snapshot_135/subfolder_001/group_150.hdf5')
+    prep_subfolder(subdir='/home/gsnyder/oasis_project/PanSTARRS/GroupParsedSnapshots/snapshot_135/subfolder_001')
+
+    '''
+    prep_subfolder(subdir='/home/gsnyder/oasis_project/PanSTARRS/GroupParsedSnapshots/snapshot_135/subfolder_003')
+    prep_subfolder(subdir='/home/gsnyder/oasis_project/PanSTARRS/GroupParsedSnapshots/snapshot_135/subfolder_010')
+    '''
