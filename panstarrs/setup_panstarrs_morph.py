@@ -63,7 +63,7 @@ def analyze_morphology(gbandfile,gwtfile,whiteseg,se_catalog):
     centersegvals = seghdu.data[cl:ch,cl:ch]
     uniqueseg = np.unique(centersegvals)
     n_uniq = uniqueseg.shape[0]
-    if not n_uniq==1 or uniqueseg[0]=0:
+    if not n_uniq==1 or uniqueseg[0]==0:
         print "Unable to find unique central object, skipping: ", (seghdu.fileinfo()['file']).name
     else:
         segi = uniqueseg[0]
