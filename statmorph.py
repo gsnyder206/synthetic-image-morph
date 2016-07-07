@@ -1453,10 +1453,10 @@ class galdata:
         yspan = ymax-ymin
         span = np.max(np.asarray([xspan,yspan]))+80
         ##TEMPORARY Assume image roughly centered
-        new_xmin = se_catalog['X_IMAGE'] - span/2
-        new_xmax = se_catalog['X_IMAGE'] + span/2
-        new_ymin = se_catalog['Y_IMAGE'] - span/2
-        new_ymax = se_catalog['Y_IMAGE'] + span/2
+        new_xmin = long ( se_catalog['X_IMAGE'] - span/2 )
+        new_xmax = long ( se_catalog['X_IMAGE'] + span/2 )
+        new_ymin = long ( se_catalog['Y_IMAGE'] - span/2 )
+        new_ymax = long ( se_catalog['Y_IMAGE'] + span/2 )
 
         #image FITS filename 
         self.imagefile= data_hdu.fileinfo()['file'].name  #data_hdu.header['THISFILE']

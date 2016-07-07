@@ -68,7 +68,7 @@ def analyze_morphology(gbandfile,gwtfile,whiteseg,se_catalog):
     else:
         segi = np.where(se_cat['NUMBER']==uniqueseg[0])[0][0]
         
-        print segi, uniqueseg, n_uniq, se_cat[segi]
+        #print segi, uniqueseg, n_uniq, se_cat[segi]
             
     #brightest NOT best -- use also class_star and seg at image center!
     
@@ -165,7 +165,8 @@ def process_directory(directory,Np=2,maxq=10000,lim=None):
         finished_objs.append(done_queue.get())
 
     print len(finished_objs)
-    print finished_objs[1].whiteseg
+    print finished_objs[-1].imagefile
+    
 
     for p in range(NUMBER_OF_PROCESSES):
         task_queue.put('STOP')
@@ -177,9 +178,9 @@ def process_directory(directory,Np=2,maxq=10000,lim=None):
     return finished_objs
 
 
-def do_nonmerger_test():
+def do_nonmerger_test(Np=1,lim=None):
     analysis_dir = "/home/gsnyder/oasis_project/PanSTARRS/nonmergers"
-    objects = process_directory(analysis_dir,Np=1,maxq=10000,lim=10)
+    objects = process_directory(analysis_dir,Np=Np,maxq=10000,lim=lim)
     for go in objects:
         print "Finished.. ", go.gini, go.rp_ellip
     
@@ -193,7 +194,9 @@ if __name__=="__main__":
     #p = pstats.Stats('profiler_stats_10107')
     #p.strip_dirs().sort_stats('time').print_stats(45)
 
-    cProfile.run('do_nonmerger_test()','profiler_stats_nonmerger_test')
-    p = pstats.Stats('profiler_stats_nonmerger_test')
+
+    
+    cProfile.run('do_nonmerger_test(Np=1,lim=10)','profiler_stats_nonmerger_test_1_10')
+    p = pstats.Stats('profiler_stats_nonmerger_test_1_10')
     p.strip_dirs().sort_stats('time').print_stats(45)
     
