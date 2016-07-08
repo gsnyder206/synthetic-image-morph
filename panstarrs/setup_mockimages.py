@@ -127,9 +127,11 @@ def prep_subfolder(subdir='/home/gsnyder/oasis_project/PanSTARRS/GroupParsedSnap
 
 if __name__=="__main__":
     #prep_mock_image(groupfile='/home/gsnyder/oasis_project/PanSTARRS/GroupParsedSnapshots/snapshot_135/subfolder_001/group_150.hdf5')
-    prep_subfolder(subdir='/home/gsnyder/oasis_project/PanSTARRS/GroupParsedSnapshots/snapshot_135/subfolder_003')
+    prep_subfolder(subdir='/home/gsnyder/oasis_project/PanSTARRS/GroupParsedSnapshots/snapshot_135/subfolder_050')
+
+    '''prep_subfolder(subdir='/home/gsnyder/oasis_project/PanSTARRS/GroupParsedSnapshots/snapshot_135/subfolder_003')
     prep_subfolder(subdir='/home/gsnyder/oasis_project/PanSTARRS/GroupParsedSnapshots/snapshot_135/subfolder_010')
     
-    '''
+  
     prep_subfolder(subdir='/home/gsnyder/oasis_project/PanSTARRS/GroupParsedSnapshots/snapshot_135/subfolder_001')
     '''
