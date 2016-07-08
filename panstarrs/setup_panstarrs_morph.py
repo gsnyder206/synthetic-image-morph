@@ -194,7 +194,13 @@ def do_nonmerger_test(Np=1,lim=None):
     objects = process_directory(analysis_dir,Np=Np,maxq=10000,lim=lim)
     for go in objects:
         print "Finished.. ", go.imagefile
-    
+
+
+    pfile = "nonmergers_test.pickle"
+    pfo = open(pfile,'w')
+    res = cPickle.dump(objects,pfo)
+    pfo.close()
+        
     return
 
     
