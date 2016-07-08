@@ -115,19 +115,25 @@ def prep_mock_image(groupfile=None,output_dir='/home/gsnyder/oasis_project/PanST
     bf.write('redshift\t\t {:10.6f}\n'.format(float(redshift)))
     bf.close()
 
-    return
+    return os.path.abspath(bsubf)
 
 
 def prep_subfolder(subdir='/home/gsnyder/oasis_project/PanSTARRS/GroupParsedSnapshots/snapshot_135/subfolder_001'):
     groupfiles = np.sort(np.asarray(glob.glob(os.path.join(subdir,'group_*.hdf5'))))
-    for gf in groupfiles:
-        prep_mock_image(groupfile=gf)
+    submitfile = 'submit_'+os.path.basename(subdir)+'.sh'
+    smf = open(submitfile,'w')
     
+    for gf in groupfiles:
+        bsubf = prep_mock_image(groupfile=gf)
+        submitline = 'qsub '+bsubf
+        smf.write(submitline+'\n')
+        
+    smf.close()
     return
 
 if __name__=="__main__":
     #prep_mock_image(groupfile='/home/gsnyder/oasis_project/PanSTARRS/GroupParsedSnapshots/snapshot_135/subfolder_001/group_150.hdf5')
-    prep_subfolder(subdir='/home/gsnyder/oasis_project/PanSTARRS/GroupParsedSnapshots/snapshot_135/subfolder_050')
+    prep_subfolder(subdir='/home/gsnyder/oasis_project/PanSTARRS/GroupParsedSnapshots/snapshot_135/subfolder_015')
 
     '''prep_subfolder(subdir='/home/gsnyder/oasis_project/PanSTARRS/GroupParsedSnapshots/snapshot_135/subfolder_003')
     prep_subfolder(subdir='/home/gsnyder/oasis_project/PanSTARRS/GroupParsedSnapshots/snapshot_135/subfolder_010')
