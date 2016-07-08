@@ -6,7 +6,7 @@ import numpy as np
 
 
 
-def prep_mock_image(groupfile=None,output_dir='/home/gsnyder/oasis_project/PanSTARRS/mockimage_tests/',stubfolder='/home/gsnyder/sunrise_data/panstarrs_stubs/test',bindir='/home/gsnyder/bin', filters='/home/gsnyder/sunrise_data/sunrise_filters/panstarrs/'):
+def prep_mock_image(groupfile=None,output_dir='/home/gsnyder/oasis_project/PanSTARRS/mockimage_tests/',stubfolder='/home/gsnyder/sunrise_data/panstarrs_stubs/test',bindir='/home/gsnyder/bin', filters='/home/gsnyder/sunrise_data/sunrise_filters/panstarrs/',mail=True):
 
     gfn = os.path.basename(groupfile)
     base_i = gfn.index('.hdf5')
@@ -67,8 +67,10 @@ def prep_mock_image(groupfile=None,output_dir='/home/gsnyder/oasis_project/PanST
     bsubf.write('#PBS -o '+base_name+'_pbs.out\n')
     bsubf.write('#PBS -e '+base_name+'_pbs.err\n')
     bsubf.write('#PBS -A hsc100\n')
-    bsubf.write('#PBS -m abe \n')
-    bsubf.write('#PBS -M gsnyder@stsci.edu \n')
+    if mail==True:
+        bsubf.write('#PBS -m abe \n')
+        bsubf.write('#PBS -M gsnyder@stsci.edu \n')
+        
     bsubf.write('#PBS -l epilogue=/home/gsnyder/resource_epilogue.sh\n')
 
     bsubf.write('#PBS -V \n\n')
@@ -127,7 +129,7 @@ def prep_subfolder(subdir='/home/gsnyder/oasis_project/PanSTARRS/GroupParsedSnap
     smf = open(submitfile,'w')
     
     for gf in groupfiles:
-        bsubf = prep_mock_image(groupfile=gf)
+        bsubf = prep_mock_image(groupfile=gf,mail=False)
         submitline = 'qsub '+bsubf
         smf.write(submitline+'\n')
         

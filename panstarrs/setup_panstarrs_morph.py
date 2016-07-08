@@ -192,13 +192,14 @@ def process_directory(directory,Np=2,maxq=10000,lim=None):
 def do_nonmerger_test(Np=1,lim=None):
     analysis_dir = "/home/gsnyder/oasis_project/PanSTARRS/nonmergers"
     objects = process_directory(analysis_dir,Np=Np,maxq=10000,lim=lim)
+    savelist = []
     for go in objects:
         print "Finished.. ", go.imagefile
-
+        savelist.append(go.morph_hdu)
 
     pfile = "nonmergers_test.pickle"
     pfo = open(pfile,'w')
-    res = cPickle.dump(objects,pfo)
+    res = cPickle.dump(savelist,pfo)
     pfo.close()
         
     return
