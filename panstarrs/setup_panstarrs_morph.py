@@ -148,7 +148,7 @@ def process_directory(directory,Np=2,maxq=10000,lim=None):
             try:
                 print "Processing... ", gfile, pyfits.open(gfile)[0].data.shape[0], pyfits.open(segfile)[0].data.shape[0]
                 se_cat = ascii.read(se_file)
-            except ValueError,IOError:
+            except:
                 print "Error opening images or catalogs, skipping.. ", gfile
                 continue
             
