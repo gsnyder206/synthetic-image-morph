@@ -7,7 +7,8 @@
 #PBS -e statmorph_pbs.err
 #PBS -A hsc100
 #PBS -m abe 
-#PBS -M gsnyder@stsci.edu 
+#PBS -M gsnyder@stsci.edu
+#PBS -l epilogue=/home/gsnyder/resource_epilogue.sh
 #PBS -V
 
 cd /home/gsnyder/oasis_project/PanSTARRS/nonmergers
