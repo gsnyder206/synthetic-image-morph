@@ -115,7 +115,7 @@ def prep_mock_image(groupfile=None,output_dir='/home/gsnyder/oasis_project/PanST
     bf.write('redshift\t\t {:10.6f}\n'.format(float(redshift)))
     bf.close()
 
-    return os.path.abspath(bsubf)
+    return os.path.abspath(bsubfile)
 
 
 def prep_subfolder(subdir='/home/gsnyder/oasis_project/PanSTARRS/GroupParsedSnapshots/snapshot_135/subfolder_001'):
