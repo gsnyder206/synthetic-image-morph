@@ -8,8 +8,9 @@ import numpy as np
 
 def prep_mock_image(groupfile=None,output_dir='/home/gsnyder/oasis_project/PanSTARRS/mockimage_tests/',stubfolder='/home/gsnyder/sunrise_data/panstarrs_stubs/test',bindir='/home/gsnyder/bin', filters='/home/gsnyder/sunrise_data/sunrise_filters/panstarrs/'):
 
-
-    base_name = os.path.basename(groupfile).rstrip('.hdf5')
+    gfn = os.path.basename(groupfile)
+    base_i = gfn.index('.hdf5')
+    base_name = gfn[0:base_i]
     image_folder = os.path.join(output_dir,base_name+'_images')
     print image_folder
 
