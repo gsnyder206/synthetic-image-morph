@@ -69,6 +69,8 @@ def prep_mock_image(groupfile=None,output_dir='/home/gsnyder/oasis_project/PanST
     bsubf.write('#PBS -A hsc100\n')
     bsubf.write('#PBS -m abe \n')
     bsubf.write('#PBS -M gsnyder@stsci.edu \n')
+    bsubf.write('#PBS -l epilogue=/home/gsnyder/resource_epilogue.sh\n')
+
     bsubf.write('#PBS -V \n\n')
 
     bsubf.write('export LD_LIBRARY_PATH=/home/gsnyder/opt:$LD_LIBRARY_PATH #GCNs do not access /usr/lib64/libtbb.so.2 for some reason \n')
