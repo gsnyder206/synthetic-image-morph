@@ -145,7 +145,12 @@ def process_directory(directory,Np=2,maxq=10000,lim=None):
         if not os.path.lexists(gfile) or not os.path.lexists(wtfile) or not os.path.lexists(se_file):
             print "Missing a file, skipping... ", segfile
         else:
-            print "Processing... ", gfile, pyfits.open(gfile)[0].data.shape[0]
+            try:
+                print "Processing... ", gfile, pyfits.open(gfile)[0].data.shape[0]
+            except ValueError:
+                print "Error opening image, skipping.. ", gfile
+                continue
+            
             task = (analyze_morphology,(gfile,wtfile,segfile,se_file))
             if i <= maxq:
                 task_queue.put(task)
