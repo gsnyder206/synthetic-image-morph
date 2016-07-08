@@ -146,9 +146,10 @@ def process_directory(directory,Np=2,maxq=10000,lim=None):
             print "Missing a file, skipping... ", segfile
         else:
             try:
-                print "Processing... ", gfile, pyfits.open(gfile)[0].data.shape[0]
+                print "Processing... ", gfile, pyfits.open(gfile)[0].data.shape[0], pyfits.open(segfile)[0].data.shape[0]
+                se_cat = ascii.read(se_file)
             except ValueError:
-                print "Error opening image, skipping.. ", gfile
+                print "Error opening images or catalogs, skipping.. ", gfile
                 continue
             
             task = (analyze_morphology,(gfile,wtfile,segfile,se_file))
