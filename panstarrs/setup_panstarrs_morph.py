@@ -134,7 +134,7 @@ def process_directory(directory,Np=2,maxq=10000,lim=None):
     if lim is None:
         lim=np.int64(N_objects)
 
-
+    number_queued = 0
         
     for i,segfile in enumerate(segs[0:lim]):
         base = segfile.rstrip('_white_cold_seg.fits')
@@ -151,7 +151,8 @@ def process_directory(directory,Np=2,maxq=10000,lim=None):
             except:
                 print "Error opening images or catalogs, skipping.. ", gfile
                 continue
-            
+
+            number_queued = number_queued + 1
             task = (analyze_morphology,(gfile,wtfile,segfile,se_file))
             if i <= maxq:
                 task_queue.put(task)
@@ -170,7 +171,8 @@ def process_directory(directory,Np=2,maxq=10000,lim=None):
         newtask = TASKS_LEFT.pop()
         task_queue.put(newtask)
 
-    for i in range(min(maxq,lim)):
+    for i in range(min(maxq,number_queued)):
+        print "appending done object: ", i
         finished_objs.append(done_queue.get())
 
     print len(finished_objs)
@@ -234,7 +236,7 @@ if __name__=="__main__":
     p.strip_dirs().sort_stats('time').print_stats(15)
     '''
     
-    cProfile.run('do_nonmerger_test(Np=16,lim=1000)','profiler_stats_nonmerger_test_16_1000')
+    cProfile.run('do_nonmerger_test(Np=16,lim=None)','profiler_stats_nonmerger_test_16_1000')
     p = pstats.Stats('profiler_stats_nonmerger_test_16_1000')
     p.strip_dirs().sort_stats('time').print_stats(15)
 
