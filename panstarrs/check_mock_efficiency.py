@@ -16,7 +16,7 @@ import numpy.random as rand
 
 
 if __name__=="__main__":
-    out_files = np.sort(np.asarray(glob.glob("group_15??_pbs.out")))
+    out_files = np.sort(np.asarray(glob.glob("/Users/gsnyder/Dropbox/Workspace/Computing/XSEDE/JULY2016/group_15??_pbs.out")))
     total_wall_time_mins=0.0
     total_cpu_time_mins=0.0
     SUs_list = []
@@ -48,6 +48,7 @@ if __name__=="__main__":
                     
 
     print "Mean efficiency: ", total_cpu_time_mins/(total_wall_time_mins*16.0)
+    print "Mean SU: ", np.mean(np.asarray(SUs_list))
     print "Median SU: ", np.median(np.asarray(SUs_list))
     print "MAD SU: ", msbs.MAD(np.asarray(SUs_list))
     print "Median eff:", np.median(np.asarray(eff_list))
@@ -64,28 +65,57 @@ if __name__=="__main__":
     N = len(SUs_list)
 
     SUs_list = np.asarray(SUs_list)
-    
-    SUpergal_1 = np.sum(SUs_list[rand.random_integers(0,N-1,1)])/1.0
-    SUpergal_10 = np.sum(SUs_list[rand.random_integers(0,N-1,10)])/10.0
-    SUpergal_100 = np.sum(SUs_list[rand.random_integers(0,N-1,100)])/100.0
+    eff_list = 100*np.asarray(eff_list)
 
-    f1 = pyplot.figure(figsize=(5.0,4.0), dpi=150)
-    pyplot.subplots_adjust(left=0.1, right=0.98, bottom=0.1, top=0.98,wspace=0.0,hspace=0.0)
-    axi = f1.add_subplot(2,1,1)
+    rand.seed(21)
     
-    axi.semilogx([1,10,100],[SUpergal_1,SUpergal_10,SUpergal_100],'ok')
-    axi.errorbar([100],[SUpergal_100],yerr=msbs.MAD(np.asarray(SUs_list)))
-    axi.set_xlim(0.5,1.2e5)
-    axi.set_ylim(2.2,3.2)
-    axi.annotate('trivial extrapolation',(1.0e4,SUpergal),xycoords='data',ha='center',va='center',color='black',size=12)
-    axi.arrow(120.0,SUpergal_100+msbs.MAD(np.asarray(SUs_list)),5.0e4,0.0,length_includes_head=True,shape='right',overhang=0.2)
+    SUpergal_1 = np.median(SUs_list[rand.random_integers(0,N-1,1)])
+    SUpergal_10 = np.median(SUs_list[rand.random_integers(0,N-1,10)])
+    SUpergal_100 = np.median(SUs_list)
+    effpergal_1 = np.median(eff_list[rand.random_integers(0,N-1,1)])
+    effpergal_10 = np.median(eff_list[rand.random_integers(0,N-1,10)])
+    effpergal_100 = np.median(eff_list)
+
+    
+    f1 = pyplot.figure(figsize=(5.0,4.0), dpi=150)
+    pyplot.subplots_adjust(left=0.12, right=0.98, bottom=0.12, top=0.98,wspace=0.0,hspace=0.0)
+    axi = f1.add_subplot(2,1,1)
+    axi.locator_params(nbins=5,prune='both')
+
+    axi.semilogx([1,10,100],[SUpergal_1,SUpergal_10,SUpergal_100],'ok',markersize=8)
+    axi.errorbar([100],[SUpergal_100],yerr=msbs.MAD(np.asarray(SUs_list)),color='black')
+    axi.set_xlim(0.5,2e5)
+    axi.set_ylim(2.1,3.1)
+    axi.annotate('trivial extrapolation\n (1 galaxy per job)',(6.0e3,SUpergal_100-0.5*msbs.MAD(np.asarray(SUs_list))),xycoords='data',ha='center',va='center',color='black',size=12)
+    axi.arrow(120.0,SUpergal_100+msbs.MAD(np.asarray(SUs_list)),5.0e4,0.0,shape='full',width=0.007,color='black',length_includes_head=True,head_length=3.0e4,overhang=0.3)
+    axi.set_xticklabels([])
+    axi.set_ylabel('median SU/galaxy')
+    axi.plot([170,170],[0.0,5.0],color='gray',linestyle='dashed',lw=3)
+    axi.plot([1.05e5,1.05e5],[0.0,5.0],color='orange',linestyle='dotted',lw=3)
+    axi.plot([1.05e5],[SUpergal_100+msbs.MAD(np.asarray(SUs_list))],'o',color='orange',markersize=8)
+    
+    axi.annotate("GCN tests",(10.0,2.9),xycoords='data',ha='center',va='center',color='gray',size=12)
+    axi.annotate("Project I request\n 105,000 galaxies\n 277,200 SUs",(6.0e3,2.9),xycoords='data',ha='center',va='center',color='orange',size=12)
+
+    axi = f1.add_subplot(2,1,2)
+    axi.locator_params(nbins=5,prune='both')
+
+    axi.semilogx([1,10,100],[effpergal_1,effpergal_10,effpergal_100],'ok',markersize=8)
+    axi.errorbar([100],[effpergal_100],yerr=msbs.MAD(np.asarray(eff_list)),color='black')
+    axi.set_xlim(0.5,2e5)
+    axi.set_ylim(69.0,101.0)
+    axi.set_xlabel('number of galaxies')
+    axi.set_ylabel('median efficiency (%)',size=10)
+    axi.plot([170,170],[0.0,500.0],color='gray',linestyle='dashed',lw=3)
+    axi.plot([1.05e5,1.05e5],[0.0,5.0],color='orange',linestyle='dotted',lw=3)
+
     f1.savefig("sunrisescaling.pdf")
     pyplot.close(f1)
 
 
     
     f1 = pyplot.figure(figsize=(5.0,4.0), dpi=150)
-    pyplot.subplots_adjust(left=0.1, right=0.98, bottom=0.1, top=0.98,wspace=0.0,hspace=0.0)
+    pyplot.subplots_adjust(left=0.2, right=0.98, bottom=0.2, top=0.98,wspace=0.0,hspace=0.0)
     axi = f1.add_subplot(1,1,1)
     
     ngals_1 = np.asarray([1,10])
@@ -94,8 +124,8 @@ if __name__=="__main__":
     ngals_2 = np.asarray([10,100])
     cumtime_2 = np.asarray([81.986,897.033])
 
-    ngals_4 = np.asarray([100])
-    cumtime_4 = np.asarray([458.451])
+    ngals_4 = np.asarray([100,1000])
+    cumtime_4 = np.asarray([458.451,4632.330])
 
     ngals_16 = np.asarray([100,1000])
     cumtime_16 = np.asarray([187.22,1259.841])
