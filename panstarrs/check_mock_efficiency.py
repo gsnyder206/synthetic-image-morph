@@ -4,6 +4,7 @@ import glob
 import numpy as np
 import astropy.io.ascii as ascii
 import time
+import medianstats_bootstrap as msbs
 
 
 if __name__=="__main__":
@@ -39,8 +40,12 @@ if __name__=="__main__":
                     
 
     print "Mean efficiency: ", total_cpu_time_mins/(total_wall_time_mins*16.0)
+    print "Median SU: ", np.median(np.asarray(SUs_list))
+    print "MAD SU: ", msbs.MAD(np.asarray(SUs_list))
+    print "Median eff:", np.median(np.asarray(eff_list))
+    print "MAD eff: ", msbs.MAD(np.asarray(eff_list))
 
-    
-    for i in range(SUs_list):
+    for i in range(len(SUs_list)):
+        
         print SUs_list[i], eff_list[i], cpu_mins_list[i], wall_mins_list[i]
         
