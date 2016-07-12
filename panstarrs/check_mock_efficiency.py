@@ -69,9 +69,9 @@ if __name__=="__main__":
     SUpergal_10 = np.sum(SUs_list[rand.random_integers(0,N-1,10)])/10.0
     SUpergal_100 = np.sum(SUs_list[rand.random_integers(0,N-1,100)])/100.0
 
-    f1 = pyplot.figure(figsize=(3.0,2.0), dpi=150)
-    pyplot.subplots_adjust(left=0.08, right=0.98, bottom=0.08, top=0.98,wspace=0.0,hspace=0.0)
-    axi = f1.add_subplot(3,1,1)
+    f1 = pyplot.figure(figsize=(5.0,4.0), dpi=150)
+    pyplot.subplots_adjust(left=0.1, right=0.98, bottom=0.1, top=0.98,wspace=0.0,hspace=0.0)
+    axi = f1.add_subplot(2,1,1)
     
     axi.semilogx([1,10,100],[SUpergal_1,SUpergal_10,SUpergal_100],'ok')
     axi.set_xlim(0.5,1.2e5)
@@ -79,6 +79,33 @@ if __name__=="__main__":
     
     
     f1.savefig("sunrisescaling.pdf")
+    pyplot.close(f1)
+
+
+    
+    f1 = pyplot.figure(figsize=(5.0,4.0), dpi=150)
+    pyplot.subplots_adjust(left=0.1, right=0.98, bottom=0.1, top=0.98,wspace=0.0,hspace=0.0)
+    axi = f1.add_subplot(1,1,1)
+    
+    ngals_1 = np.asarray([1,10])
+    cumtime_1 = np.asarray([13.687,148.901])
+
+    ngals_2 = np.asarray([10,100])
+    cumtime_2 = np.asarray([81.986,897.033])
+
+    ngals_4 = np.asarray([100])
+    cumtime_4 = np.asarray([458.451])
+
+    ngals_16 = np.asarray([100,1000])
+    cumtime_16 = np.asarray([187.22,1259.841])
+    
+    axi.semilogx(ngals_1,1*cumtime_1/ngals_1,'*b')
+    axi.semilogx(ngals_2,2*cumtime_2/ngals_2,'sr')
+    axi.semilogx(ngals_4,4*cumtime_4/ngals_4,'^g')
+    axi.semilogx(ngals_16,16*cumtime_16/ngals_16,'ok',markersize=3)
+
+    
+    f1.savefig("morphscaling.pdf")
     pyplot.close(f1)
 
     
