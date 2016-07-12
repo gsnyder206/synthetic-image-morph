@@ -44,8 +44,10 @@ if __name__=="__main__":
     print "MAD SU: ", msbs.MAD(np.asarray(SUs_list))
     print "Median eff:", np.median(np.asarray(eff_list))
     print "MAD eff: ", msbs.MAD(np.asarray(eff_list))
-
+    print "Median wall mins:", np.median(np.asarray(wall_mins_list))
+    print "MAD wall mins: ", msbs.MAD(np.asarray(wall_mins_list))
+    
     for i in range(len(SUs_list)):
         
-        print SUs_list[i], eff_list[i], cpu_mins_list[i], wall_mins_list[i]
+        print "{:6.2f}  {:6.2f}  {:6.2f}  {:6.2f}  ".format( SUs_list[i], eff_list[i], cpu_mins_list[i], wall_mins_list[i])
         
