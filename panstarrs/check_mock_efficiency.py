@@ -103,7 +103,8 @@ if __name__=="__main__":
     axi.semilogx(ngals_2,2*cumtime_2/ngals_2,'sr')
     axi.semilogx(ngals_4,4*cumtime_4/ngals_4,'^g')
     axi.semilogx(ngals_16,16*cumtime_16/ngals_16,'ok',markersize=3)
-
+    axi.set_xlim(0.5,1200.0)
+    axi.set_ylim(10.0,60.0)
     
     f1.savefig("morphscaling.pdf")
     pyplot.close(f1)
