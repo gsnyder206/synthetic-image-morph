@@ -243,7 +243,7 @@ if __name__=="__main__":
     p.strip_dirs().sort_stats('time').print_stats(15)
     '''
     
-    cProfile.run('do_nonmerger_test(Np=15,lim=100)','profiler_stats_nonmerger_test_15_100')
-    p = pstats.Stats('profiler_stats_nonmerger_test_15_100')
+    cProfile.run('do_nonmerger_test(Np=2,lim=300)','profiler_stats_nonmerger_test_2_300')
+    p = pstats.Stats('profiler_stats_nonmerger_test_2_300')
     p.strip_dirs().sort_stats('time').print_stats(15)
 
