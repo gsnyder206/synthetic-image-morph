@@ -62,6 +62,8 @@ if __name__=="__main__":
         
 
     N = len(SUs_list)
+
+    SUs_list = np.asarray(SUs_list)
     
     SUpergal_1 = np.sum(SUs_list[rand.random_integers(0,N-1,1)])/1.0
     SUpergal_10 = np.sum(SUs_list[rand.random_integers(0,N-1,10)])/1.0
