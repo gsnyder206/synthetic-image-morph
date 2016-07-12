@@ -17,6 +17,8 @@ if __name__=="__main__":
                 if line.find('Resources Used') is not -1:
                     cpus = line[21:29]
                     walls = line[-8:]
+                    print of, cpus, walls
+                    
                     cputs = time.strptime(cpus,"%H:%M:%S")
                     wallts = time.strptime(walls,"%H:%M:%S")
                     cpu_mins = cputs.tm_hour*60.0 + cputs.tm_min + cputs.tm_sec/60.0
