@@ -66,8 +66,8 @@ if __name__=="__main__":
     SUs_list = np.asarray(SUs_list)
     
     SUpergal_1 = np.sum(SUs_list[rand.random_integers(0,N-1,1)])/1.0
-    SUpergal_10 = np.sum(SUs_list[rand.random_integers(0,N-1,10)])/1.0
-    SUpergal_100 = np.sum(SUs_list[rand.random_integers(0,N-1,100)])/1.0
+    SUpergal_10 = np.sum(SUs_list[rand.random_integers(0,N-1,10)])/10.0
+    SUpergal_100 = np.sum(SUs_list[rand.random_integers(0,N-1,100)])/100.0
 
     f1 = pyplot.figure(figsize=(3.0,2.0), dpi=150)
     pyplot.subplots_adjust(left=0.08, right=0.98, bottom=0.08, top=0.98,wspace=0.0,hspace=0.0)
@@ -78,7 +78,7 @@ if __name__=="__main__":
     axi.set_ylim(2.2,3.2)
     
     
-    f1.savefig("/home/gsnyder/PythonCode/synthetic-image-morph/panstarrs/sunrisescaling.pdf")
+    f1.savefig("sunrisescaling.pdf")
     pyplot.close(f1)
 
     
