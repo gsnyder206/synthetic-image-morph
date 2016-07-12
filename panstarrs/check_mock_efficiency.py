@@ -16,7 +16,7 @@ if __name__=="__main__":
             for line in F:
                 if line.find('Resources Used') is not -1:
                     cpus = line[21:29]
-                    walls = line[-8:]
+                    walls = line[-9:-1]
                     print of, cpus, walls
                     
                     cputs = time.strptime(cpus,"%H:%M:%S")
