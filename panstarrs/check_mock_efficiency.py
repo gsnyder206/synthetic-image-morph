@@ -124,8 +124,8 @@ if __name__=="__main__":
     ngals_2 = np.asarray([10,100])
     cumtime_2 = 2.5*np.asarray([81.986,897.033])
 
-    ngals_4 = np.asarray([100,1000])
-    cumtime_4 = 2.5*np.asarray([458.451,4632.330])
+    ngals_4 = np.asarray([100,300,1000])
+    cumtime_4 = 2.5*np.asarray([458.451,1338.938,4632.330])
 
     ngals_16 = np.asarray([100,300,1000])
     cumtime_16 = 2.5*np.asarray([205.54,393.668,1259.841])
