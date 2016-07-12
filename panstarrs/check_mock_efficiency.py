@@ -5,6 +5,14 @@ import numpy as np
 import astropy.io.ascii as ascii
 import time
 import medianstats_bootstrap as msbs
+import matplotlib
+#matplotlib.use('PDF')
+import matplotlib.pyplot as pyplot
+import matplotlib.colors as pycolors
+import matplotlib.cm as cm
+from matplotlib.ticker import FormatStrFormatter
+import numpy.random as rand
+
 
 
 if __name__=="__main__":
@@ -53,12 +61,19 @@ if __name__=="__main__":
         print "{:6.3f}  {:6.3f}  {:6.3f}  {:6.3f}  ".format( SUs_list[i], eff_list[i], cpu_mins_list[i], wall_mins_list[i])
         
 
-
-
+    N = len(SUs_list)
+    
+    SUpergal_1 = np.sum(SUs_list[rand.random_integers(0,N-1,1)])/1.0
+    SUpergal_10 = np.sum(SUs_list[rand.random_integers(0,N-1,10)])/1.0
+    SUpergal_100 = np.sum(SUs_list[rand.random_integers(0,N-1,100)])/1.0
 
     f1 = pyplot.figure(figsize=(3.0,2.0), dpi=150)
     pyplot.subplots_adjust(left=0.08, right=0.98, bottom=0.08, top=0.98,wspace=0.0,hspace=0.0)
     axi = f1.add_subplot(3,1,1)
+    
+    axi.semilogx([1,10,100],[SUpergal_1,SUpergal_10,SUpergal_100],'ok')
+    axi.set_xlim(0.5,1.2e5)
+    axi.set_ylim(2.2,3.2)
     
     
     f1.savefig("/home/gsnyder/PythonCode/synthetic-image-morph/panstarrs/sunrisescaling.pdf")
