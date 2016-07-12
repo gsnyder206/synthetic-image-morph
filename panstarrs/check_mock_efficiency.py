@@ -74,10 +74,11 @@ if __name__=="__main__":
     axi = f1.add_subplot(2,1,1)
     
     axi.semilogx([1,10,100],[SUpergal_1,SUpergal_10,SUpergal_100],'ok')
+    axi.errorbar([100],[SUpergal_100],yerr=msbs.MAD(np.asarray(SUs_list)))
     axi.set_xlim(0.5,1.2e5)
     axi.set_ylim(2.2,3.2)
-    
-    
+    axi.annotate('trivial extrapolation',(1.0e4,SUpergal),xycoords='data',ha='center',va='center',color='black',size=12)
+    axi.arrow(120.0,SUpergal_100+msbs.MAD(np.asarray(SUs_list)),5.0e4,0.0,length_includes_head=True,shape='right',overhang=0.2)
     f1.savefig("sunrisescaling.pdf")
     pyplot.close(f1)
 
@@ -104,7 +105,7 @@ if __name__=="__main__":
     axi.loglog(ngals_4,4*cumtime_4/ngals_4,'^g')
     axi.loglog(ngals_16,16*cumtime_16/ngals_16,'ok',markersize=3)
     axi.set_xlim(0.5,1200.0)
-    axi.set_ylim(10.0,60.0)
+    axi.set_ylim(5.0,60.0)
     
     f1.savefig("morphscaling.pdf")
     pyplot.close(f1)
