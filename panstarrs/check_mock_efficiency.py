@@ -12,4 +12,7 @@ if __name__=="__main__":
     
     for of in out_files:
         with open(of,'r') as F:
-            print F[7]
+            for line in F:
+                if line.find('Resources Used') is not -1:
+                    print line
+                    
