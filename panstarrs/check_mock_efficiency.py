@@ -119,23 +119,23 @@ if __name__=="__main__":
     axi = f1.add_subplot(1,1,1)
     
     ngals_1 = np.asarray([1,10])
-    cumtime_1 = np.asarray([13.687,148.901])
+    cumtime_1 = 2.5*np.asarray([13.687,148.901])
 
     ngals_2 = np.asarray([10,100])
-    cumtime_2 = np.asarray([81.986,897.033])
+    cumtime_2 = 2.5*np.asarray([81.986,897.033])
 
     ngals_4 = np.asarray([100,1000])
-    cumtime_4 = np.asarray([458.451,4632.330])
+    cumtime_4 = 2.5*np.asarray([458.451,4632.330])
 
     ngals_16 = np.asarray([100,1000])
-    cumtime_16 = np.asarray([187.22,1259.841])
+    cumtime_16 = 2.5*np.asarray([205.54,1259.841])
     
     axi.loglog(ngals_1,1*cumtime_1/ngals_1,'*b')
     axi.loglog(ngals_2,2*cumtime_2/ngals_2,'sr')
     axi.loglog(ngals_4,4*cumtime_4/ngals_4,'^g')
     axi.loglog(ngals_16,16*cumtime_16/ngals_16,'ok',markersize=3)
     axi.set_xlim(0.5,1200.0)
-    axi.set_ylim(5.0,60.0)
+    axi.set_ylim(30.0,100.0)
     
     f1.savefig("morphscaling.pdf")
     pyplot.close(f1)
