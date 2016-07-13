@@ -121,8 +121,8 @@ if __name__=="__main__":
     ngals_1 = np.asarray([1,10])
     cumtime_1 = 2.5*np.asarray([13.687,148.901])
 
-    ngals_2 = np.asarray([10,100])
-    cumtime_2 = 2.5*np.asarray([81.986,897.033])
+    ngals_2 = np.asarray([10,100,300])
+    cumtime_2 = 2.5*np.asarray([81.986,897.033,2654.3])
 
     ngals_4 = np.asarray([100,300,1000])
     cumtime_4 = 2.5*np.asarray([458.451,1338.938,4632.330])
@@ -138,7 +138,7 @@ if __name__=="__main__":
     axi.yaxis.set_major_formatter(FormatStrFormatter("%d"))
     axi.set_yticks([30,50,70,90])
     
-    axi.set_xlim(0.5,1200.0)
+    axi.set_xlim(5,2000.0)
     axi.set_ylim(30.0,100.0)
     axi.minorticks_off()
 

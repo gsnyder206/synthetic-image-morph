@@ -243,7 +243,14 @@ if __name__=="__main__":
     p.strip_dirs().sort_stats('time').print_stats(15)
     '''
     
-    cProfile.run('do_nonmerger_test(Np=2,lim=300)','profiler_stats_nonmerger_test_2_300')
-    p = pstats.Stats('profiler_stats_nonmerger_test_2_300')
+    cProfile.run('do_nonmerger_test(Np=8,lim=100)','profiler_stats_nonmerger_test_8_100')
+    p = pstats.Stats('profiler_stats_nonmerger_test_8_100')
     p.strip_dirs().sort_stats('time').print_stats(15)
 
+    cProfile.run('do_nonmerger_test(Np=8,lim=300)','profiler_stats_nonmerger_test_8_300')
+    p = pstats.Stats('profiler_stats_nonmerger_test_8_300')
+    p.strip_dirs().sort_stats('time').print_stats(15)
+
+    cProfile.run('do_nonmerger_test(Np=8,lim=1000)','profiler_stats_nonmerger_test_8_1000')
+    p = pstats.Stats('profiler_stats_nonmerger_test_8_1000')
+    p.strip_dirs().sort_stats('time').print_stats(15)
