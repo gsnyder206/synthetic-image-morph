@@ -117,7 +117,7 @@ if __name__=="__main__":
         print fils[fili[i]], np.max(cdata), 0.01*np.max(cdata), sigma_pix[i], np.sum(data)/np.sum(cdata)
 
         norm = ImageNormalize(stretch=LogStretch(),vmin=0.01,vmax=0.35,clip=True)
-        axi.imshow(cdata*np.max(data)/np.max(cdata), origin='lower', cmap='Greys_r', norm=norm, interpolation='nearest')
+        axi.imshow(cdata*np.max(data)/np.max(cdata), origin='lower', cmap='Greys', norm=norm, interpolation='nearest')
         #axi.annotate('{:3.2f}$\mu m$'.format(image_hdu.header['EFLAMBDA']),xy=(0.05,0.05),xycoords='axes fraction',color='white',ha='left',va='center',size=6)
 
         totalcount = totalcount+1
