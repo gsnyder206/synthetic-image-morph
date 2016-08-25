@@ -77,7 +77,7 @@ if __name__=="__main__":
         axi.set_xticks([]) ; axi.set_yticks([])
 
         #plot grayscale galaxy image
-        data = bb[camera].data[fili[i],:,:]
+        data = bb[camera].data[fili[i],300:500,300:500]
 
         norm = ImageNormalize(stretch=LogStretch(),vmin=0.01*np.max(data),vmax=np.max(data),clip=True)
         axi.imshow(data, origin='lower', cmap='Greys_r', norm=norm, interpolation='nearest')
