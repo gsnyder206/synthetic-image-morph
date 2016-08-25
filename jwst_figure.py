@@ -73,7 +73,7 @@ if __name__=="__main__":
 
     for i in range(nx):
         
-        axi = fig.add_subplot(nx,ny,totalcount+1) 
+        axi = fig.add_subplot(ny,nx,totalcount+1) 
         axi.set_xticks([]) ; axi.set_yticks([])
 
         #plot grayscale galaxy image
