@@ -72,6 +72,12 @@ if __name__=="__main__":
     totalcount=0
     fili = [bi,zi,hi,nc200i,nc356i,m770i]
     lams = [0.45,0.85,1.6,2.0,3.5,7.7]
+    origpixkpc = 0.0625
+    fwhm_arcsec = [0.08,0.12,0.20,0.10,0.20,0.40]
+    sigma_arcsec = fwhm_pix_arcsec/2.35
+    scale = 6.05 #kpc/arcsec
+    sigma_kpc = sigma_arcsec*scale
+    sigma_pix = sigma_kpc/origpixkpc
 
     for i in range(nx):
         
@@ -88,6 +94,29 @@ if __name__=="__main__":
         #axi.annotate('{:3.2f}$\mu m$'.format(image_hdu.header['EFLAMBDA']),xy=(0.05,0.05),xycoords='axes fraction',color='white',ha='left',va='center',size=6)
 
         totalcount = totalcount+1
+
+
+
+
+    #resB = sp.ndimage.filters.gaussian_filter(b,sigma[2],output=sB)
+
+    for i in range(nx):
+        
+        axi = fig.add_subplot(ny,nx,totalcount+1) 
+        axi.set_xticks([]) ; axi.set_yticks([])
+
+        #plot grayscale galaxy image
+        data = bb[camera].data[fili[i],350:450,350:450]*(lams[i]**2)
+        print fils[fili[i]], np.max(data), 0.01*np.max(data), sigma_pix[i]
+        cdata = data*1.0
+
+        resc = sp.ndimage.filters.gaussian_filter(data,sigma_pix[i],output=cdata)
+        norm = ImageNormalize(stretch=LogStretch(),vmin=0.01,vmax=0.25,clip=True)
+        axi.imshow(cdata, origin='lower', cmap='Greys_r', norm=norm, interpolation='nearest')
+        #axi.annotate('{:3.2f}$\mu m$'.format(image_hdu.header['EFLAMBDA']),xy=(0.05,0.05),xycoords='axes fraction',color='white',ha='left',va='center',size=6)
+
+        totalcount = totalcount+1
+
 
 
     fig.savefig('jwst.pdf',dpi=600)
