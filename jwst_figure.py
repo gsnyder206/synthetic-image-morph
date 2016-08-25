@@ -108,7 +108,7 @@ if __name__=="__main__":
         #plot grayscale galaxy image
         data = bb[camera].data[fili[i],350:450,350:450]*(lams[i]**2)
         print fils[fili[i]], np.max(data), 0.01*np.max(data), sigma_pix[i]
-        #cdata = data*1.0
+        cdata = np.zeros_like(data)
 
         resc = sp.ndimage.filters.gaussian_filter(data*1.0,sigma_pix[i],output=cdata)
         print fils[fili[i]], np.max(cdata), 0.01*np.max(cdata), sigma_pix[i], np.sum(data)/np.sum(cdata)
