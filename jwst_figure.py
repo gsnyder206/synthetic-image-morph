@@ -51,4 +51,40 @@ if __name__=="__main__":
     bb = pyfits.open(bbf)
     camera = "CAMERA3-BROADBAND"
 
-    
+    bi = 2
+    vi = 3
+    zi = 6
+    ji = 8
+    hi = 10
+    nc150i = 20
+    nc200i = 21
+    nc277i = 22
+    nc356i = 23
+    nc444i = 24
+    m770i = 26
+
+
+    fig = pyplot.figure(figsize=(6.0,2.0), dpi=600)
+    pyplot.subplots_adjust(left=0.0, right=1.0, bottom=0.0, top=1.0,wspace=0.0,hspace=0.0)
+    nx = 6
+    ny = 2
+    totalcount=0
+    fili = [bi,zi,hi,nc200i,nc356i,m770i]
+
+    for i in range(nx):
+
+        axi = fig.add_subplot(ny,nx,totalcount+1) 
+        axi.set_xticks([]) ; axi.set_yticks([])
+
+        #plot grayscale galaxy image
+        data = bb[camera].data[fili[i],:,:]
+
+        norm = ImageNormalize(stretch=LogStretch(),vmin=0.01*np.max(data),vmax=np.max(data),clip=True)
+        axi.imshow(data, origin='lower', cmap='Greys_r', norm=norm, interpolation='nearest')
+        axi.annotate('{:3.2f}$\mu m$'.format(image_hdu.header['EFLAMBDA']),xy=(0.05,0.05),xycoords='axes fraction',color='white',ha='left',va='center',size=6)
+
+
+
+
+    fig.savefig('jwst.pdf',dpi=600)
+    pyplot.close(fig)
