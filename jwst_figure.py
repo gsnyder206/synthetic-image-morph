@@ -73,7 +73,7 @@ if __name__=="__main__":
     fili = [bi,zi,hi,nc200i,nc356i,m770i]
     lams = [0.45,0.85,1.6,2.0,3.5,7.7]
     origpixkpc = 0.0625
-    fwhm_arcsec = np.asarray([0.08,0.12,0.20,0.10,0.20,0.40])
+    fwhm_arcsec = np.asarray([0.08,0.12,0.20,0.10,0.20,0.40])/2.0
     sigma_arcsec = fwhm_arcsec/2.35
     scale = 6.05 #kpc/arcsec
     sigma_kpc = sigma_arcsec*scale
@@ -89,7 +89,7 @@ if __name__=="__main__":
         print fils[fili[i]], np.max(data), 0.01*np.max(data)
 
 
-        norm = ImageNormalize(stretch=LogStretch(),vmin=0.01,vmax=0.25,clip=True)
+        norm = ImageNormalize(stretch=LogStretch(),vmin=0.01,vmax=0.35,clip=True)
         axi.imshow(data, origin='lower', cmap='Greys_r', norm=norm, interpolation='nearest')
         #axi.annotate('{:3.2f}$\mu m$'.format(image_hdu.header['EFLAMBDA']),xy=(0.05,0.05),xycoords='axes fraction',color='white',ha='left',va='center',size=6)
 
@@ -113,7 +113,7 @@ if __name__=="__main__":
         resc = sp.ndimage.filters.gaussian_filter(data*1.0,sigma_pix[i],output=cdata)
         print fils[fili[i]], np.max(cdata), 0.01*np.max(cdata), sigma_pix[i], np.sum(data)/np.sum(cdata)
 
-        cdata = congrid.congrid(cdata,(20,20))
+        cdata = congrid.congrid(cdata,(40,40))
         print fils[fili[i]], np.max(cdata), 0.01*np.max(cdata), sigma_pix[i], np.sum(data)/np.sum(cdata)
 
         norm = ImageNormalize(stretch=LogStretch(),vmin=0.01,vmax=0.35,clip=True)
