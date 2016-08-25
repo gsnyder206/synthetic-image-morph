@@ -73,7 +73,7 @@ if __name__=="__main__":
     fili = [bi,zi,hi,nc200i,nc356i,m770i]
     lams = [0.45,0.85,1.6,2.0,3.5,7.7]
     origpixkpc = 0.0625
-    fwhm_arcsec = [0.08,0.12,0.20,0.10,0.20,0.40]
+    fwhm_arcsec = np.asarray([0.08,0.12,0.20,0.10,0.20,0.40])
     sigma_arcsec = fwhm_arcsec/2.35
     scale = 6.05 #kpc/arcsec
     sigma_kpc = sigma_arcsec*scale
