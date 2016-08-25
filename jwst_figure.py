@@ -83,7 +83,7 @@ if __name__=="__main__":
         axi.imshow(data, origin='lower', cmap='Greys_r', norm=norm, interpolation='nearest')
         #axi.annotate('{:3.2f}$\mu m$'.format(image_hdu.header['EFLAMBDA']),xy=(0.05,0.05),xycoords='axes fraction',color='white',ha='left',va='center',size=6)
 
-
+        totalcount = totalcount+1
 
 
     fig.savefig('jwst.pdf',dpi=600)
