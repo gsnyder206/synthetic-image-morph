@@ -72,8 +72,8 @@ if __name__=="__main__":
     fili = [bi,zi,hi,nc200i,nc356i,m770i]
 
     for i in range(nx):
-
-        axi = fig.add_subplot(ny,nx,totalcount+1) 
+        
+        axi = fig.add_subplot(1,i+1,totalcount+1) 
         axi.set_xticks([]) ; axi.set_yticks([])
 
         #plot grayscale galaxy image
