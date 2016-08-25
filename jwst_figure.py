@@ -26,7 +26,7 @@ import os
 #import tarfile
 #import shutil
 #import cosmocalc
-#import congrid
+import congrid
 import astropy.io.ascii as ascii
 #import sunpy__load
 #import sunpy__plot
