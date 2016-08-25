@@ -69,7 +69,8 @@ if __name__=="__main__":
     nx = 6
     ny = 2
     totalcount=0
-    fili = [bi,zi,hi,nc200i,nc356i,bi]
+    fili = [bi,zi,hi,nc200i,nc356i,m770i]
+    lams = [0.45,0.85,1.6,2.0,3.5,7.7]
 
     for i in range(nx):
         
@@ -77,7 +78,7 @@ if __name__=="__main__":
         axi.set_xticks([]) ; axi.set_yticks([])
 
         #plot grayscale galaxy image
-        data = bb[camera].data[fili[i],300:500,300:500]
+        data = bb[camera].data[fili[i],300:500,300:500]*(lams[i]**2)
         print np.max(data), 0.01*np.max(data)
 
 
