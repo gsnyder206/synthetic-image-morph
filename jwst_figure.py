@@ -50,6 +50,7 @@ if __name__=="__main__":
 
     bb = pyfits.open(bbf)
     camera = "CAMERA3-BROADBAND"
+    fils = bb['FILTERS'].data['filter']
 
     bi = 2
     vi = 3
@@ -79,7 +80,7 @@ if __name__=="__main__":
 
         #plot grayscale galaxy image
         data = bb[camera].data[fili[i],300:500,300:500]*(lams[i]**2)
-        print np.max(data), 0.01*np.max(data)
+        print fils[fili[i]], np.max(data), 0.01*np.max(data)
 
 
         norm = ImageNormalize(stretch=LogStretch(),vmin=1.5,vmax=150,clip=True)
