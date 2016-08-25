@@ -69,7 +69,7 @@ if __name__=="__main__":
     nx = 6
     ny = 2
     totalcount=0
-    fili = [bi,zi,hi,nc200i,nc356i,m770i]
+    fili = [bi,zi,hi,nc200i,nc356i,bi]
 
     for i in range(nx):
         
@@ -78,6 +78,8 @@ if __name__=="__main__":
 
         #plot grayscale galaxy image
         data = bb[camera].data[fili[i],300:500,300:500]
+        print np.max(data), 0.01*np.max(data)
+
 
         norm = ImageNormalize(stretch=LogStretch(),vmin=0.01*np.max(data),vmax=np.max(data),clip=True)
         axi.imshow(data, origin='lower', cmap='Greys_r', norm=norm, interpolation='nearest')
