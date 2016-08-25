@@ -40,7 +40,7 @@ from astropy.convolution import Gaussian2DKernel
 from astropy.visualization.mpl_normalize import ImageNormalize
 from astropy.visualization import *
 import astropy.io.fits as pyfits
-import statmorph
+#import statmorph
 import datetime
 
 
