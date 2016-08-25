@@ -79,11 +79,11 @@ if __name__=="__main__":
         axi.set_xticks([]) ; axi.set_yticks([])
 
         #plot grayscale galaxy image
-        data = bb[camera].data[fili[i],300:500,300:500]*(lams[i]**2)
+        data = bb[camera].data[fili[i],340:450,350:450]*(lams[i]**2)
         print fils[fili[i]], np.max(data), 0.01*np.max(data)
 
 
-        norm = ImageNormalize(stretch=LogStretch(),vmin=1.5,vmax=150,clip=True)
+        norm = ImageNormalize(stretch=LogStretch(),vmin=20,vmax=150,clip=True)
         axi.imshow(data, origin='lower', cmap='Greys_r', norm=norm, interpolation='nearest')
         #axi.annotate('{:3.2f}$\mu m$'.format(image_hdu.header['EFLAMBDA']),xy=(0.05,0.05),xycoords='axes fraction',color='white',ha='left',va='center',size=6)
 
