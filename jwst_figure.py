@@ -83,7 +83,7 @@ if __name__=="__main__":
         print fils[fili[i]], np.max(data), 0.01*np.max(data)
 
 
-        norm = ImageNormalize(stretch=LogStretch(),vmin=0.0025,vmax=0.25,clip=True)
+        norm = ImageNormalize(stretch=LogStretch(),vmin=0.01,vmax=0.25,clip=True)
         axi.imshow(data, origin='lower', cmap='Greys_r', norm=norm, interpolation='nearest')
         #axi.annotate('{:3.2f}$\mu m$'.format(image_hdu.header['EFLAMBDA']),xy=(0.05,0.05),xycoords='axes fraction',color='white',ha='left',va='center',size=6)
 
