@@ -91,12 +91,19 @@ if __name__=="__main__":
     axi.set_xticklabels([])
     axi.set_ylabel('median SU/galaxy')
     axi.plot([170,170],[0.0,5.0],color='gray',linestyle='dashed',lw=3)
+
+    #axi.plot([1.14e5,1.14e5],[0.0,5.0],color='blue',linestyle='dotted',lw=3)
+    #axi.plot([1.14e5],[SUpergal_100+msbs.MAD(np.asarray(SUs_list))],'o',color='blue',markersize=8)
+
     axi.plot([1.05e5,1.05e5],[0.0,5.0],color='orange',linestyle='dotted',lw=3)
     axi.plot([1.05e5],[SUpergal_100+msbs.MAD(np.asarray(SUs_list))],'o',color='orange',markersize=8)
+
     
     axi.annotate("GCN tests",(10.0,2.9),xycoords='data',ha='center',va='center',color='gray',size=12)
     axi.annotate("Project I request\n 105,000 galaxies\n 277,200 SUs",(6.0e3,2.9),xycoords='data',ha='center',va='center',color='orange',size=12)
+    #axi.annotate("Project III request\n 87,000x1.31 galaxies\n 277,200 SUs",(6.0e3,2.9),xycoords='data',ha='center',va='center',color='orange',size=12)
 
+    
     axi = f1.add_subplot(2,1,2)
     axi.locator_params(nbins=5,prune='both')
 
@@ -114,9 +121,10 @@ if __name__=="__main__":
 
 
     
-    f1 = pyplot.figure(figsize=(5.0,4.0), dpi=150)
-    pyplot.subplots_adjust(left=0.12, right=0.98, bottom=0.12, top=0.98,wspace=0.0,hspace=0.0)
+    f1 = pyplot.figure(figsize=(5.0,3.0), dpi=150)
+    pyplot.subplots_adjust(left=0.12, right=0.98, bottom=0.16, top=0.98,wspace=0.0,hspace=0.0)
     axi = f1.add_subplot(1,1,1)
+    axi.locator_params(nbins=5,prune='both')
 
     ngals_1 = np.asarray([1,10])
     cumtime_1 = 2.5*np.asarray([13.687,148.901])
@@ -127,13 +135,21 @@ if __name__=="__main__":
     ngals_4 = np.asarray([100,300,1000])
     cumtime_4 = 2.5*np.asarray([458.451,1338.938,4632.330])
 
+    ngals_8 = np.asarray([100,300,1000])
+    cumtime_8 =2.5* np.asarray([283.5,703.5,2366.3])
+    
     ngals_16 = np.asarray([100,300,1000])
     cumtime_16 = 2.5*np.asarray([205.54,393.668,1259.841])
 
-    axi.loglog(ngals_1,1*cumtime_1/ngals_1,'*b',markersize=8)
-    axi.loglog(ngals_2,2*cumtime_2/ngals_2,'sr',markersize=8)
+
+    axi.loglog(ngals_1,1*cumtime_1/ngals_1,'+y',markersize=8)
+    axi.loglog(ngals_2,2*cumtime_2/ngals_2,'sb',markersize=8)
     axi.loglog(ngals_4,4*cumtime_4/ngals_4,'^g',markersize=8)
+    axi.loglog(ngals_8,8*cumtime_8/ngals_8,'*r',markersize=8)
     axi.loglog(ngals_16,16*cumtime_16/ngals_16,'ok',markersize=8)
+    axi.plot([60.0,1.0e7],[50.0,50.0],linestyle='dashed',color='orange',lw=5)
+    
+    axi.legend(['1 procs','2 procs','4 procs','8 procs','16 procs','Project II request'],loc='upper left',fontsize='small')
     
     axi.yaxis.set_major_formatter(FormatStrFormatter("%d"))
     axi.set_yticks([30,50,70,90])
@@ -142,8 +158,8 @@ if __name__=="__main__":
     axi.set_ylim(30.0,100.0)
     axi.minorticks_off()
 
-    axi.set_ylabel('used CPU-sec/galaxy')
-    axi.set_xlabel('number of images')
+    axi.set_ylabel('used CPU-sec/image')
+    axi.set_xlabel('number of images tested')
     
     f1.savefig("morphscaling.pdf")
     pyplot.close(f1)
