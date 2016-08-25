@@ -110,7 +110,7 @@ if __name__=="__main__":
         print fils[fili[i]], np.max(data), 0.01*np.max(data), sigma_pix[i]
         cdata = data*1.0
 
-        resc = sp.ndimage.filters.gaussian_filter(data,sigma_pix[i],output=cdata)
+        resc = sp.ndimage.filters.gaussian_filter(data*1.0,sigma_pix[i],output=cdata)
         print fils[fili[i]], np.max(cdata), 0.01*np.max(cdata), sigma_pix[i]
 
         norm = ImageNormalize(stretch=LogStretch(),vmin=0.01,vmax=0.25,clip=True)
