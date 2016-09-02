@@ -598,7 +598,9 @@ def find_pairs(lightconefile,pairfile,sep=100.0,hh=0.704,massmin=10**(10.5),rati
     mhalo = np.float32(data['col23'])
     mbary = np.float32(data['col25'])
     sfr = np.float32(data['col26'])
+    gmag = np.float32(data['col31'])
 
+    
     zmin = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0, 1.5, 2.0, 2.5]
     zmax = [0.2, 0.4, 0.6, 0.8, 1.0, 1.5, 2.0, 2.5, 3.0]
     zmed = [0.1, 0.3, 0.5, 0.7, 0.9, 1.25,  1.75, 2.25, 2.75]
