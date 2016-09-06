@@ -335,8 +335,8 @@ def evaluate_pair(basepath,primary_snap,primary_sfid,secondary_snap,secondary_sf
         primary_tree = load_full_tree(basepath,tree_id_primary)
         secondary_tree = load_full_tree(basepath,tree_id_secondary)
 
-        primary_desc,primary_snaps,primary_mass,primary_mstar,r1,r2 = mmpb_from_tree(primary_tree,sublink_id_primary)
-        secondary_desc,secondary_snaps,secondary_mass,secondary_mstar,r1s,r2s = mmpb_from_tree(secondary_tree,sublink_id_secondary)
+        primary_desc,primary_snaps,primary_mass,primary_mstar,r1,r2,sfidA,sfrA,timesA = mmpb_from_tree(primary_tree,sublink_id_primary)
+        secondary_desc,secondary_snaps,secondary_mass,secondary_mstar,r1s,r2s,sfidB,sfrB,timesB = mmpb_from_tree(secondary_tree,sublink_id_secondary)
 
         for i,pdi in enumerate(primary_desc):
             matchi = np.where(np.logical_and(secondary_desc==pdi,secondary_snaps > secondary_snap))[0]
