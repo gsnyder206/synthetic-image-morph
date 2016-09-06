@@ -14,7 +14,7 @@ import asciitable
 import scipy.ndimage
 import scipy.stats as ss
 import scipy as sp
-import pyfits
+import astropy.io.fits as pyfits
 import glob
 import os
 import gc
