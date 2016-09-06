@@ -572,7 +572,7 @@ def evaluate_environment(bp,pri_snap,pri_sfid,sec_snap,sec_sfid):
     return delta #, hsml
 
 
-def evaluate_fluxes(bp,pri_snap,pri_sfid,sec_snap,sec_sfid,gmag_all):
+def evaluate_fluxes(bp,pri_snap,pri_sfid,sec_snap,sec_sfid,gmag_all,snapid,sfid):
     pi = np.where(np.logical_and(np.logical_and(snapid==pri_snap,sfid==pri_sfid),np.abs(tz - pri_tz) < 0.001))[0]
     si = np.where(np.logical_and(np.logical_and(snapid==sec_snap,sfid==sec_sfid),np.abs(tz - sec_tz) < 0.001))[0]
     assert pi.shape[0]==1
@@ -686,7 +686,7 @@ def find_pairs(lightconefile,pairfile,sep=100.0,hh=0.704,massmin=10**(10.5),rati
             delta_v = delta_z*3.0e5
             
 
-            pri_g, sec_g, gratio = evaluate_fluxes(bp,pri_snap[i],pri_sfid[i],sec_snap[i],sec_sfid[i],gmag)
+            pri_g, sec_g, gratio = evaluate_fluxes(bp,pri_snap[i],pri_sfid[i],sec_snap[i],sec_sfid[i],gmag,snapid,shid)
             bratio = sec_mbary[i]/pri_mbary[i]
             
             wl = '{:16.10f}  {:8d}  {:12d}  {:12.4e}  {:12.4e}  {:12.4e}  {:6d}'\
