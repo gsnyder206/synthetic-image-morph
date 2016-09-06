@@ -581,7 +581,7 @@ def evaluate_fluxes(bp,pri_snap,pri_sfid,sec_snap,sec_sfid,gmag_all,snapid,sfid,
     pri_gmag = np.asarray(gmag_all[pi])[0]
     sec_gmag = np.asarray(gmag_all[si])[0]
 
-    gmag_ratio = 10.0**(-0.4*(pri_gmag-sec_gmag))
+    gmag_ratio = 10.0**(0.4*(pri_gmag-sec_gmag))   #this yields f_sec/f_pri
     
     return pri_gmag, sec_gmag, gmag_ratio
 
