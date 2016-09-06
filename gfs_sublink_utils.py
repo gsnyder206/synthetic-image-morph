@@ -571,6 +571,21 @@ def evaluate_environment(bp,pri_snap,pri_sfid,sec_snap,sec_sfid):
  
     return delta #, hsml
 
+
+def evaluate_fluxes(bp,pri_snap,pri_sfid,sec_snap,sec_sfid,gmag_all):
+    pi = np.where(np.logical_and(np.logical_and(snapid==pri_snap,sfid==pri_sfid),np.abs(tz - pri_tz) < 0.001))[0]
+    si = np.where(np.logical_and(np.logical_and(snapid==sec_snap,sfid==sec_sfid),np.abs(tz - sec_tz) < 0.001))[0]
+    assert pi.shape[0]==1
+    assert si.shape[0]==1
+    
+    pri_gmag = gmag_all[pi]
+    sec_gmag = gmag_all[si]
+
+    gmag_ratio = 10.0**(-0.4*(pri_gmag-sec_gmag))
+    
+    return pri_gmag, sec_gmag, gmag_ratio
+
+
 def find_pairs(lightconefile,pairfile,sep=100.0,hh=0.704,massmin=10**(10.5),ratio=10.0,photz_sig=0.02,usemstar=True,bp = '/astro/snyder_lab2/Illustris/Illustris-2',label='mstar10.5'):
 
     pri_snap,pri_sfid,pri_iz,pri_tz,pri_mstar,pri_mhalo,pri_mbary,pri_nc,sec_snap,sec_sfid,sec_iz,sec_tz,sec_mstar,sec_mhalo,sec_mbary,sec_drad_arcsec = parse_pair_catalog(pairfile)
@@ -650,7 +665,7 @@ def find_pairs(lightconefile,pairfile,sep=100.0,hh=0.704,massmin=10**(10.5),rati
 
     #save pairs catalog
     with open(outfile,'w') as outf:
-        outf.write('#iz snap sfid mstar mhalo mbary Nc sec_iz sec_snap sec_sfid sec_mstar sec_mhalo sec_mbary sec_drad_arcsec drad_kpc pairMerges mergersnap mergerage time_until_merger mstar_ratio_now mstar_ratio_tmax mhalo_ratio_tmax mhalo_ratio_now snap_tmax merger_mass merger_mstar ecc rperi delta hsml rnow vnow rapo b pri_sfr sec_sfr delta_z delta_v\n')
+        outf.write('#iz snap sfid mstar mhalo mbary Nc sec_iz sec_snap sec_sfid sec_mstar sec_mhalo sec_mbary sec_drad_arcsec drad_kpc pairMerges mergersnap mergerage time_until_merger mstar_ratio_now mstar_ratio_tmax mhalo_ratio_tmax mhalo_ratio_now snap_tmax merger_mass merger_mstar ecc rperi delta hsml rnow vnow rapo b pri_sfr sec_sfr delta_z delta_v gratio bratio\n')
         for j,psnap in enumerate(pri_snap[pairs]):
             i = pairs[j]
 
@@ -669,14 +684,18 @@ def find_pairs(lightconefile,pairfile,sep=100.0,hh=0.704,massmin=10**(10.5),rati
 
             delta_z = np.abs(pri_iz[i]-sec_iz[i])
             delta_v = delta_z*3.0e5
+            
 
+            pri_g, sec_g, gratio = evaluate_fluxes(bp,pri_snap[i],pri_sfid[i],sec_snap[i],sec_sfid[i],gmag)
+            bratio = sec_mbary[i]/pri_mbary[i]
+            
             wl = '{:16.10f}  {:8d}  {:12d}  {:12.4e}  {:12.4e}  {:12.4e}  {:6d}'\
                  '  {:16.10f}  {:8d}  {:12d}  {:12.4e}  {:12.4e}  {:12.4e}  {:12.6f}  {:12.6f}'\
                  '  {:12s}  {:8d}  {:10.4f}  {:10.4f}  {:10.4f}  {:10.4f}  {:10.4f}  {:10.4f}  {:8d}  {:12.4e}  {:12.4e}'\
-                 '  {:12.6f}  {:12.6f}  {:12.6f}  {:12.6f}  {:12.6f}  {:12.6f}  {:12.6f}  {:12.6f}  {:12.6f}  {:12.6f}  {:12.6f}  {:12.6f}'.format(pri_iz[i],pri_snap[i],pri_sfid[i],pri_mstar[i],pri_mhalo[i],pri_mbary[i],pri_nc[i],
+                 '  {:12.6f}  {:12.6f}  {:12.6f}  {:12.6f}  {:12.6f}  {:12.6f}  {:12.6f}  {:12.6f}  {:12.6f}  {:12.6f}  {:12.6f}  {:12.6f}  {:12.6f}'.format(pri_iz[i],pri_snap[i],pri_sfid[i],pri_mstar[i],pri_mhalo[i],pri_mbary[i],pri_nc[i],
                         sec_iz[i],sec_snap[i],sec_sfid[i],sec_mstar[i],sec_mhalo[i],sec_mbary[i],sec_drad_arcsec[i],sec_drad_kpc,
                         str(pairMerges),merger_snapshot,time_of_merger,time_until_merger,mass_ratio_now,mass_ratio_tmax,mhalo_ratio_tmax,mhalo_ratio_now,sec_snap_tmax,
-                                                                                                                               merger_mass,merger_mstar,ecc,rperi,delta,hsml,rnow,vnow,rapo, b, pri_sfr, sec_sfr, delta_z, delta_v)
+                                                                                                                                                             merger_mass,merger_mstar,ecc,rperi,delta,hsml,rnow,vnow,rapo, b, pri_sfr, sec_sfr, delta_z, delta_v, gratio, bratio)
 
             outf.write(wl+'\n')
     return
@@ -697,11 +716,11 @@ if __name__=="__main__":
     #           usemstar=True,label='mstar10.5',bp = '/astro/snyder_lab2/Illustris/Illustris-1')
 
     find_pairs('Illustris-1_RADEC_hudfwide_75Mpc_7_6_xyz_corners.txt','/astro/snyder_lab2/Illustris/Lightcones/new2/Illustris1_pairs_r100_h0.70_mstar10.5_mr100000_dz0.020_mock1.list',
-               usemstar=True,label='mstar10.5',bp = '/astro/snyder_lab2/Illustris/Illustris-1')
+               usemstar=True,label='mstar10.5new',bp = '/astro/snyder_lab2/Illustris/Illustris-1')
     find_pairs('Illustris-1_RADEC_hudfwide_75Mpc_7_6_yxz_corners.txt','/astro/snyder_lab2/Illustris/Lightcones/new2/Illustris1_pairs_r100_h0.70_mstar10.5_mr100000_dz0.020_mock2.list',
-               usemstar=True,label='mstar10.5',bp = '/astro/snyder_lab2/Illustris/Illustris-1')
+               usemstar=True,label='mstar10.5new',bp = '/astro/snyder_lab2/Illustris/Illustris-1')
     find_pairs('Illustris-1_RADEC_hudfwide_75Mpc_7_6_zyx_corners.txt','/astro/snyder_lab2/Illustris/Lightcones/new2/Illustris1_pairs_r100_h0.70_mstar10.5_mr100000_dz0.020_mock3.list',
-               usemstar=True,label='mstar10.5',bp = '/astro/snyder_lab2/Illustris/Illustris-1')
+               usemstar=True,label='mstar10.5new',bp = '/astro/snyder_lab2/Illustris/Illustris-1')
 
 
     #find_pairs('Illustris-2_RADEC_hudfwide_75Mpc_7_6_xyz.txt','/user/lotz/illustris/Illustris2_pairs_r100_h0.70_mhalo10.5_mr10_dz0.020_mock1.list',usemstar=False,label='mhalo11.5',massmin=10.0**(11.5))
