@@ -578,8 +578,8 @@ def evaluate_fluxes(bp,pri_snap,pri_sfid,sec_snap,sec_sfid,gmag_all,snapid,sfid,
     assert pi.shape[0]==1
     assert si.shape[0]==1
     
-    pri_gmag = gmag_all[pi]
-    sec_gmag = gmag_all[si]
+    pri_gmag = np.asarray(gmag_all[pi])[0]
+    sec_gmag = np.asarray(gmag_all[si])[0]
 
     gmag_ratio = 10.0**(-0.4*(pri_gmag-sec_gmag))
     
@@ -688,11 +688,12 @@ def find_pairs(lightconefile,pairfile,sep=100.0,hh=0.704,massmin=10**(10.5),rati
 
             pri_g, sec_g, gratio = evaluate_fluxes(bp,pri_snap[i],pri_sfid[i],sec_snap[i],sec_sfid[i],gmag,snapid,shid,tz,pri_tz[i],sec_tz[i])
             bratio = sec_mbary[i]/pri_mbary[i]
+            print gratio, bratio
             
             wl = '{:16.10f}  {:8d}  {:12d}  {:12.4e}  {:12.4e}  {:12.4e}  {:6d}'\
                  '  {:16.10f}  {:8d}  {:12d}  {:12.4e}  {:12.4e}  {:12.4e}  {:12.6f}  {:12.6f}'\
                  '  {:12s}  {:8d}  {:10.4f}  {:10.4f}  {:10.4f}  {:10.4f}  {:10.4f}  {:10.4f}  {:8d}  {:12.4e}  {:12.4e}'\
-                 '  {:12.6f}  {:12.6f}  {:12.6f}  {:12.6f}  {:12.6f}  {:12.6f}  {:12.6f}  {:12.6f}  {:12.6f}  {:12.6f}  {:12.6f}  {:12.6f}  {:12.6f}'.format(pri_iz[i],pri_snap[i],pri_sfid[i],pri_mstar[i],pri_mhalo[i],pri_mbary[i],pri_nc[i],
+                 '  {:12.6f}  {:12.6f}  {:12.6f}  {:12.6f}  {:12.6f}  {:12.6f}  {:12.6f}  {:12.6f}  {:12.6f}  {:12.6f}  {:12.6f}  {:12.6f}  {:12.6f}  {:12.6f}'.format(pri_iz[i],pri_snap[i],pri_sfid[i],pri_mstar[i],pri_mhalo[i],pri_mbary[i],pri_nc[i],
                         sec_iz[i],sec_snap[i],sec_sfid[i],sec_mstar[i],sec_mhalo[i],sec_mbary[i],sec_drad_arcsec[i],sec_drad_kpc,
                         str(pairMerges),merger_snapshot,time_of_merger,time_until_merger,mass_ratio_now,mass_ratio_tmax,mhalo_ratio_tmax,mhalo_ratio_now,sec_snap_tmax,
                                                                                                                                                              merger_mass,merger_mstar,ecc,rperi,delta,hsml,rnow,vnow,rapo, b, pri_sfr, sec_sfr, delta_z, delta_v, gratio, bratio)
