@@ -194,13 +194,13 @@ def generate_filter_images(bbfile, snapnum,subdirnum,sh_id,ci,custom_filename_sb
 
     common_args['pixelsize_arcsec'] = analysis_object.pixsize_arcsec[i]
 
-    print filter_index, filter_label, i, type(filter_index)
+    print filter_index, filter_label, i, type(filter_index), type(int(filter_index))
 
 
     if not os.path.lexists(custom_filename_sb00) or clobber==True:
         #do sunpy calcs
         print custom_filename_sb00, filter_index, filter_label, psf_file, psf_pix_arcsec, psf_hdu, psf_truncate
-        cam_0_raw, rp, the_used_seed,this_fail_flag,fitsfn,openlist   = sunpy__synthetic_image.build_synthetic_image(bbfile, filter_index,
+        cam_0_raw, rp, the_used_seed,this_fail_flag,fitsfn,openlist   = sunpy__synthetic_image.build_synthetic_image(bbfile, int(filter_index),
                                                                                                             seed=0,
                                                                                                             r_petro_kpc=None, 
                                                                                                             fix_seed=False,
