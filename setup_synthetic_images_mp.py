@@ -491,14 +491,18 @@ def plot_test_stamp(image_hdu,saveseg_hdu,tbhdu,cmhdu,mhdu,ap_seghdu,figure,nx,n
 
 def process_single_broadband(bbfile,analysis_object,bbase='broadband_red_',clobber=False, analyze=True, do_idl=False):
     #create subdirectory to hold mock images and analyses
+    end = bbfile[-3:]
+    if end=='.gz':
+        is_unzipped=False
+    else:
+        is_unzipped=True
+
     if bbase is not "broadbandz":
-        end = bbfile[-3:]
-        if end=='.gz':
-            sh_id = bbfile[len(bbase):].rstrip('.fits.gz')
-            is_unzipped=False
-        else:
+        if is_unzipped:
             sh_id = bbfile[len(bbase):].rstrip('.fits')
-            is_unzipped=True
+        else:
+            sh_id = bbfile[len(bbase):].rstrip('.fits.gz')
+            
         bb_dir = 'images_subhalo_'+sh_id
         subdir_path = os.path.dirname(os.path.abspath(bbfile))
         subdirnum = subdir_path[-3:]
