@@ -12,7 +12,6 @@ import matplotlib.cm as cm
 import matplotlib.patches as patches
 import numpy as np
 import cPickle
-import asciitable
 import scipy.ndimage
 import scipy.stats as ss
 import scipy.signal
@@ -40,7 +39,7 @@ from astropy.convolution import Gaussian2DKernel
 from astropy.visualization.mpl_normalize import ImageNormalize
 from astropy.visualization import *
 import astropy.io.fits as pyfits
-import lotzmorph
+import statmorph
 import datetime
 
 imdpi = 600
