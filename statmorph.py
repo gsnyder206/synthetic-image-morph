@@ -18,7 +18,7 @@ import scipy.odr as odr
 import glob
 import os
 import make_color_image
-import make_fake_wht
+#import make_fake_wht
 import gzip
 import tarfile
 import shutil
