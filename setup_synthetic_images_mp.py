@@ -183,7 +183,7 @@ def initialize_test_figure():
     return fig,1.0/nx,1.0/ny,int(nx),int(ny)
 
 
-def generate_filter_images(bbfile, snapnum,subdirnum,sh_id,ci,custom_filename_sb00,analysis_object,i,clobber=False,analyze=True,openlist=None):
+def generate_filter_images(bbfile, snapnum,subdirnum,sh_id,ci,custom_filename_sb00,analysis_object,i,clobber=False,analyze=True,openlist=None,snprefix=None):
     filter_index = analysis_object.filter_indices[i]
     filter_label = analysis_object.filter_labels[i]
     psf_file = analysis_object.psf_files[i]
@@ -214,14 +214,19 @@ def generate_filter_images(bbfile, snapnum,subdirnum,sh_id,ci,custom_filename_sb
         #add some useful info to header
         #data,header = pyfits.getdata(custom_filename_sb00, ext=0, header=True)
         hdulist = pyfits.open(custom_filename_sb00)
-        hdulist[0].header['SNAPNUM']=(snapnum,'Illustris snapshot number')
-        hdulist[0].header['SUBDIR']=(subdirnum,'Image subdirectory')
-        hdulist[0].header['SUBH_ID']=(sh_id,'Subhalo ID index')
+        if snapnum is not None:
+            hdulist[0].header['SNAPNUM']=(snapnum,'Illustris snapshot number')
+            hdulist[0].header['SUBDIR']=(subdirnum,'Image subdirectory')
+            hdulist[0].header['SUBH_ID']=(sh_id,'Subhalo ID index')
+            hdulist[0].header['REF']=('Torrey et al. (2015)', 'ideal image reference')
+        else:
+            hdulist[0].header['REF']=('Moody+ 2013; Snyder+ 2015a', 'ideal image reference')
+            hdulist[0].header['SNPREFIX']=(snprefix, 'VELA snap ID')
+
+
         hdulist[0].header['CAMERA']=(ci,'Sunrise camera number')
         hdulist[0].header['FLABEL']=(filter_label,'Filter shorthand')
-
         hdulist[0].header['HSTREF']=('HST-AR#13887 (PI G Snyder)','realistic image reference')
-        hdulist[0].header['REF']=('Torrey et al. (2015)', 'ideal image reference')
         hdulist[0].header['Date']=(datetime.datetime.now().date().isoformat())
         hdulist[0].header['PHOTFNU']=(photfnu_Jy_i,'Jy; inverse sensitivity, flux[Jy] giving 1 count/sec')
         hdulist[0].header['APROXPSF']=(analysis_object.psf_fwhm_arcsec[i],'Estimate of PSF FWHM in arcsec')
@@ -486,23 +491,31 @@ def plot_test_stamp(image_hdu,saveseg_hdu,tbhdu,cmhdu,mhdu,ap_seghdu,figure,nx,n
 
 def process_single_broadband(bbfile,analysis_object,bbase='broadband_red_',clobber=False, analyze=True, do_idl=False):
     #create subdirectory to hold mock images and analyses
-    end = bbfile[-3:]
-    if end=='.gz':
-        sh_id = bbfile[len(bbase):].rstrip('.fits.gz')
-        is_unzipped=False
+    if bbase is not "broadbandz":
+        end = bbfile[-3:]
+        if end=='.gz':
+            sh_id = bbfile[len(bbase):].rstrip('.fits.gz')
+            is_unzipped=False
+        else:
+            sh_id = bbfile[len(bbase):].rstrip('.fits')
+            is_unzipped=True
+        bb_dir = 'images_subhalo_'+sh_id
+        subdir_path = os.path.dirname(os.path.abspath(bbfile))
+        subdirnum = subdir_path[-3:]
+        snap_path = os.path.dirname(subdir_path)
+        snapnum = snap_path[-3:]
+        snap_prefix = 'snap'+snapnum+'dir'+subdirnum+'sh'+sh_id
     else:
-        sh_id = bbfile[len(bbase):].rstrip('.fits')
-        is_unzipped=True
+        snapnum=None
+        subdirnum=None
+        sh_id=None
+        snap_prefix = os.path.basename(os.path.dirname(os.path.dirname(os.path.abspath(bbfile))))
 
-    bb_dir = 'images_subhalo_'+sh_id
     print bb_dir
     if not os.path.lexists(bb_dir):
         os.mkdir(bb_dir)
 
-    subdir_path = os.path.dirname(os.path.abspath(bbfile))
-    subdirnum = subdir_path[-3:]
-    snap_path = os.path.dirname(subdir_path)
-    snapnum = snap_path[-3:]
+
 
     #calculate number of cameras
     assert (analysis_object.camera_indices is not None)
@@ -520,7 +533,7 @@ def process_single_broadband(bbfile,analysis_object,bbase='broadband_red_',clobb
             #naming convention
             #snap???dir???sh*cam??_[FILTER]_SB??.fits
             #SB00 noiseless
-            custom_filename_sb00 = os.path.join(bb_dir,'snap'+snapnum+'dir'+subdirnum+'sh'+sh_id+'cam'+camstring+'_'+filter_label+'_SB00.fits')
+            custom_filename_sb00 = os.path.join(bb_dir,snap_prefix+'cam'+camstring+'_'+filter_label+'_SB00.fits')
             if not os.path.lexists(custom_filename_sb00):
                 all_files_exist=False
     
@@ -546,11 +559,11 @@ def process_single_broadband(bbfile,analysis_object,bbase='broadband_red_',clobb
             #naming convention
             #snap???dir???sh*cam??_[FILTER]_SB??.fits
             #SB00 noiseless
-            custom_filename_sb00 = os.path.join(bb_dir,'snap'+snapnum+'dir'+subdirnum+'sh'+sh_id+'cam'+camstring+'_'+filter_label+'_SB00.fits')
+            custom_filename_sb00 = os.path.join(bb_dir,snap_prefix+'cam'+camstring+'_'+filter_label+'_SB00.fits')
 
 
             try:
-                openlist = generate_filter_images(bbfile,snapnum,subdirnum,sh_id,ci,custom_filename_sb00, analysis_object, i, clobber=clobber,analyze=analyze,openlist=openlist)
+                openlist = generate_filter_images(bbfile,snapnum,subdirnum,sh_id,ci,custom_filename_sb00, analysis_object, i, clobber=clobber,analyze=analyze,openlist=openlist,snprefix=snap_prefix)
             except (KeyboardInterrupt,NameError,AttributeError,TypeError) as e:
                 print e
                 raise
@@ -575,13 +588,13 @@ def process_single_broadband(bbfile,analysis_object,bbase='broadband_red_',clobb
     #2.  lotz++ morphologies
 
     #write a Lotz IDL input file for comparison tests
-    idl_input_file = os.path.join(bb_dir,'snap'+snapnum+'dir'+subdirnum+'sh'+sh_id+'_idlinput.txt')
+    idl_input_file = os.path.join(bb_dir,snap_prefix+'_idlinput.txt')
     idl_obj = open(idl_input_file,'w')
     idl_obj.write('# IMAGE  NPIX   PSF   SCALE   SKY  XC YC A/B PA SKYBOX   MAG   MAGER   DM   RPROJ[arcsec]   ZEROPT[mag?] \n')
     idl_obj.close()
     #    morph_input_obj.write('# IMAGE  NPIX   PSF   SCALE   SKY  XC YC A/B PA SKYBOX   MAG   MAGER   DM   RPROJ[arcsec]   ZEROPT[mag?] \n')
-    idl_output_file = os.path.join(bb_dir,'snap'+snapnum+'dir'+subdirnum+'sh'+sh_id+'_idloutput.txt')
-    py_output_file = os.path.join(bb_dir,'snap'+snapnum+'dir'+subdirnum+'sh'+sh_id+'_pyoutput.txt')
+    idl_output_file = os.path.join(bb_dir,snap_prefix+'_idloutput.txt')
+    py_output_file = os.path.join(bb_dir,snap_prefix+'_pyoutput.txt')
     if os.path.lexists(py_output_file):
         os.remove(py_output_file)
 
@@ -592,7 +605,7 @@ def process_single_broadband(bbfile,analysis_object,bbase='broadband_red_',clobb
         for mag_i,maglim in enumerate(analysis_object.magsb_limits):
 
             #segmap is well defined now, find and load it here
-            segmap_filename_sb00 = os.path.join(bb_dir,'snap'+snapnum+'dir'+subdirnum+'sh'+sh_id+'cam'+camstring+'_'+analysis_object.segment_filter_label+'_SB00.fits')
+            segmap_filename_sb00 = os.path.join(bb_dir,snap_prefix+'cam'+camstring+'_'+analysis_object.segment_filter_label+'_SB00.fits')
             segmap_filename = segmap_filename_sb00.rstrip('SB00.fits')+'SB{:2.0f}.fits'.format(maglim)
             segmap_hdu = pyfits.open(segmap_filename)['SEGMAP']
             seg_image = segmap_hdu.data
@@ -605,7 +618,7 @@ def process_single_broadband(bbfile,analysis_object,bbase='broadband_red_',clobb
             print '   loaded segmentation map with properties ', segmap_filename, seg_npix, clabel, cpos0, cpos1
 
             #one figure per depth and viewing angle -- all filters
-            outfigname = os.path.join(bb_dir,'snap'+snapnum+'dir'+subdirnum+'sh'+sh_id+'cam'+camstring+'_'+'SB{:2.0f}'.format(maglim)+'_test.pdf')
+            outfigname = os.path.join(bb_dir,snap_prefix+'cam'+camstring+'_'+'SB{:2.0f}'.format(maglim)+'_test.pdf')
             figure,deltax,deltay,nx,ny = initialize_test_figure()
             axiscount = 0
 
@@ -615,7 +628,7 @@ def process_single_broadband(bbfile,analysis_object,bbase='broadband_red_',clobb
 
                 filter_index = analysis_object.filter_indices[i]
                 filter_lambda_order = analysis_object.filter_lambda_order[i]
-                custom_filename_sb00 = os.path.join(bb_dir,'snap'+snapnum+'dir'+subdirnum+'sh'+sh_id+'cam'+camstring+'_'+filter_label+'_SB00.fits')
+                custom_filename_sb00 = os.path.join(bb_dir,snap_prefix+'cam'+camstring+'_'+filter_label+'_SB00.fits')
                 custom_filename = custom_filename_sb00.rstrip('SB00.fits')+'SB{:2.0f}.fits'.format(maglim)
                 skipfilter = analysis_object.skip_filters[i]
 

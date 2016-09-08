@@ -246,7 +246,7 @@ def process_snapshot(subdirpath='.',mockimage_parameters=None,clobber=False, max
     for i,bbfile in enumerate(bbfile_list):
 
         try:
-            ssimp.process_single_broadband(bbfile,mockimage_parameters,clobber=clobber,do_idl=do_idl,analyze=analyze)
+            ssimp.process_single_broadband(bbfile,mockimage_parameters,clobber=clobber,do_idl=do_idl,analyze=analyze,bbase="broadbandz")
         except (KeyboardInterrupt,NameError,AttributeError,KeyError,TypeError) as e:
             print e
             raise
