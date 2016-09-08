@@ -210,7 +210,7 @@ def process_snapshot(subdirpath='.',mockimage_parameters=None,clobber=False, max
     ## wfc3 ir 0.13 arcsec
     ## wfc3 uv 0.04 arcsec
 
-    mockimage_parameters = analysis_parameters('mockimage_default')
+    mockimage_parameters = ssimp.analysis_parameters('mockimage_default')
     mockimage_parameters.filter_indices = filter_indices
     mockimage_parameters.filter_labels = filter_labels
     mockimage_parameters.pixsize_arcsec = pixsize_arcsec
