@@ -24,7 +24,6 @@ import make_color_image
 import gzip
 import tarfile
 import shutil
-import cosmocalc
 import congrid
 import astropy.io.ascii as ascii
 import sunpy__load
