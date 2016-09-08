@@ -10,7 +10,6 @@ import matplotlib.cm as cm
 import matplotlib.patches as patches
 import numpy as np
 import cPickle
-import asciitable
 import scipy.ndimage
 import scipy.stats as ss
 import scipy.signal
@@ -23,7 +22,6 @@ import make_fake_wht
 import gzip
 import tarfile
 import shutil
-import cosmocalc
 import congrid
 import astropy.io.ascii as ascii
 import warnings
