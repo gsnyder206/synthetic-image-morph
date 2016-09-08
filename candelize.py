@@ -266,4 +266,4 @@ def process_snapshot(subdirpath='.',mockimage_parameters=None,clobber=False, max
 if __name__=="__main__":
 
 
-    res = process_snapshot(subdirpath='.',clobber=True,seg_filter_label='NC-F200W',magsb_limits=[25.0,29.0],camindices=[0,1,2,3],do_idl=False,analyze=False)
+    res = process_snapshot(subdirpath='.',clobber=True,seg_filter_label='NC-F200W',magsb_limits=[25.0,29.0],camindices=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16],do_idl=False,analyze=False)
