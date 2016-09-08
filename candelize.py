@@ -99,7 +99,7 @@ def process_snapshot(subdirpath='.',mockimage_parameters=None,clobber=False, max
                           'hst/wfc3_f140w',
                           'hst/wfc3_f275w', 'hst/wfc3_f336w',
                           'hst/acs_f814w']
-'''
+    '''
     skip_filter_boolean = [False,
                            False,
                            True,
@@ -119,7 +119,7 @@ def process_snapshot(subdirpath='.',mockimage_parameters=None,clobber=False, max
                            True,
                            False,
                            False]
-'''
+    '''
     skip_filter_boolean = [False,
                            False,
                            False,
