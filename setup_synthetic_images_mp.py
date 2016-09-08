@@ -413,6 +413,9 @@ def analyze_image_morphology(custom_filename,filter_index,segmap_filename,segmap
                         print '        Mag: {:5.2f}    Magerr:  {:5.2f}'.format(segment_mag,segment_magerr)
                         try:
                             mhdu, ap_seghdu = lotzmorph.morph_from_synthetic_image(image_hdu,saveseg_hdu,tbhdu,cmhdu,extname='LotzMorphMeasurements',idl_filename=idl_filename,python_outfile=python_outfile)
+                        except (KeyboardInterrupt,NameError,AttributeError,TypeError,IndexError) as e:
+                            print e
+                            raise
                         except:
                             print "Exception inside morphology analysis code! ", custom_filename
                             mhdu = None
