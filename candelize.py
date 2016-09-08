@@ -216,8 +216,8 @@ def process_snapshot(subdirpath='.',mockimage_parameters=None,clobber=False, max
     mockimage_parameters.pixsize_arcsec = pixsize_arcsec
     mockimage_parameters.morphcode_base = morphcode_dir
     mockimage_parameters.morphcode_files = morphcode_files
-    mockimage_parameters.se_base = se_dir
-    mockimage_parameters.se_files = se_files
+    #mockimage_parameters.se_base = se_dir
+    #mockimage_parameters.se_files = se_files
     mockimage_parameters.camera_indices = camindices #None #by default, do all
     mockimage_parameters.psf_files = psf_files
     mockimage_parameters.psf_pix_arcsec = psf_pix_arcsec
