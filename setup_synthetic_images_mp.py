@@ -194,6 +194,8 @@ def generate_filter_images(bbfile, snapnum,subdirnum,sh_id,ci,custom_filename_sb
 
     common_args['pixelsize_arcsec'] = analysis_object.pixsize_arcsec[i]
 
+    print filter_index, filter_label, i
+
 
     if not os.path.lexists(custom_filename_sb00) or clobber==True:
         #do sunpy calcs
