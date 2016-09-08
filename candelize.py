@@ -70,7 +70,7 @@ def process_snapshot(subdirpath='.',mockimage_parameters=None,clobber=False, max
     fils = tf['FILTERS'].data.field('filter')
     print fils
 
-'''
+    '''
     filters_to_analyze = ['ACS_F435_NEW.res',
                           'ACS_F606_NEW.res',
                           'ACS_F775_NEW.res',
@@ -90,7 +90,7 @@ def process_snapshot(subdirpath='.',mockimage_parameters=None,clobber=False, max
                           'f275w.UVIS1.res',
                           'f336w.UVIS1.res',
                           'F814W_WFC.res']
-'''
+    '''
 
     filters_to_analyze = ['hst/acs_f435w','hst/acs_f606w','hst/acs_f775w','hst/acs_f850lp',
                           'hst/wfc3_f105w','hst/wfc3_f125w','hst/wfc3_f160w',
