@@ -10,7 +10,6 @@ import numpy as np
 #import array
 #import astLib.astStats as astStats
 #import cPickle
-import asciitable
 import scipy.ndimage
 import scipy.stats as ss
 import scipy as sp
