@@ -524,7 +524,7 @@ def process_single_broadband(bbfile,analysis_object,bbase='broadband_red_',clobb
             snap_prefix = os.path.basename(os.path.dirname(os.path.dirname(os.path.abspath(bbfile))))+'_nonscatter_'
         else:
             snap_prefix = os.path.basename(os.path.dirname(os.path.dirname(os.path.abspath(bbfile))))+'_scatter_'            
-        bb_dir = 'images_'+snap_prefix
+        bb_dir = 'images_'+snap_prefix.rstrip('_')
 
     print bb_dir
     if not os.path.lexists(bb_dir):
