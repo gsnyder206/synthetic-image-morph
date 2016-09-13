@@ -228,7 +228,7 @@ def process_snapshot(subdirpath='.',mockimage_parameters=None,clobber=False, max
     mockimage_parameters.photfnu_Jy = photfnu_Jy
     mockimage_parameters.filter_lambda_order = filter_lambda_order
     mockimage_parameters.skip_filters = skip_filter_boolean
-
+    
     #use exactly one detection and segmentation per object, depending on redshift
     #enormous simplification
     #observationally, go w deepest filter.  here... ?
@@ -266,4 +266,5 @@ def process_snapshot(subdirpath='.',mockimage_parameters=None,clobber=False, max
 if __name__=="__main__":
 
 
-    res = process_snapshot(subdirpath='.',clobber=False,seg_filter_label='NC-F200W',magsb_limits=[25.0,29.0],camindices=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16],do_idl=False,analyze=True)
+    #res = process_snapshot(subdirpath='.',clobber=False,seg_filter_label='NC-F200W',magsb_limits=[25.0,29.0],camindices=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16],do_idl=False,analyze=True)
+    res = process_snapshot(subdirpath='.',clobber=False,seg_filter_label='NC-F200W',magsb_limits=[25.0,29.0],camindices=[0,1],do_idl=False,analyze=False)
