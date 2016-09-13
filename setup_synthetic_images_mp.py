@@ -191,7 +191,8 @@ def generate_filter_images(bbfile, snapnum,subdirnum,sh_id,ci,custom_filename_sb
     psf_truncate = analysis_object.psf_truncate[i]
     psf_hdu = analysis_object.psf_hdu_num[i]
     photfnu_Jy_i = analysis_object.photfnu_Jy[i]
-
+    use_nonscatter = analysis_object.use_nonscatter
+    
     common_args['pixelsize_arcsec'] = analysis_object.pixsize_arcsec[i]
 
     #print filter_index, filter_label, i, type(filter_index), type(int(filter_index))
@@ -210,6 +211,7 @@ def generate_filter_images(bbfile, snapnum,subdirnum,sh_id,ci,custom_filename_sb
                                                                                                             psf_truncate_pixels = psf_truncate,
                                                                                                             psf_hdu_num = psf_hdu,
                                                                                                             openlist=openlist,
+                                                                                                            use_nonscatter=use_nonscatter,         
                                                                                                             **common_args)
         assert (os.path.lexists(custom_filename_sb00))
 
@@ -518,7 +520,10 @@ def process_single_broadband(bbfile,analysis_object,bbase='broadband_red_',clobb
         snapnum=None
         subdirnum=None
         sh_id=None
-        snap_prefix = os.path.basename(os.path.dirname(os.path.dirname(os.path.abspath(bbfile))))
+        if analysis_object.use_nonscatter is True:
+            snap_prefix = os.path.basename(os.path.dirname(os.path.dirname(os.path.abspath(bbfile))))+'_nonscatter_'
+        else:
+            snap_prefix = os.path.basename(os.path.dirname(os.path.dirname(os.path.abspath(bbfile))))+'_scatter_'            
         bb_dir = 'images_'+snap_prefix
 
     print bb_dir

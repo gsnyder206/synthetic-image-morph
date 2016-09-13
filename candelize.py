@@ -43,7 +43,7 @@ import datetime
 import setup_synthetic_images_mp as ssimp
 
 
-def process_snapshot(subdirpath='.',mockimage_parameters=None,clobber=False, max=None, galaxy=None,seg_filter_label='NC-F200W',magsb_limits=[23.0,25.0,27.0,29.0],camindices=[0,1,2,3],do_idl=False,analyze=True):
+def process_snapshot(subdirpath='.',mockimage_parameters=None,clobber=False, max=None, galaxy=None,seg_filter_label='NC-F200W',magsb_limits=[23.0,25.0,27.0,29.0],camindices=[0,1,2,3],do_idl=False,analyze=True,use_nonscatter=True):
 
     cwd = os.path.abspath(os.curdir)
 
@@ -228,6 +228,7 @@ def process_snapshot(subdirpath='.',mockimage_parameters=None,clobber=False, max
     mockimage_parameters.photfnu_Jy = photfnu_Jy
     mockimage_parameters.filter_lambda_order = filter_lambda_order
     mockimage_parameters.skip_filters = skip_filter_boolean
+    mockimage_parameters.use_nonscatter = use_nonscatter
     
     #use exactly one detection and segmentation per object, depending on redshift
     #enormous simplification
@@ -267,4 +268,4 @@ if __name__=="__main__":
 
 
     #res = process_snapshot(subdirpath='.',clobber=False,seg_filter_label='NC-F200W',magsb_limits=[25.0,29.0],camindices=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16],do_idl=False,analyze=True)
-    res = process_snapshot(subdirpath='.',clobber=False,seg_filter_label='NC-F200W',magsb_limits=[25.0,29.0],camindices=[0,1],do_idl=False,analyze=False)
+    res = process_snapshot(subdirpath='.',clobber=True,seg_filter_label='NC-F200W',magsb_limits=[25.0,29.0],camindices=[0,1],do_idl=False,analyze=False,use_nonscatter=True)
