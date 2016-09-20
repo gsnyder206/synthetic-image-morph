@@ -698,8 +698,8 @@ def process_single_broadband(bbfile,analysis_object,bbase='broadband_red_',clobb
 
 
     if bbase is 'broadbandz':
-        subprocess.call('tar','cf',bb_dir+'.tar',bb_dir)
-        subprocess.call('rm','-rf',bb_dir)
+        subprocess.call(['tar','cf',bb_dir+'.tar',bb_dir])
+        subprocess.call(['rm','-rf',bb_dir])
         
     return bb_dir
 
