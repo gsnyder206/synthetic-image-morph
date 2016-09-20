@@ -716,12 +716,12 @@ if __name__=="__main__":
     #find_pairs('Illustris-1_RADEC_hudfwide_75Mpc_7_6_zyx_corners.txt','/astro/snyder_lab2/Illustris/Lightcones/forgreg/Illustris1_pairs_r100_h0.70_mstar10.5_mr10_dz0.020_mock3.list',
     #           usemstar=True,label='mstar10.5',bp = '/astro/snyder_lab2/Illustris/Illustris-1')
 
-    find_pairs('Illustris-1_RADEC_hudfwide_75Mpc_7_6_xyz_corners.txt','/astro/snyder_lab2/Illustris/Lightcones/new2/Illustris1_pairs_r100_h0.70_mstar10.5_mr100000_dz0.020_mock1.list',
-               usemstar=True,label='mstar10.5new',bp = '/astro/snyder_lab2/Illustris/Illustris-1')
-    find_pairs('Illustris-1_RADEC_hudfwide_75Mpc_7_6_yxz_corners.txt','/astro/snyder_lab2/Illustris/Lightcones/new2/Illustris1_pairs_r100_h0.70_mstar10.5_mr100000_dz0.020_mock2.list',
-               usemstar=True,label='mstar10.5new',bp = '/astro/snyder_lab2/Illustris/Illustris-1')
-    find_pairs('Illustris-1_RADEC_hudfwide_75Mpc_7_6_zyx_corners.txt','/astro/snyder_lab2/Illustris/Lightcones/new2/Illustris1_pairs_r100_h0.70_mstar10.5_mr100000_dz0.020_mock3.list',
-               usemstar=True,label='mstar10.5new',bp = '/astro/snyder_lab2/Illustris/Illustris-1')
+    find_pairs('Illustris-1_RADEC_hudfwide_75Mpc_7_6_xyz_corners.txt','/astro/snyder_lab2/Illustris/Lightcones/new3/Illustris1_pairs_r100_h0.70_mstar10.5_mr100000_dz0.020_z10_mock1.list',
+               usemstar=True,label='mstar10.5new3',bp = '/astro/snyder_lab2/Illustris/Illustris-1')
+    find_pairs('Illustris-1_RADEC_hudfwide_75Mpc_7_6_yxz_corners.txt','/astro/snyder_lab2/Illustris/Lightcones/new3/Illustris1_pairs_r100_h0.70_mstar10.5_mr100000_dz0.020_z10_mock2.list',
+               usemstar=True,label='mstar10.5new3',bp = '/astro/snyder_lab2/Illustris/Illustris-1')
+    find_pairs('Illustris-1_RADEC_hudfwide_75Mpc_7_6_zyx_corners.txt','/astro/snyder_lab2/Illustris/Lightcones/new3/Illustris1_pairs_r100_h0.70_mstar10.5_mr100000_dz0.020_z10_mock3.list',
+               usemstar=True,label='mstar10.5new3',bp = '/astro/snyder_lab2/Illustris/Illustris-1')
 
 
     #find_pairs('Illustris-2_RADEC_hudfwide_75Mpc_7_6_xyz.txt','/user/lotz/illustris/Illustris2_pairs_r100_h0.70_mhalo10.5_mr10_dz0.020_mock1.list',usemstar=False,label='mhalo11.5',massmin=10.0**(11.5))

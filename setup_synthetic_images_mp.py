@@ -696,7 +696,9 @@ def process_single_broadband(bbfile,analysis_object,bbase='broadband_red_',clobb
         print '        Measuring Morphologies with IDL Code... '
         subprocess.call(['bash', runscript])
 
-    return 1
+
+    subprocess.call('tar','cf',bb_dir+'.tar',bb_dir)
+    return bb_dir
 
 
 

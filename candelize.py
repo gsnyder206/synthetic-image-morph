@@ -243,11 +243,13 @@ def process_snapshot(subdirpath='.',mockimage_parameters=None,clobber=False, max
     assert(len(psf_pix_arcsec)==len(pixsize_arcsec))
     assert(len(filter_labels)==len(mockimage_parameters.psf_files))
 
+    bbdirs = []
     
     for i,bbfile in enumerate(bbfile_list):
 
         try:
-            ssimp.process_single_broadband(bbfile,mockimage_parameters,clobber=clobber,do_idl=do_idl,analyze=analyze,bbase="broadbandz")
+            bbdir = ssimp.process_single_broadband(bbfile,mockimage_parameters,clobber=clobber,do_idl=do_idl,analyze=analyze,bbase="broadbandz")
+            bbdirs.append(bbdir)
         except (KeyboardInterrupt,NameError,AttributeError,KeyError,TypeError,IndexError) as e:
             print e
             raise
@@ -259,7 +261,7 @@ def process_snapshot(subdirpath='.',mockimage_parameters=None,clobber=False, max
 
     os.chdir(cwd)
 
-    return 1
+    return bbdirs
 
 
 
