@@ -138,7 +138,7 @@ def do_pc1_sizemass(figfile,data=None, snaps=None,filters=None,**kwargs):
 
 
     f1 = pyplot.figure(figsize=(6.5,3.5), dpi=150)
-    pyplot.subplots_adjust(left=0.09, right=0.98, bottom=0.12, top=0.98,wspace=0.0,hspace=0.0)
+    pyplot.subplots_adjust(left=0.09, right=0.98, bottom=0.12, top=0.98,wspace=0.0,hspace=0.05)
 
     for i,s,f in zip(range(len(snaps)),snaps,filters):
         mo = data['morph'][s]
@@ -195,7 +195,7 @@ def do_pc1_sfrmass(figfile,data=None, snaps=None,filters=None,**kwargs):
 
 
     f1 = pyplot.figure(figsize=(6.5,3.5), dpi=150)
-    pyplot.subplots_adjust(left=0.09, right=0.98, bottom=0.12, top=0.98,wspace=0.0,hspace=0.0)
+    pyplot.subplots_adjust(left=0.09, right=0.98, bottom=0.12, top=0.98,wspace=0.0,hspace=0.05)
 
     for i,s,f in zip(range(len(snaps)),snaps,filters):
         mo = data['morph'][s]
