@@ -66,7 +66,7 @@ def make_pc_dict(mo,fi):
     return parameters, pcd, pc, pcd
 
 
-def pc1_sizemass_panel(f1,nr,nc,nt,size,mass,pc1,xlim=[5.0e9,8.0e11],ylim={'sizemass':[0.7,20.0]},gridsize=12,vlim=[-2,2]):
+def pc1_sizemass_panel(f1,nr,nc,nt,size,mass,pc1,xlim=[5.0e9,5.0e11],ylim={'sizemass':[0.7,20.0]},gridsize=12,vlim=[-2,2]):
 
     rlim = np.log10(np.asarray(ylim['sizemass']))
     mlim = np.log10(np.asarray(xlim))
@@ -99,7 +99,7 @@ def pc1_sizemass_panel(f1,nr,nc,nt,size,mass,pc1,xlim=[5.0e9,8.0e11],ylim={'size
     return axi,s
 
 
-def pc1_sfrmass_panel(f1,nr,nc,nt,sfr,mass,pc1,xlim=[5.0e9,8.0e11],ylim={'sfrmass':[5,500.0]},gridsize=12,vlim=[-2,2]):
+def pc1_sfrmass_panel(f1,nr,nc,nt,sfr,mass,pc1,xlim=[5.0e9,5.0e11],ylim={'sfrmass':[5,500.0]},gridsize=12,vlim=[-2,2]):
 
     rlim = np.log10(np.asarray(ylim['sfrmass']))
     mlim = np.log10(np.asarray(xlim))
@@ -239,7 +239,7 @@ def do_pc1_sfrmass(figfile,data=None, snaps=None,filters=None,**kwargs):
         print pc1.shape
 
         axi,lsize = pc1_sfrmass_panel(f1,2,3,i+1,sfr.flatten(),mass.flatten(),pc1,**kwargs)
-        axi.annotate('z={:4.1f}'.format(redshift),(0.85,0.90),xycoords='axes fraction',size=lsize,color='black',ha='center',va='center')
+        axi.annotate('z={:4.1f}'.format(redshift),(0.15,0.90),xycoords='axes fraction',size=lsize,color='black',ha='center',va='center')
         axi.annotate(f,(0.75,0.10),xycoords='axes fraction',size=lsize,color='black',ha='center',va='center')
 
     f1.savefig(figfile)
@@ -275,7 +275,7 @@ def do_all_plots(snaps,fils,data,label='CANDELS',**kwargs):
 
     do_pc1_sizemass('PC1_sizemass_'+label+'.pdf',data=data,snaps=snaps,filters=fils,**kwargs)
 
-    do_pc1_sfrmass('PC1_sfrmass_'+label+'.pdf',data=data,snaps=snaps,filters=fils,vlim=[-2,1],gridsize=12,**kwargs)
+    do_pc1_sfrmass('PC1_sfrmass_'+label+'.pdf',data=data,snaps=snaps,filters=fils,vlim=[-1,2],gridsize=10,**kwargs)
 
 
     return
