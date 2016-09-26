@@ -40,6 +40,9 @@ import illustris_python as ilpy
 from parse_illustris_morphs import *
 from PyML import machinelearning as pyml
 from PyML import convexhullclassifier as cvx
+import statmorph
+
+
 
 ilh = 0.704
 illcos = astropy.cosmology.FlatLambdaCDM(H0=70.4,Om0=0.2726,Ob0=0.0456)

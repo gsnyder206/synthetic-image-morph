@@ -37,7 +37,7 @@ from astropy.visualization.mpl_normalize import ImageNormalize
 import astropy.cosmology
 #from astropy.visualization import *
 import astropy.io.fits as pyfits
-#import lotzmorph
+import statmorph
 import copy
 import medianstats_bootstrap as msbs
 import illustris_python as ilpy
@@ -686,7 +686,7 @@ def get_other(snapnum,sfid,bp='/astro/snyder_lab2/Illustris/Illustris-1'):
 
 
 
-def load_all_info(base_directory='/astro/snyder_lab/Illustris_CANDELS/Illustris-1_z1_images_bc03/',snapnum='068', filename = 'MorphDataObjectLight_SB25.pickle'):
+def load_all_info(base_directory='/astro/snyder_lab/Illustris_CANDELS/Illustris-1_z1_images_bc03/',snapnum=68, filename = 'MorphDataObjectLight_SB25.pickle'):
 
     snapdir = os.path.join(base_directory,'snapshot_{:03d}'.format(snapnum))
     morphcat = os.path.join(snapdir,filename)
