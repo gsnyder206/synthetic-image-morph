@@ -274,7 +274,8 @@ def do_jandels_loading(filename = 'MorphDataObjectLight_SB27.pickle'):
 def do_all_plots(snaps,fils,data,label='CANDELS',**kwargs):
 
     do_pc1_sizemass('PC1_sizemass_'+label+'.pdf',data=data,snaps=snaps,filters=fils,**kwargs)
-    do_pc1_sfrmass('PC1_sfrmass_'+label+'.pdf',data=data,snaps=snaps,filters=fils,**kwargs)
+
+    do_pc1_sfrmass('PC1_sfrmass_'+label+'.pdf',data=data,snaps=snaps,filters=fils,vlim=[-2,1],gridsize=12,**kwargs)
 
 
     return
