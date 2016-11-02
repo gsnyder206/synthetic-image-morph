@@ -817,9 +817,16 @@ def output_full_catalog(dataobjs,snaps,filter=['WFC3-F160W'],label='SB25',camera
             sgrp.create_dataset('Cameras',data=camera)
             mstar_1 = dataobjs['subhalos'][s]['SubhaloMassInRadType'][:,4].flatten()*(1.0e10)/ilh
             sfr_1 = dataobjs['subhalos'][s]['SubhaloSFR'][:].flatten()
+            mhalo_1 = dataobjs['subhalos'][s]['SubhaloMass'][:].flatten()*(1.0e10)/ilh
+            bhrate_1 = dataobjs['subhalos'][s]['SubhaloBHMdot'][:].flatten()*((1.0e10)/ilh)/(0.978*1.0e9/ilh)
+            bhmass_1 = dataobjs['subhalos'][s]['SubhaloBHMass'][:].flatten()*(1.0e10)/ilh 
+
             sgrp.create_dataset('Mstar_Msun',data=mstar_1)
             sgrp.create_dataset('SFR_Msunperyr',data=sfr_1)
-
+            sgrp.create_dataset('BHMdot_Msunperyr',data=bhrate_1)
+            sgrp.create_dataset('Mbh_Msun',data=bhmass_1)
+            sgrp.create_dataset('Mhalo_Msun',data=mhalo_1)
+            
             for fil in filter:
                 fsgrp = sgrp.create_group(fil)
                 fi = np.where(dataobjs['morph'][s].filters==fil)[0]

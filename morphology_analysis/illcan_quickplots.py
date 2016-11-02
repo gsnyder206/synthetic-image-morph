@@ -119,12 +119,12 @@ def pc1_sfrmass_panel(f1,nr,nc,nt,sfr,mass,pc1,xlim=[5.0e9,5.0e11],ylim={'sfrmas
     axi.tick_params(axis='both',which='major',labelsize=s)
 
     if nt % nc == 1:
-        axi.set_ylabel(r'SFR [$M_{\odot}\ yr^{-1}$]',size=s,labelpad=1)
+        axi.set_ylabel(r'Star Formation Rate',size=s-1,labelpad=1)
     else:
         axi.set_yticklabels([])
 
     if nt > (nr-1)*nc:
-        axi.set_xlabel(r'$M_{*}$ [$M_{\odot}$]',size=s,labelpad=1)
+        axi.set_xlabel(r'Stellar Mass [$M_{\odot}$]',size=s-1,labelpad=1)
     else:
         axi.set_xticklabels([])
 
@@ -138,7 +138,7 @@ def do_pc1_sizemass(figfile,data=None, snaps=None,filters=None,**kwargs):
 
 
     f1 = pyplot.figure(figsize=(6.5,3.5), dpi=150)
-    pyplot.subplots_adjust(left=0.09, right=0.98, bottom=0.12, top=0.98,wspace=0.0,hspace=0.05)
+    pyplot.subplots_adjust(left=0.08, right=0.98, bottom=0.11, top=0.98,wspace=0.0,hspace=0.05)
 
     for i,s,f in zip(range(len(snaps)),snaps,filters):
         mo = data['morph'][s]
@@ -194,8 +194,8 @@ def do_pc1_sfrmass(figfile,data=None, snaps=None,filters=None,**kwargs):
     assert snaps is not None
 
 
-    f1 = pyplot.figure(figsize=(6.5,3.5), dpi=150)
-    pyplot.subplots_adjust(left=0.09, right=0.98, bottom=0.12, top=0.98,wspace=0.0,hspace=0.05)
+    f1 = pyplot.figure(figsize=(7.0,3.5), dpi=150)
+    pyplot.subplots_adjust(left=0.08, right=0.98, bottom=0.11, top=0.98,wspace=0.0,hspace=0.05)
 
     for i,s,f in zip(range(len(snaps)),snaps,filters):
         mo = data['morph'][s]
