@@ -159,8 +159,8 @@ if __name__=="__main__":
     bp = '/astro/snyder_lab2/Illustris/Illustris-1'  #simulation base path for merger trees
     basepath = bp
 
-    catalogfile = "/astro/snyder_lab2/Illustris/MorphologyAnalysis/nonparmorphs_SB25_12filters_morestats.hdf5"   #morphology catalog file
-    mergerdatafile = "/astro/snyder_lab2/Illustris/MorphologyAnalysis/imagedata_mergerinfo.hdf5"
+    catalogfile = "/astro/snyder_lab2/Illustris/MorphologyAnalysis/nonparmorphs_SB27_12filters_all_NEW.hdf5"   #morphology catalog file
+    mergerdatafile = "/astro/snyder_lab2/Illustris/MorphologyAnalysis/imagedata_mergerinfo_SB27.hdf5"
 
     mdf = h5py.File(mergerdatafile,'w')
     grp = mdf.create_group('mergerinfo')

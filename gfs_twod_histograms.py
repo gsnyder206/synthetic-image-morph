@@ -1,6 +1,5 @@
 
 import matplotlib
-matplotlib.use('PDF')
 import matplotlib.pyplot as pyplot
 import matplotlib.colors as pycolors
 import matplotlib.cm as cm
@@ -35,7 +34,7 @@ def get_levels_from_percentiles(hist,tiles):
 
 
 
-def median_grid(indices,other_dict):
+def median_grid(indices,other_dict,**kwargs):
 
     x = other_dict['x']
     
@@ -43,7 +42,7 @@ def median_grid(indices,other_dict):
 
     return val
 
-def fraction_grid(indices,other_dict):
+def fraction_grid(indices,other_dict,**kwargs):
 
     #x must be a boolean array
     x = other_dict['x']
@@ -57,8 +56,26 @@ def fraction_grid(indices,other_dict):
     return val
 
 
+def normed_proportion_grid(indices,other_dict,hist_2d=None,**kwargs):
+
+    N = np.sum(np.ones_like(hist_2d))
+    
+    #x must be a boolean array
+    x = other_dict['x']
+    denominator = x.shape[0] #x[indices].shape[0]
+    
+    xw = np.where(x[indices])[0]
+    numerator = xw.shape[0]
+
+    
+    val = N*float(numerator)/float(denominator)
+    
+    return val
+
+
+
 def test_function():
-    print 'I am a test function'
+    print('I am a test function')
     return 1.0
 
 
@@ -80,7 +97,7 @@ def execute_twodim(xparam,yparam,xlim,ylim,other_params,other_function,bins=20,m
             if (fli.shape)[0] >= min_bin:
                 
                 #result = eval(other_function,{'indices':fli,'other_dict':other_params})
-                result = eval(other_function+'(fli,other_params)')
+                result = eval(other_function+'(fli,other_params,hist_2d=MR_hist)')
 
                 value_twod[i,j] = result
 
@@ -92,13 +109,18 @@ def execute_twodim(xparam,yparam,xlim,ylim,other_params,other_function,bins=20,m
 
 
 
-def make_twod_grid(axi,xparam,yparam,other_params,other_function,bins=20,tiles=(0.90,0.50),percentiles=False,numbers=[10,100],vmin=0.0,vmax=1.0,bad_offset=-1000.0,**bin_kwargs):
+def make_twod_grid(axi,xparam,yparam,other_params,other_function,bins=20,tiles=(0.90,0.50),percentiles=False,numbers=[10,100],vmin=0.0,vmax=1.0,bad_offset=-1000.0,flipx=False,**bin_kwargs):
 
 
     xlim = axi.get_xlim()
     ylim = axi.get_ylim()
 
-    value_twod, hist_twod, xMR, yMR, dx, dy = execute_twodim(xparam,yparam,xlim,ylim,other_params,other_function,bins=bins,vmin=vmin,**bin_kwargs) #passive_fractions_twodim(xparam,yparam,xlimits,ylimits,CONDITIONAL,sfr_all,mstar_all,bins=bins)
+    if flipx is True:
+        xlim_use = np.flipud(xlim)
+    else:
+        xlim_use = xlim
+        
+    value_twod, hist_twod, xMR, yMR, dx, dy = execute_twodim(xparam,yparam,xlim_use,ylim,other_params,other_function,bins=bins,vmin=vmin,**bin_kwargs) #passive_fractions_twodim(xparam,yparam,xlimits,ylimits,CONDITIONAL,sfr_all,mstar_all,bins=bins)
 
 
     
@@ -108,8 +130,8 @@ def make_twod_grid(axi,xparam,yparam,other_params,other_function,bins=20,tiles=(
     
     cscale_function = pycolors.Normalize(vmin=vmin,vmax=vmax,clip=True)
 
-    colorobj = axi.imshow(np.transpose((Zm)),vmin=vmin,vmax=vmax,origin='lower',aspect='auto',interpolation='nearest',extent=[xlim[0],xlim[1],ylim[0],ylim[1]],cmap=themap)
-
+    colorobj = axi.imshow(np.transpose((Zm)),vmin=vmin,vmax=vmax,origin='lower',aspect='auto',interpolation='nearest',extent=[xlim_use[0],xlim_use[1],ylim[0],ylim[1]],cmap=themap)
+        
     if percentiles==True:
         levels = get_levels_from_percentiles(MR_hist*1.0,tiles)
         axi.contour(xMR[1:]-dx/2.0,yMR[1:]-dy/2.0,np.transpose(np.log10(MR_hist+0.001)),np.log10(levels),linewidths=1.0,colors=['silver','white'])

@@ -1107,8 +1107,9 @@ def run_064(starti=0,max=None):
     return
 
 def run_068(starti=0,max=None):
-    #result = process_snapshot('/astro/snyder_lab/Illustris_CANDELS/Illustris-1_z1_images_bc03/snapshot_068',         clobber=False,analyze=True,seg_filter_label='NC-F200W',magsb_limits=[25],   do_idl=False,starti=starti,max=max)
-    result = process_subdir('/astro/snyder_lab/Illustris_CANDELS/Illustris-1_z1_images_bc03/snapshot_068/subdir_000',clobber=False,analyze=True,seg_filter_label='NC-F200W',magsb_limits=[27,29],do_idl=False)
+    result = process_snapshot('/astro/snyder_lab/Illustris_CANDELS/Illustris-1_z1_images_bc03/snapshot_068',         clobber=False,analyze=True,seg_filter_label='NC-F200W',magsb_limits=[27],   do_idl=False,starti=starti,max=max)
+    #result = process_subdir('/astro/snyder_lab/Illustris_CANDELS/Illustris-1_z1_images_bc03/snapshot_068/subdir_000',clobber=False,analyze=True,seg_filter_label='NC-F200W',magsb_limits=[27,29],do_idl=False)
+    
     return
 
 

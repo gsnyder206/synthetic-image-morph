@@ -3,13 +3,11 @@ import string
 import sys
 import struct
 import matplotlib
-matplotlib.use('Agg')
 import matplotlib.pyplot as pyplot
 import matplotlib.colors as pycolors
 import matplotlib.cm as cm
 from matplotlib.ticker import FormatStrFormatter
 import numpy as np
-import cPickle
 import asciitable
 import scipy.ndimage
 import scipy.stats as ss
@@ -21,7 +19,6 @@ import glob
 import os
 import gzip
 import shutil
-import congrid
 import astropy.io.ascii as ascii
 import warnings
 import subprocess
@@ -31,20 +28,15 @@ import astropy.units as u
 from astropy.cosmology import WMAP7,z_at_value
 import copy
 import datetime
-import ezgal
 from matplotlib.patches import Polygon
 from matplotlib.collections import PatchCollection
 from matplotlib.collections import PolyCollection
-import parse_illustris_morphs as pim
-import illustris_python as ilpy
-from parse_illustris_morphs import *
-from PyML import machinelearning as pyml
-from PyML import convexhullclassifier as cvx
-import statmorph
+import PyML
+import PyML.machinelearning
 import gfs_twod_histograms as gth
 import pandas
+import h5py
 
-from PyML import machinelearning as pyml
 
 
 ilh = 0.704
@@ -52,6 +44,22 @@ illcos = astropy.cosmology.FlatLambdaCDM(H0=70.4,Om0=0.2726,Ob0=0.0456)
 sq_arcsec_per_sr = 42545170296.0
 
 
+snap_keys = ['snapshot_103','snapshot_103','snapshot_085','snapshot_085','snapshot_075','snapshot_075','snapshot_075','snapshot_068','snapshot_068','snapshot_068',
+             'snapshot_064','snapshot_064','snapshot_060','snapshot_060','snapshot_054', 'snapshot_049','snapshot_041']
+fil_keys =  ['ACS-F606W',  'WFC3-F105W',   'ACS-F814W',  'WFC3-F105W',  'WFC3-F105W',  'NC-F115W',  'NC-F150W',    'WFC3-F160W',  'NC-F115W',  'NC-F150W',
+             'WFC3-F160W',  'NC-F150W'    ,'WFC3-F160W',  'NC-F200W'    ,'NC-F200W'    , 'NC-F277W',   'NC-F277W']    
+
+
+def simple_classifier_stats(classifications,labels):
+
+    tp = np.where( (labels==True)*(classifications==True) )[0]
+    fn = np.where( (labels==True)*(classifications==False))[0]
+    fp = np.where( (labels==False)*(classifications==True))[0]
+
+    completeness = float(tp.shape[0])/float(tp.shape[0] + fn.shape[0])
+    ppv = float(tp.shape[0])/float(tp.shape[0] + fp.shape[0])
+    
+    return completeness, ppv
 
 def FGM20(gini,m20):
     a = -0.14
@@ -89,23 +97,6 @@ def SGM20(gini,m20):
     return f
 
 
-
-def fGM20(gini_good,m20_good):
-    Fgm20_good=[]
-    F=(-0.693*m20_good)+(4.95*gini_good)-3.85
-    if gini_good[i]>= ((0.14*m20_good[i])+0.778):
-	Fgm20_good.append(abs(F))
-    if gini_good[i]< ((0.14*m20_good[i])+0.778):
-        Fgm20_good.append(-abs(F))
-
-    return
-
-def dGM20(gini_good,m20_good):
-    Dgm20_good = []
-    Dgm20_good.append(abs((-0.14*m20_good[i])-gini_good[i]+0.33)/(0.14))
-        
-    return Dgm20_good
-    
 def get_all_morph_val(msF,sk,fk,keyname):
     morph_array = np.concatenate( (msF['nonparmorphs'][sk][fk]['CAMERA0'][keyname].value,
                                    msF['nonparmorphs'][sk][fk]['CAMERA1'][keyname].value,
@@ -142,8 +133,8 @@ def make_pc_dict(msF,sk,fk):
     pcd['I'] = get_all_morph_val(msF,sk,fk,'MID1_ISTAT')
     pcd['D'] = get_all_morph_val(msF,sk,fk,'MID1_DSTAT')
 
-    npmorph = pyml.dataMatrix(pcd,parameters)
-    pc = pyml.pcV(npmorph)
+    npmorph = PyML.machinelearning.dataMatrix(pcd,parameters)
+    pc = PyML.machinelearning.pcV(npmorph)
 
     return parameters, pcd, pc, pcd
 
@@ -198,13 +189,8 @@ def plot_sfr_radius_mass(msF,merF,sk,fk,FIG,xlim,ylim,rlim,Cval,gridf='median_gr
 
 
 
-def make_sfr_radius_mass_plots(msF,merF):
+def make_sfr_radius_mass_plots(msF,merF,rfiter=3):
 
-    snap_keys = ['snapshot_103','snapshot_085','snapshot_075','snapshot_075','snapshot_068','snapshot_068',
-                 'snapshot_064','snapshot_064','snapshot_060','snapshot_060','snapshot_054', 'snapshot_049','snapshot_041']
-    fil_keys =  ['ACS-F606W',   'ACS-F814W',  'WFC3-F105W',  'NC-F115W',    'WFC3-F160W',  'NC-F115W',
-                 'WFC3-F160W',  'NC-F150W'    ,'WFC3-F160W',  'NC-F200W'    ,'NC-F200W'    , 'NC-F277W',   'NC-F277W']
-    
     for sk,fk in zip(snap_keys,fil_keys):
 
         parameters, pcd, pc, pcd = make_pc_dict(msF,sk,fk)
@@ -225,6 +211,8 @@ def make_sfr_radius_mass_plots(msF,merF):
         Istat = get_all_morph_val(msF,sk,fk,'MID1_ISTAT')
         Dstat = get_all_morph_val(msF,sk,fk,'MID1_DSTAT')
 
+        sfid = get_all_snap_val(msF,sk,'SubfindID')
+        
         S_GM20 = SGM20(gini,m20)
         F_GM20 = FGM20(gini,m20)
         
@@ -248,12 +236,14 @@ def make_sfr_radius_mass_plots(msF,merF):
         PARAMS_MOD=True
         PARAMS_ONLY=False
         PCS_ONLY=False
-        RUN_RF=False
-        RF_ITER=3
+        RUN_RF=True
+        RF_ITER=rfiter
+        rf_masscut = 10.0**(10.5)
+
         
         if PCS_ONLY is True:
-            gi = np.where(np.isfinite(pc1)*np.isfinite(pc2)*np.isfinite(pc3)*np.isfinite(pc4)*np.isfinite(pc5)*np.isfinite(pc6)*np.isfinite(pc7) != 0)[0]
-            print gi.shape, pc1.shape
+            gi = np.where(np.isfinite(pc1)*np.isfinite(pc2)*np.isfinite(pc3)*np.isfinite(pc4)*np.isfinite(pc5)*np.isfinite(pc6)*np.isfinite(pc7)*(mstar >= rf_masscut) != 0)[0]
+            print(gi.shape, pc1.shape)
             rf_dict['pc1']=pc1[gi]
             rf_dict['pc2']=pc2[gi]
             rf_dict['pc3']=pc3[gi]
@@ -262,12 +252,14 @@ def make_sfr_radius_mass_plots(msF,merF):
             rf_dict['pc6']=pc6[gi]
             rf_dict['pc7']=pc7[gi]
             rf_dict['mergerFlag']=boolean_merger1[gi]
+            rf_dict['SubfindID']=sfid[gi]
+
             cols=['pc1','pc2','pc3','pc4','pc5','pc6','pc7']
             rflabel='pcs'
             
         if PARAMS_ONLY is True:
-            gi = np.where(np.isfinite(gini)*np.isfinite(m20)*np.isfinite(asym)*np.isfinite(Mstat)*np.isfinite(Istat)*np.isfinite(Dstat)*np.isfinite(cc) != 0)[0]
-            print gi.shape, pc1.shape
+            gi = np.where(np.isfinite(gini)*np.isfinite(m20)*np.isfinite(asym)*np.isfinite(Mstat)*np.isfinite(Istat)*np.isfinite(Dstat)*np.isfinite(cc)*(mstar >= rf_masscut) != 0)[0]
+            print(gi.shape, pc1.shape)
             rf_dict['gini']=gini[gi]
             rf_dict['m20']=m20[gi]
             rf_dict['asym']=asym[gi]
@@ -276,12 +268,14 @@ def make_sfr_radius_mass_plots(msF,merF):
             rf_dict['Dstat']=Dstat[gi]
             rf_dict['cc']=cc[gi]
             rf_dict['mergerFlag']=boolean_merger1[gi]
+            rf_dict['SubfindID']=sfid[gi]
+
             cols=['gini','m20','asym','Mstat','Istat','Dstat','cc']
             rflabel='params'
             
         if PARAMS_MOD is True:
-            gi = np.where(np.isfinite(S_GM20)*np.isfinite(F_GM20)*np.isfinite(asym)*np.isfinite(Mstat)*np.isfinite(Istat)*np.isfinite(Dstat)*np.isfinite(cc) != 0)[0]
-            print gi.shape, pc1.shape
+            gi = np.where(np.isfinite(S_GM20)*np.isfinite(F_GM20)*np.isfinite(asym)*np.isfinite(Mstat)*np.isfinite(Istat)*np.isfinite(Dstat)*np.isfinite(cc)*(mstar >= rf_masscut) != 0)[0]
+            print(gi.shape, pc1.shape)
             rf_dict['dGM20']=S_GM20[gi]
             rf_dict['fGM20']=F_GM20[gi]
             rf_dict['asym']=asym[gi]
@@ -290,6 +284,8 @@ def make_sfr_radius_mass_plots(msF,merF):
             rf_dict['Dstat']=Dstat[gi]
             rf_dict['cc']=cc[gi]
             rf_dict['mergerFlag']=boolean_merger1[gi]
+            rf_dict['SubfindID']=sfid[gi]
+
             cols=['dGM20','fGM20','asym','Mstat','Istat','Dstat','cc']
             rflabel='paramsmod'
 
@@ -299,8 +295,8 @@ def make_sfr_radius_mass_plots(msF,merF):
             
                 df=pandas.DataFrame(rf_dict)
             
-                print "Running Random Forest... ", sk, fk
-                result, labels, label_probability = pyml.randomForestMC(df,iterations=RF_ITER,cols=cols)
+                print("Running Random Forest... ", sk, fk)
+                result, labels, label_probability = PyML.randomForestMC(df,iterations=RF_ITER,cols=cols)
                 #result = summary statistics, feature importances (N iterations x N statistics/importances)
                 #labels = labels following random forest (N galaxies x N iterations)
                 #label_probability = probability of label following random forest (N galaxies x N iterations)
@@ -312,6 +308,9 @@ def make_sfr_radius_mass_plots(msF,merF):
 
                 labels['mergerFlag']=df['mergerFlag']
                 label_probability['mergerFlag']=df['mergerFlag']
+                labels['SubfindID']=df['SubfindID']
+                label_probability['SubfindID']=df['SubfindID']
+
                 
                 df.to_pickle('rfoutput/'+rflabel+'_data_cut_{}_{}.pkl'.format(sk,fk))
                 result.to_pickle('rfoutput/'+rflabel+'_result_cut_{}_{}.pkl'.format(sk,fk))
@@ -382,6 +381,19 @@ def make_sfr_radius_mass_plots(msF,merF):
         f1.savefig(plot_filen,dpi=300)
         pyplot.close(f1)
 
+        
+        plot_filen = 'merger3/sfr_radius_mass_'+sk+'_'+fk+'_merger3.pdf'
+        if not os.path.lexists('merger3'):
+            os.mkdir('merger3')
+        
+        f1 = pyplot.figure(figsize=(3.5,5.0), dpi=300)
+        pyplot.subplots_adjust(left=0.15, right=0.98, bottom=0.08, top=0.88,wspace=0.0,hspace=0.0)
+        colorobj = plot_sfr_radius_mass(msF,merF,sk,fk,f1,xlim=xlim,ylim=ylim,rlim=rlim,Cval=boolean_merger1,min_bin=3,gridf='normed_proportion_grid',vmin=0.0,vmax=1.0,bins=bins)
+        gth.make_colorbar(colorobj,title='proportion of major mergers',ticks=[0.0,0.5,1.0],format='%.2f')
+
+        f1.savefig(plot_filen,dpi=300)
+        pyplot.close(f1)
+
 
 
         plot_filen = 'mstar_mhalo/sfr_radius_mass_'+sk+'_'+fk+'_mstar_mhalo.pdf'
@@ -419,7 +431,7 @@ def make_sfr_radius_mass_plots(msF,merF):
 
 
 
-def plot_g_m20_cc_a(msF,merF,sk,fk,FIG,xlim,x2lim,ylim,y2lim,Cval,gridf='median_grid',**bin_kwargs):
+def plot_g_m20_cc_a(msF,merF,sk,fk,FIG,xlim,x2lim,ylim,y2lim,Cval,gridf='median_grid',masscut=0.0,**bin_kwargs):
 
     sfr  = get_all_snap_val(msF,sk,'SFR_Msunperyr')
     mstar  = get_all_snap_val(msF,sk,'Mstar_Msun')
@@ -433,7 +445,8 @@ def plot_g_m20_cc_a(msF,merF,sk,fk,FIG,xlim,x2lim,ylim,y2lim,Cval,gridf='median_
     
     labs=11
     axi = FIG.add_subplot(2,1,1)
-    axi.set_ylabel('$C$',labelpad=1,size=labs)    
+    axi.set_ylabel('$C$',labelpad=1,size=labs)
+    axi.set_xlabel('$A$',labelpad=1,size=labs)    
     axi.tick_params(axis='both',which='both',labelsize=labs)
     axi.locator_params(nbins=5,prune='both')
 
@@ -441,9 +454,9 @@ def plot_g_m20_cc_a(msF,merF,sk,fk,FIG,xlim,x2lim,ylim,y2lim,Cval,gridf='median_
     axi.set_ylim(ylim[0],ylim[1])
 
 
-    gi = np.where(np.isfinite(Cval)==True)[0]
+    gi = np.where( (np.isfinite(Cval)==True)*(mstar >= masscut))[0]
     
-    res = gth.make_twod_grid(axi,asym,cc,{'x':Cval[gi]},gridf,**bin_kwargs)
+    res = gth.make_twod_grid(axi,asym[gi],cc[gi],{'x':Cval[gi]},gridf,**bin_kwargs)
     
 
 
@@ -457,49 +470,330 @@ def plot_g_m20_cc_a(msF,merF,sk,fk,FIG,xlim,x2lim,ylim,y2lim,Cval,gridf='median_
 
     
     kpc_per_arcsec = illcos.kpc_proper_per_arcmin(redshift).value/60.0
-
     size_pixels = get_all_morph_val(msF,sk,fk,'RP')
     pix_arcsec  = get_all_morph_val(msF,sk,fk,'PIX_ARCSEC')
-
     size_kpc = size_pixels*pix_arcsec*kpc_per_arcsec
 
-    axi,colorobj = gth.make_twod_grid(axi,m20,gini,{'x':Cval[gi]},gridf,**bin_kwargs)
+
+    
+    axi,colorobj = gth.make_twod_grid(axi,m20[gi],gini[gi],{'x':Cval[gi]},gridf,flipx=True,**bin_kwargs)
     axi.annotate('z = {:3.1f}'.format(redshift) ,xy=(0.80,0.05),ha='center',va='center',xycoords='axes fraction',color='black',size=labs)
     axi.annotate(fk                             ,xy=(0.80,0.15),ha='center',va='center',xycoords='axes fraction',color='black',size=labs)
-
+    if masscut > 0.0:
+        axi.annotate('$log_{10} M_{*} > $'+'{:4.1f}'.format(np.log10(masscut)),xy=(0.80,0.25),ha='center',va='center',xycoords='axes fraction',color='black',size=labs)
+    
     return colorobj
 
 
 
 
-def make_morphology_plots(msF,merF,vardict):
+def make_morphology_plots(msF,merF,vardict=None):
 
-    for sk,fk in zip(vardict['snap_keys'],vardict['fil_keys']):
-
-        bins=18
-
-        xlim=[0.0,0.5]
-        x2lim=[-0.8,-3.5]
-        ylim=[0.4,5.0]
-        y2lim=[0.35,0.75]
+    for sk,fk in zip(snap_keys,fil_keys):
+        parameters, pcd, pc, pcd = make_pc_dict(msF,sk,fk)
+        pc1 = pc.X[:,0].flatten()
+        pc2 = pc.X[:,1].flatten()
+        pc3 = pc.X[:,2].flatten()
+        pc4 = pc.X[:,3].flatten()
+        pc5 = pc.X[:,4].flatten()
+        pc6 = pc.X[:,5].flatten()
+        pc7 = pc.X[:,6].flatten()
+        PCs=pandas.DataFrame(pc.X)
         
+        asym = get_all_morph_val(msF,sk,fk,'ASYM')
+        gini = get_all_morph_val(msF,sk,fk,'GINI')
+        m20 = get_all_morph_val(msF,sk,fk,'M20')
+        cc = get_all_morph_val(msF,sk,fk,'CC')
+        Mstat = get_all_morph_val(msF,sk,fk,'MID1_MPRIME')
+        Istat = get_all_morph_val(msF,sk,fk,'MID1_ISTAT')
+        Dstat = get_all_morph_val(msF,sk,fk,'MID1_DSTAT')
+
+        S_GM20 = SGM20(gini,m20)
+        F_GM20 = FGM20(gini,m20)
+        
+        
+        latest_NumMajorMergersLastGyr = get_mergerinfo_val(merF,sk,'latest_NumMajorMergersLastGyr')
+        boolean_merger1 = latest_NumMajorMergersLastGyr >= 1.0
+        latest_NumMinorMergersLastGyr = get_mergerinfo_val(merF,sk,'latest_NumMinorMergersLastGyr')
+        boolean_merger4 = latest_NumMinorMergersLastGyr >= 1.0
+
+        this_NumMajorMergersLastGyr = get_mergerinfo_val(merF,sk,'this_NumMajorMergersLastGyr')
+        boolean_merger2 = this_NumMajorMergersLastGyr >= 1.0
+        
+
+        mhalo = get_all_snap_val(msF,sk,'Mhalo_Msun')
+        mstar = get_all_snap_val(msF,sk,'Mstar_Msun')
+        log_mstar_mhalo = np.log10( mstar/mhalo )
+
+        redshift = msF['nonparmorphs'][sk][fk]['CAMERA0']['REDSHIFT'].value[0]
+
+        
+        bins=14
+
+        xlim=[0.0,1.0]
+        x2lim=[-0.5,-2.7]
+        ylim=[0.4,5.0]
+        y2lim=[0.35,0.70]
+
+        masscut = 10.0**(10.5)
+        numbers = [3,30]
         
         plot_filen = 'pc1/morphology_'+sk+'_'+fk+'_pc1.pdf'
         if not os.path.lexists('pc1'):
             os.mkdir('pc1')
-        
+        print(plot_filen)
         f1 = pyplot.figure(figsize=(3.5,5.0), dpi=300)
-        pyplot.subplots_adjust(left=0.15, right=0.98, bottom=0.08, top=0.88,wspace=0.0,hspace=0.10)
-        colorobj = plot_g_m20_cc_a(msF,merF,sk,fk,f1,xlim=xlim,x2lim=x2lim,ylim=ylim,y2lim=y2lim,Cval=vardict['pc1'],vmin=-2,vmax=3,bins=bins)
+        pyplot.subplots_adjust(left=0.15, right=0.98, bottom=0.08, top=0.88,wspace=0.0,hspace=0.22)
+        colorobj = plot_g_m20_cc_a(msF,merF,sk,fk,f1,xlim=xlim,x2lim=x2lim,ylim=ylim,y2lim=y2lim,Cval=pc1,vmin=-2,vmax=3,bins=bins,masscut=masscut,numbers=numbers)
         gth.make_colorbar(colorobj,title='PC1 morphology',ticks=[-2,-1,0,1,2,3])
-
-        
         f1.savefig(plot_filen,dpi=300)
         pyplot.close(f1)
 
-    
+        plot_filen = 'pc3/morphology_'+sk+'_'+fk+'_pc1.pdf'
+        if not os.path.lexists('pc3'):
+            os.mkdir('pc3')
+        f1 = pyplot.figure(figsize=(3.5,5.0), dpi=300)
+        pyplot.subplots_adjust(left=0.15, right=0.98, bottom=0.08, top=0.88,wspace=0.0,hspace=0.22)
+        colorobj = plot_g_m20_cc_a(msF,merF,sk,fk,f1,xlim=xlim,x2lim=x2lim,ylim=ylim,y2lim=y2lim,Cval=pc3,vmin=-1,vmax=3,bins=bins,masscut=masscut,numbers=numbers)
+        gth.make_colorbar(colorobj,title='PC3 morphology',ticks=[-1,0,1,2,3])
+        f1.savefig(plot_filen,dpi=300)
+        pyplot.close(f1)
+
+
+        plot_filen = 'asym/morphology_'+sk+'_'+fk+'_pc1.pdf'
+        if not os.path.lexists('asym'):
+            os.mkdir('asym')
+        f1 = pyplot.figure(figsize=(3.5,5.0), dpi=300)
+        pyplot.subplots_adjust(left=0.15, right=0.98, bottom=0.08, top=0.88,wspace=0.0,hspace=0.22)
+        colorobj = plot_g_m20_cc_a(msF,merF,sk,fk,f1,xlim=xlim,x2lim=x2lim,ylim=ylim,y2lim=y2lim,Cval=asym,vmin=0.0,vmax=0.4,bins=bins,masscut=masscut,numbers=numbers)
+        gth.make_colorbar(colorobj,title='Asymmetry',ticks=[0.0,0.2,0.4])
+        f1.savefig(plot_filen,dpi=300)
+        pyplot.close(f1)
+
+
+        plot_filen = 'merger1/morphology_'+sk+'_'+fk+'_merger1.pdf'
+        if not os.path.lexists('merger1'):
+            os.mkdir('merger1')
+        f1 = pyplot.figure(figsize=(3.5,5.0), dpi=300)
+        pyplot.subplots_adjust(left=0.15, right=0.98, bottom=0.08, top=0.88,wspace=0.0,hspace=0.22)
+        colorobj = plot_g_m20_cc_a(msF,merF,sk,fk,f1,xlim=xlim,x2lim=x2lim,ylim=ylim,y2lim=y2lim,Cval=boolean_merger1,min_bin=3,gridf='fraction_grid',vmin=0.0,vmax=0.5,bins=bins,masscut=masscut,numbers=numbers)
+        gth.make_colorbar(colorobj,title='fraction major merger',ticks=[0.0,0.25,0.50],format='%.2f')
+        f1.savefig(plot_filen,dpi=300)
+        pyplot.close(f1)
+
+        
+        plot_filen = 'merger2/morphology_'+sk+'_'+fk+'_merger2.pdf'
+        if not os.path.lexists('merger2'):
+            os.mkdir('merger2')
+        f1 = pyplot.figure(figsize=(3.5,5.0), dpi=300)
+        pyplot.subplots_adjust(left=0.15, right=0.98, bottom=0.08, top=0.88,wspace=0.0,hspace=0.22)
+        colorobj = plot_g_m20_cc_a(msF,merF,sk,fk,f1,xlim=xlim,x2lim=x2lim,ylim=ylim,y2lim=y2lim,Cval=boolean_merger2,min_bin=3,gridf='fraction_grid',vmin=0.0,vmax=0.5,bins=bins,masscut=masscut,numbers=numbers)
+        gth.make_colorbar(colorobj,title='fraction past major merger',ticks=[0.0,0.25,0.50],format='%.2f')
+        f1.savefig(plot_filen,dpi=300)
+        pyplot.close(f1)
+
+
+        plot_filen = 'merger3/morphology_'+sk+'_'+fk+'_merger3.pdf'
+        if not os.path.lexists('merger3'):
+            os.mkdir('merger3')
+        f1 = pyplot.figure(figsize=(3.5,5.0), dpi=300)
+        pyplot.subplots_adjust(left=0.15, right=0.98, bottom=0.08, top=0.88,wspace=0.0,hspace=0.22)
+        colorobj = plot_g_m20_cc_a(msF,merF,sk,fk,f1,xlim=xlim,x2lim=x2lim,ylim=ylim,y2lim=y2lim,Cval=boolean_merger1,min_bin=3,gridf='normed_proportion_grid',vmin=0.0,vmax=1.0,bins=bins,masscut=masscut,numbers=numbers)
+        gth.make_colorbar(colorobj,title='proportion of major mergers',ticks=[0.0,0.5,1.0],format='%.2f')
+        f1.savefig(plot_filen,dpi=300)
+        pyplot.close(f1)
+
+
+        plot_filen = 'merger4/morphology_'+sk+'_'+fk+'_merger4.pdf'
+        if not os.path.lexists('merger4'):
+            os.mkdir('merger4')
+        f1 = pyplot.figure(figsize=(3.5,5.0), dpi=300)
+        pyplot.subplots_adjust(left=0.15, right=0.98, bottom=0.08, top=0.88,wspace=0.0,hspace=0.22)
+        colorobj = plot_g_m20_cc_a(msF,merF,sk,fk,f1,xlim=xlim,x2lim=x2lim,ylim=ylim,y2lim=y2lim,Cval=boolean_merger4,min_bin=3,gridf='fraction_grid',vmin=0.0,vmax=0.5,bins=bins,masscut=masscut,numbers=numbers)
+        gth.make_colorbar(colorobj,title='fraction minor+major merger',ticks=[0.0,0.25,0.50],format='%.2f')
+        f1.savefig(plot_filen,dpi=300)
+        pyplot.close(f1)
+        
+        
+        
+        plot_filen = 'mstar_mhalo/morphology_'+sk+'_'+fk+'_mstar_mhalo.pdf'
+        if not os.path.lexists('mstar_mhalo'):
+            os.mkdir('mstar_mhalo')
+        f1 = pyplot.figure(figsize=(3.5,5.0), dpi=300)
+        pyplot.subplots_adjust(left=0.15, right=0.98, bottom=0.08, top=0.88,wspace=0.0,hspace=0.22)
+        colorobj = plot_g_m20_cc_a(msF,merF,sk,fk,f1,xlim=xlim,x2lim=x2lim,ylim=ylim,y2lim=y2lim,Cval=log_mstar_mhalo,min_bin=3,gridf='median_grid',vmin=-2.0,vmax=-0.5,bins=bins,masscut=masscut,numbers=numbers)
+        gth.make_colorbar(colorobj,title='median $log_{10} M_*/M_{h}$',ticks=[-2,-1.5,-1,-0.5])
+        f1.savefig(plot_filen,dpi=300)
+        pyplot.close(f1)
+
+
+        plot_filen = 'mhalo/morphology_'+sk+'_'+fk+'_mhalo.pdf'
+        if not os.path.lexists('mhalo'):
+            os.mkdir('mhalo')
+        f1 = pyplot.figure(figsize=(3.5,5.0), dpi=300)
+        pyplot.subplots_adjust(left=0.15, right=0.98, bottom=0.08, top=0.88,wspace=0.0,hspace=0.22)
+        colorobj = plot_g_m20_cc_a(msF,merF,sk,fk,f1,xlim=xlim,x2lim=x2lim,ylim=ylim,y2lim=y2lim,Cval=np.log10(mhalo),min_bin=3,gridf='median_grid',vmin=11.5,vmax=14.0,bins=bins,masscut=masscut,numbers=numbers)
+        gth.make_colorbar(colorobj,title='median $log_{10} M_{h}$',ticks=[11.5,12.0,13.0,14.0])
+        f1.savefig(plot_filen,dpi=300)
+        pyplot.close(f1)
+
+        
+
+        
     return locals()
 
+
+def make_rf_evolution_plots(rflabel='paramsmod',rf_masscut=0.0):
+
+
+    plot_filen = 'rf_plots/global_stats.pdf'
+    if not os.path.lexists('rf_plots'):
+        os.mkdir('rf_plots')
+    f1 = pyplot.figure(figsize=(3.5,3.0), dpi=300)
+    pyplot.subplots_adjust(left=0.18, right=0.98, bottom=0.15, top=0.98,wspace=0.0,hspace=0.0)
+
+
+    imp_filen = 'rf_plots/importance_stats.pdf'
+    if not os.path.lexists('rf_plots'):
+        os.mkdir('rf_plots')
+    f2 = pyplot.figure(figsize=(3.5,3.0), dpi=300)
+    pyplot.subplots_adjust(left=0.18, right=0.98, bottom=0.15, top=0.98,wspace=0.0,hspace=0.0)
+
+
+    labs=11
+    axi = f1.add_subplot(1,1,1)
+    axi.set_xlim(0.2,4.5)
+    axi.set_ylim(-0.01,1.1)
+    axi.tick_params(axis='both',which='both',labelsize=labs)
+    axi.locator_params(nbins=7,prune='both')
+
+    axi.set_xlabel('redshift')
+    axi.set_ylabel('value')
+    
+    axi2 = f2.add_subplot(1,1,1)
+    axi2.set_xlim(0.2,4.5)
+    axi2.set_ylim(0.3,1.99)
+    axi2.tick_params(axis='both',which='both',labelsize=labs)
+    axi2.locator_params(nbins=7,prune='both')
+
+    axi2.set_xlabel('redshift')
+    axi2.set_ylabel('relative importance')
+    
+    imp_norm = 1.0/7.0
+
+    if rflabel=='paramsmod':
+        cols=['dGM20','fGM20','asym','Mstat','Istat','Dstat','cc']
+        syms=['^g','<r','ok','sb','sg','sy','*k']
+    else:
+        assert(False)
+
+
+    for sk,fk in zip(snap_keys,fil_keys):
+        parameters, pcd, pc, pcd = make_pc_dict(msF,sk,fk)
+        pc1 = pc.X[:,0].flatten()
+        pc2 = pc.X[:,1].flatten()
+        pc3 = pc.X[:,2].flatten()
+        pc4 = pc.X[:,3].flatten()
+        pc5 = pc.X[:,4].flatten()
+        pc6 = pc.X[:,5].flatten()
+        pc7 = pc.X[:,6].flatten()
+        PCs=pandas.DataFrame(pc.X)
+        
+        asym = get_all_morph_val(msF,sk,fk,'ASYM')
+        gini = get_all_morph_val(msF,sk,fk,'GINI')
+        m20 = get_all_morph_val(msF,sk,fk,'M20')
+        cc = get_all_morph_val(msF,sk,fk,'CC')
+        Mstat = get_all_morph_val(msF,sk,fk,'MID1_MPRIME')
+        Istat = get_all_morph_val(msF,sk,fk,'MID1_ISTAT')
+        Dstat = get_all_morph_val(msF,sk,fk,'MID1_DSTAT')
+
+        #S_GM20 = SGM20(gini,m20)
+        #F_GM20 = FGM20(gini,m20)
+        
+        
+        latest_NumMajorMergersLastGyr = get_mergerinfo_val(merF,sk,'latest_NumMajorMergersLastGyr')
+        boolean_merger1 = latest_NumMajorMergersLastGyr >= 1.0
+        latest_NumMinorMergersLastGyr = get_mergerinfo_val(merF,sk,'latest_NumMinorMergersLastGyr')
+        boolean_merger4 = latest_NumMinorMergersLastGyr >= 1.0
+
+        this_NumMajorMergersLastGyr = get_mergerinfo_val(merF,sk,'this_NumMajorMergersLastGyr')
+        boolean_merger2 = this_NumMajorMergersLastGyr >= 1.0
+        
+
+        mhalo = get_all_snap_val(msF,sk,'Mhalo_Msun')
+        mstar = get_all_snap_val(msF,sk,'Mstar_Msun')
+        log_mstar_mhalo = np.log10( mstar/mhalo )
+
+        redshift = msF['nonparmorphs'][sk][fk]['CAMERA0']['REDSHIFT'].value[0]
+        ins = fk.split('-')[0]
+        if redshift > 4.2:
+            continue
+        
+        data_file = 'rfoutput/'+rflabel+'_data_cut_{}_{}.pkl'.format(sk,fk)
+        result_file= 'rfoutput/'+rflabel+'_result_cut_{}_{}.pkl'.format(sk,fk)
+        labels_file = 'rfoutput/'+rflabel+'_labels_cut_{}_{}.pkl'.format(sk,fk)
+        prob_file = 'rfoutput/'+rflabel+'_label_probability_cut_{}_{}.pkl'.format(sk,fk)
+        pcs_file= 'rfoutput/'+rflabel+'_pc_cut_{}_{}.pkl'.format(sk,fk)
+
+        rf_data = np.load(data_file,encoding='bytes')
+        rf_asym = rf_data['asym'].values
+        rf_flag = rf_data['mergerFlag'].values
+        #rf_sgm20 = rf_data['dGM20'].values
+        rf_cc = rf_data['cc'].values
+        
+        asym_classifier = rf_asym > 0.25
+        asym_com,asym_ppv = simple_classifier_stats(asym_classifier,rf_flag)
+
+        #sgm_classifier = rf_sgm20 > 0.10
+        #sgm_com,sgm_ppv = simple_classifier_stats(sgm_classifier,rf_flag)
+
+        #three_classifier = np.logical_or(rf_asym > 0.35,rf_sgm20 > 0.10)
+        #three_com,three_ppv = simple_classifier_stats(three_classifier,rf_flag)
+        
+
+        result = np.load(result_file)
+        completeness = np.median(result['completeness'].values)
+        ppv = np.median(result['ppv'].values)
+        probs = np.load(prob_file)
+        iters = result['completeness'].values.shape[0]
+
+        print('redshift: {:3.1f}   filter: {:15s}   RF sample size: {:8d}   # True mergers: {} '.format(redshift,fk,rf_asym.shape[0],np.sum(rf_flag)))
+        
+
+        for ck,sym in zip(cols,syms):
+            imp = np.median(result[ck])/imp_norm
+            axi2.plot(redshift,imp,sym,markersize=6)
+
+        if ins=='WFC3':
+            symbol='o'
+            symcol='black'
+            symsiz=8
+        if ins=='ACS':
+            symbol='s'
+            symcol='Blue'
+            symsiz=8
+        if ins=='NC':
+            symbol='^'
+            symcol='red'
+            symsiz=8
+            
+        
+        axi.plot(redshift,completeness,marker=symbol,markersize=symsiz,markerfacecolor=symcol,markeredgecolor='None')
+        axi.plot(redshift,ppv,marker=symbol,markersize=symsiz,markeredgecolor=symcol,markerfacecolor='None')
+
+        axi.plot(redshift,asym_com,marker=symbol,markersize=symsiz/2,markerfacecolor=symcol,markeredgecolor='None')
+        axi.plot(redshift,asym_ppv,marker=symbol,markersize=symsiz/2,markeredgecolor=symcol,markerfacecolor='None')
+
+        
+    f1.savefig(plot_filen,dpi=300)
+    pyplot.close(f1)
+
+    axi2.legend(cols,fontsize=8,ncol=3,loc='upper center',numpoints=1)
+    f2.savefig(imp_filen,dpi=300)
+    pyplot.close(f2)
+
+        
+    return locals()
 
 
 
@@ -507,11 +801,14 @@ if __name__=="__main__":
 
 
     morph_stat_file = '/astro/snyder_lab2/Illustris/MorphologyAnalysis/nonparmorphs_SB25_12filters_all_NEW.hdf5'
+    #morph_stat_file = '/astro/snyder_lab2/Illustris/MorphologyAnalysis/nonparmorphs_SB27_12filters_all_NEW.hdf5'
+
     merger_file = '/astro/snyder_lab2/Illustris/MorphologyAnalysis/imagedata_mergerinfo.hdf5'
+    #merger_file = '/astro/snyder_lab2/Illustris/MorphologyAnalysis/imagedata_mergerinfo_SB27.hdf5'
 
 
     with h5py.File(morph_stat_file,'r') as msF:
         with h5py.File(merger_file,'r') as merF:
-            localvars = make_sfr_radius_mass_plots(msF,merF)
-            localvars = make_morphology_plots(msF,merF,localvars)
-    
+            localvars = make_sfr_radius_mass_plots(msF,merF,rfiter=10)
+            localvars = make_rf_evolution_plots(rflabel='paramsmod',rf_masscut=10.0**(10.5))
+            #localvars = make_morphology_plots(msF,merF)
