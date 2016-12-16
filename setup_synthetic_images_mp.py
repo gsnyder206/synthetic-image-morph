@@ -41,6 +41,9 @@ from astropy.visualization import *
 import astropy.io.fits as pyfits
 import statmorph
 import datetime
+from multiprocessing import Process, Queue, current_process
+import time
+
 
 imdpi = 600
 
@@ -309,9 +312,9 @@ def generate_filter_images(bbfile, snapnum,subdirnum,sh_id,ci,custom_filename_sb
     return openlist
 
 
-def analyze_image_morphology(custom_filename,filter_index,segmap_filename,segmap_hdu,
+def analyze_image_morphology(custom_filename,filter_index,segmap_filename,
                              seg_image,seg_header,seg_npix,seg_filter_label,clabel,cpos0,cpos1,
-                             figure,nx,ny,totalcount,analyze=True,clobber=False,idl_filename=None,python_outfile=None):
+                             analyze=True,clobber=False,idl_filename=None,python_outfile=None):
 
     assert (os.path.lexists(custom_filename))
 
@@ -352,9 +355,9 @@ def analyze_image_morphology(custom_filename,filter_index,segmap_filename,segmap
             #must confirm validity of centering data
         else:
             rebinned_segmap = seg_image
-            #print rebinned_segmap.shape, np.min(rebinned_segmap), np.max(rebinned_segmap)
-            saveseg_hdu = segmap_hdu
-
+            #saveseg_hdu = segmap_hdu  #don't want to pass segmap_hdu because it is an object (unpickleable for child process maybe?)
+            saveseg_hdu = pyfits.ImageHDU(rebinned_segmap,header=seg_header)
+            
 
         #save segmap
         new_hdulist.append(saveseg_hdu)
@@ -438,7 +441,7 @@ def analyze_image_morphology(custom_filename,filter_index,segmap_filename,segmap
                         mhdu = None
                         ap_seghdu = None
 
-                    result = plot_test_stamp(image_hdu,saveseg_hdu,tbhdu,cmhdu,mhdu,ap_seghdu,figure,nx,ny,totalcount)
+                    #result = plot_test_stamp(image_hdu,saveseg_hdu,tbhdu,cmhdu,mhdu,ap_seghdu,figure,nx,ny,totalcount)
 
                     assert (nc<=1)
                         
@@ -447,10 +450,36 @@ def analyze_image_morphology(custom_filename,filter_index,segmap_filename,segmap
             #save container to file, overwriting as needed
             new_hdulist.writeto(custom_filename,clobber=True)
 
+    #return_dict = {}
+    #return_dict['image_hdu']=image_hdu
+    #return_dict['saveseg_hdu']=saveseg_hdu
+    #return_dict['tbhdu']=tbhdu
+    #return_dict['cmhdu']=cmhdu
+    #return_dict['mhdu']=mhdu
+    #return_dict['ap_seghdu']=ap_seghdu
+    
+    return custom_filename
 
-    return 1
+#def plot_test_stamp(image_hdu,saveseg_hdu,tbhdu,cmhdu,mhdu,ap_seghdu,figure,nx,ny,totalcount):
+def plot_test_stamp(filename,figure,nx,ny,totalcount):
+    
+    hlist = pyfits.open(filename)
+    image_hdu = hlist['SYNTHETIC_IMAGE']
+    saveseg_hdu = hlist['SEGMAP']
 
-def plot_test_stamp(image_hdu,saveseg_hdu,tbhdu,cmhdu,mhdu,ap_seghdu,figure,nx,ny,totalcount):
+    tbhdu = hlist['PhotUtilsMeasurements']
+    
+    try:
+        mhdu = hlist['LotzMorphMeasurements']
+    except KeyError as e:
+        mhdu = None
+
+    try:
+        ap_seghdu = hlist['APSEGMAP']
+    except KeyError as e:
+        ap_seghdu = None
+
+        
     #initialize axis
     axi = figure.add_subplot(ny,nx,totalcount+1) 
     axi.set_xticks([]) ; axi.set_yticks([])
@@ -496,7 +525,152 @@ def plot_test_stamp(image_hdu,saveseg_hdu,tbhdu,cmhdu,mhdu,ap_seghdu,figure,nx,n
 
     return 1
 
-def process_single_broadband(bbfile,analysis_object,bbase='broadband_red_',clobber=False, analyze=True, do_idl=False):
+
+
+
+def morphology_loop(custom_filename,filter_index,segmap_filename,
+                    seg_image,seg_header,seg_npix,seg_filter_label,clabel,cpos0,cpos1,
+                    figure,nx,ny,filter_lambda_order,analyze_this,clobber,
+                    idl_input_file,py_output_file):
+    
+    filename='empty'
+    
+    try:
+        filename = analyze_image_morphology(custom_filename,filter_index,segmap_filename,
+                                               seg_image,seg_header,seg_npix,seg_filter_label,clabel,cpos0,cpos1,
+                                               analyze=analyze_this,clobber=clobber,
+                                               idl_filename=idl_input_file,python_outfile=py_output_file)
+
+    except (KeyboardInterrupt, AttributeError, TypeError) as e:
+        print e
+        raise
+    except:
+        print "Exception while analyzing image morphology: ", custom_filename
+        print "Error:", sys.exc_info()[0]
+    else:
+        pass
+
+        
+    return filename,filter_lambda_order
+
+def test_task(custom_filename,filter_index,segmap_filename,
+              seg_image,seg_header,seg_npix,seg_filter_label,clabel,cpos0,cpos1,
+              figure,nx,ny,filter_lambda_order,analyze_this,clobber,
+              idl_input_file,py_output_file):
+    thing = 2
+    return thing
+
+
+def worker(input,output,**kwargs):
+    for func, args in iter(input.get,'STOP'):
+        f = calculate(func,args,**kwargs)
+        output.put(f)
+
+def calculate(func,args,**kwargs):
+    result = func(*args,**kwargs)
+    #return '%s was given %s and got %s' % \
+    #         (current_process().name, args, result)
+    return result
+
+
+
+def process_mag(analysis_object,bb_dir,snap_prefix,camstring,maglim,analyze,
+                segmap_filename,seg_image,seg_header,seg_npix,seg_filter_label,
+                clabel,cpos0,cpos1,figure,nx,ny,clobber,idl_input_file,py_output_file,
+                Np=2,maxq=10000,lim=None):
+    
+    N_filters = len(analysis_object.filter_labels)
+
+    NUMBER_OF_PROCESSES=Np
+    task_queue = Queue()
+    done_queue = Queue()
+    TASKS = []
+    TASKS_DONE = []
+    TASKS_LEFT = []
+
+    if lim is None:
+        lim=np.int64(N_filters)
+
+    number_queued = 0
+
+
+
+    print 'maxq ', maxq
+    print 'np   ', Np
+    
+    for i,filter_label in enumerate(analysis_object.filter_labels):
+        sys.stdout.flush()
+        
+        filter_index = analysis_object.filter_indices[i]
+        filter_lambda_order = analysis_object.filter_lambda_order[i]
+        custom_filename_sb00 = os.path.join(bb_dir,snap_prefix+'cam'+camstring+'_'+filter_label+'_SB00.fits')
+        custom_filename = custom_filename_sb00.rstrip('SB00.fits')+'SB{:2.0f}.fits'.format(maglim)
+        skipfilter = analysis_object.skip_filters[i]
+
+        if skipfilter or not analyze:
+            analyze_this=False
+        else:
+            analyze_this=True
+
+        params = (custom_filename,filter_index,segmap_filename,
+                  seg_image,seg_header,seg_npix,seg_filter_label,clabel,cpos0,cpos1,
+                  figure,nx,ny,filter_lambda_order,analyze_this,clobber,
+                  idl_input_file,py_output_file)
+        
+        if not os.path.lexists(custom_filename):
+            print "Missing a file, skipping... ", custom_filename
+        else:
+
+            number_queued = number_queued + 1
+
+            #It appears multiprocessing fails when sending an astropy.io.fits HDU object to the child processes
+            #segmap_hdu is passed along to save next to the images; could we send it in another form?  data+header?
+
+            #now successfully entering code loop, but similar failure. some edge case when objects get returned/passed?
+            #yup -- seems impossible to pass astropy fits HDU objects in OR out of child process
+            
+            #task = (test_task,(filter_index,))
+            task = (morphology_loop,(custom_filename,filter_index,segmap_filename,
+                               seg_image,seg_header,seg_npix,seg_filter_label,clabel,cpos0,cpos1,
+                               figure,nx,ny,filter_lambda_order,analyze_this,clobber,
+                               idl_input_file,py_output_file))
+            
+            if i <= maxq:
+                task_queue.put(task)
+                TASKS.append(task)
+            else:
+                TASKS_LEFT.append(task)
+
+
+        
+
+    for p in range(NUMBER_OF_PROCESSES):
+        Process(target=worker,args=(task_queue,done_queue)).start()
+
+    finished_objs = []
+        
+    while len(TASKS_LEFT) > 0:
+        finished_objs.append(done_queue.get())
+        newtask = TASKS_LEFT.pop()
+        task_queue.put(newtask)
+
+    for i in range(min(maxq,number_queued)):
+        print "appending done object: ", i
+        finished_objs.append(done_queue.get())
+
+    print finished_objs[0]
+
+    for p in range(NUMBER_OF_PROCESSES):
+        task_queue.put('STOP')
+
+
+    return finished_objs
+
+
+
+
+
+def process_single_broadband(bbfile,analysis_object,bbase='broadband_red_',clobber=False, analyze=True, do_idl=False, Np=2,maxq=10000,lim=None):
     #create subdirectory to hold mock images and analyses
     end = bbfile[-3:]
     if end=='.gz':
@@ -617,6 +791,7 @@ def process_single_broadband(bbfile,analysis_object,bbase='broadband_red_',clobb
     for camindex,ci in enumerate(use_camind):
         camstring = '{:02}'.format(ci)
 
+
         for mag_i,maglim in enumerate(analysis_object.magsb_limits):
 
             #segmap is well defined now, find and load it here
@@ -631,46 +806,26 @@ def process_single_broadband(bbfile,analysis_object,bbase='broadband_red_',clobb
             cpos0 = segmap_hdu.header['POS0']
             cpos1 = segmap_hdu.header['POS1']
             print '   loaded segmentation map with properties ', segmap_filename, seg_npix, clabel, cpos0, cpos1
-
+            
             #one figure per depth and viewing angle -- all filters
             outfigname = os.path.join(bb_dir,snap_prefix+'cam'+camstring+'_'+'SB{:2.0f}'.format(maglim)+'_test.pdf')
             figure,deltax,deltay,nx,ny = initialize_test_figure()
-            axiscount = 0
 
 
-            for i,filter_label in enumerate(analysis_object.filter_labels):
-                sys.stdout.flush()
+            finished_objs = process_mag(analysis_object,bb_dir,snap_prefix,camstring,maglim,analyze,
+                                        segmap_filename,seg_image,seg_header,seg_npix,seg_filter_label,
+                                        clabel,cpos0,cpos1,figure,nx,ny,clobber,idl_input_file,py_output_file,
+                                        Np=Np,maxq=maxq,lim=lim)
 
-                filter_index = analysis_object.filter_indices[i]
-                filter_lambda_order = analysis_object.filter_lambda_order[i]
-                custom_filename_sb00 = os.path.join(bb_dir,snap_prefix+'cam'+camstring+'_'+filter_label+'_SB00.fits')
-                custom_filename = custom_filename_sb00.rstrip('SB00.fits')+'SB{:2.0f}.fits'.format(maglim)
-                skipfilter = analysis_object.skip_filters[i]
 
-                if skipfilter or not analyze:
-                    analyze_this=False
-                else:
-                    analyze_this=True
-
-                try:
-                    result = analyze_image_morphology(custom_filename,filter_index,segmap_filename,segmap_hdu,
-                                                      seg_image,seg_header,seg_npix,seg_filter_label,clabel,cpos0,cpos1,
-                                                      figure,nx,ny,filter_lambda_order,analyze=analyze_this,clobber=clobber,
-                                                      idl_filename=idl_input_file,python_outfile=py_output_file)
-                    axiscount=axiscount+1
-                except (KeyboardInterrupt, AttributeError) as e:
-                    print e
-                    raise
-                except:
-                    print "Exception while analyzing image morphology: ", custom_filename
-                    print "Error:", sys.exc_info()[0]
-                else:
-                    pass
+            for i,seq in enumerate(finished_objs):
+                print seq
+                res = plot_test_stamp(seq[0],figure,nx,ny,seq[1])
+                
 
             #save test figure, one for each depth
             figure.savefig(outfigname,dpi=imdpi)
             pyplot.close(figure)
-
 
 
     #run IDL morph for comparison tests

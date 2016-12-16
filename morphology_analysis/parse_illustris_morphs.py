@@ -748,7 +748,7 @@ def output_full_catalog(dataobjs,snaps,filter=['WFC3-F160W'],label='SB25',camera
     #dataobjs,snaps = load_everything(base_directory=base_directory,filename=filename)
     #gini,m20,cc,rpe,rhc,snp,sfid
 
-
+    
     output_dataset = {}
     for s in snaps:
         output_dataset[s] = {}
@@ -805,7 +805,14 @@ def output_full_catalog(dataobjs,snaps,filter=['WFC3-F160W'],label='SB25',camera
             output_dataset[s]['APPROXPSF_ARCSEC']=dataobjs['morph'][s].approx_psf_fwhm_arcsec[:,:,:,0]
             output_dataset[s]['REDSHIFT']=dataobjs['morph'][s].redshift[:,:,:,0]
 
+            i=dataobjs['morph'][s].unique_subhalo_inverse
+            j=dataobjs['morph'][s].cam_indices
+            k=dataobjs['morph'][s].fil_indices
 
+            imfiles = np.empty_like(dataobjs['morph'][s].gini[:,:,:,0],dtype='|S100')
+            imfiles[i,j,k]=dataobjs['morph'][s].image_files
+            output_dataset[s]['IMFILES']=imfiles
+            
     outfile = 'nonparmorphs_'+label+'.hdf5'
 
     with h5py.File(outfile,'w') as writefile:
@@ -837,11 +844,15 @@ def output_full_catalog(dataobjs,snaps,filter=['WFC3-F160W'],label='SB25',camera
 
                     for field in output_dataset[s].keys():
                         this_array = output_dataset[s][field][:,c,fi].flatten()
-                        nan_values = np.where(this_array == -9.0,np.nan*np.ones_like(this_array),this_array)
+                        if field != 'IMFILES':
+                            nan_values = np.where(this_array == -9.0,np.nan*np.ones_like(this_array),this_array)
                         if field=='MAG' or field=='MAG_ERR':
                             nan_values = np.where(nan_values==-1.0,np.nan*np.ones_like(nan_values),nan_values)
 
-                        dset = cfsgrp.create_dataset(field,data=nan_values)
+                        if field=='IMFILES':
+                            dset = cfsgrp.create_dataset(field,data=this_array)
+                        else:
+                            dset = cfsgrp.create_dataset(field,data=nan_values)
 
     return
 
@@ -1000,6 +1011,8 @@ shfields=['SubhaloBHMass','SubhaloBHMdot','SubhaloGrNr','SubhaloMass','SubhaloMa
 
 if __name__=="__main__":
     #compare_060_000()
-    make_master_catalog(depth='SB25')
+    #make_master_catalog(depth='SB25')
     #make_master_catalog(depth='SB27')
-    make_master_catalog(depth='SB29')
+    #make_master_catalog(depth='SB29')
+    base_directory='/astro/snyder_lab/Illustris_CANDELS/Illustris-1_z1_images_bc03/'
+    morph_data_obj = parse_illustris_morph_snapshot(snapshot_directory=os.path.join(base_directory,'snapshot_068'),depth='SB27')

@@ -43,7 +43,7 @@ import datetime
 import setup_synthetic_images_mp as ssimp
 
 
-def process_snapshot(subdirpath='.',mockimage_parameters=None,clobber=False, max=None, galaxy=None,seg_filter_label='NC-F200W',magsb_limits=[23.0,25.0,27.0,29.0],camindices=[0,1,2,3],do_idl=False,analyze=True,use_nonscatter=True):
+def process_snapshot(subdirpath='.',mockimage_parameters=None,clobber=False, max=None, galaxy=None,seg_filter_label='NC-F200W',magsb_limits=[23.0,25.0,27.0,29.0],camindices=[0,1,2,3],do_idl=False,analyze=True,use_nonscatter=True,Np=2):
 
     cwd = os.path.abspath(os.curdir)
 
@@ -248,7 +248,7 @@ def process_snapshot(subdirpath='.',mockimage_parameters=None,clobber=False, max
     for i,bbfile in enumerate(bbfile_list):
 
         try:
-            bbdir = ssimp.process_single_broadband(bbfile,mockimage_parameters,clobber=clobber,do_idl=do_idl,analyze=analyze,bbase="broadbandz")
+            bbdir = ssimp.process_single_broadband(bbfile,mockimage_parameters,clobber=clobber,do_idl=do_idl,analyze=analyze,bbase="broadbandz",Np=Np)
             bbdirs.append(bbdir)
         except (KeyboardInterrupt,NameError,AttributeError,KeyError,TypeError,IndexError) as e:
             print e
@@ -269,7 +269,6 @@ def process_snapshot(subdirpath='.',mockimage_parameters=None,clobber=False, max
 if __name__=="__main__":
 
 
-    #res = process_snapshot(subdirpath='.',clobber=False,seg_filter_label='NC-F200W',magsb_limits=[25.0,29.0],camindices=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16],do_idl=False,analyze=True)
-    #res = process_snapshot(subdirpath='.',clobber=True,seg_filter_label='NC-F200W',magsb_limits=[25.0,29.0],camindices=[0,1],do_idl=False,analyze=False,use_nonscatter=False)
-    res = process_snapshot(subdirpath='.',clobber=False,seg_filter_label='NC-F200W',magsb_limits=[25.0,27.0],camindices=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18],do_idl=False,analyze=True,use_nonscatter=False)
-    res = process_snapshot(subdirpath='.',clobber=False,seg_filter_label='NC-F200W',magsb_limits=[25.0,27.0],camindices=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18],do_idl=False,analyze=True,use_nonscatter=True)
+
+    res = process_snapshot(subdirpath='.',clobber=False,seg_filter_label='NC-F200W',magsb_limits=[25.0,27.0],camindices=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18],do_idl=False,analyze=True,use_nonscatter=False,Np=10)
+    res = process_snapshot(subdirpath='.',clobber=False,seg_filter_label='NC-F200W',magsb_limits=[25.0,27.0],camindices=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18],do_idl=False,analyze=True,use_nonscatter=True,Np=10)

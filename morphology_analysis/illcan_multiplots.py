@@ -36,7 +36,7 @@ import PyML.machinelearning
 import gfs_twod_histograms as gth
 import pandas
 import h5py
-
+import make_color_image
 
 
 ilh = 0.704
@@ -48,6 +48,50 @@ snap_keys = ['snapshot_103','snapshot_103','snapshot_085','snapshot_085','snapsh
              'snapshot_064','snapshot_064','snapshot_060','snapshot_060','snapshot_054', 'snapshot_049','snapshot_041']
 fil_keys =  ['ACS-F606W',  'WFC3-F105W',   'ACS-F814W',  'WFC3-F105W',  'WFC3-F105W',  'NC-F115W',  'NC-F150W',    'WFC3-F160W',  'NC-F115W',  'NC-F150W',
              'WFC3-F160W',  'NC-F150W'    ,'WFC3-F160W',  'NC-F200W'    ,'NC-F200W'    , 'NC-F277W',   'NC-F277W']    
+
+im_snap_keys = ['snapshot_103','snapshot_085','snapshot_075','snapshot_068',
+             'snapshot_064','snapshot_060','snapshot_054', 'snapshot_049']
+
+im_fil_keys = {}
+im_fil_keys['snapshot_103']={}
+im_fil_keys['snapshot_103']['b']=['NC-F115W']
+im_fil_keys['snapshot_103']['g']=['NC-F150W']
+im_fil_keys['snapshot_103']['r']=['NC-F200W']
+
+im_fil_keys['snapshot_085']={}
+im_fil_keys['snapshot_085']['b']=['NC-F115W']
+im_fil_keys['snapshot_085']['g']=['NC-F150W']
+im_fil_keys['snapshot_085']['r']=['NC-F200W']
+
+im_fil_keys['snapshot_075']={}
+im_fil_keys['snapshot_075']['b']=['NC-F115W']
+im_fil_keys['snapshot_075']['g']=['NC-F150W']
+im_fil_keys['snapshot_075']['r']=['NC-F200W']
+
+im_fil_keys['snapshot_068']={}
+im_fil_keys['snapshot_068']['b']=['NC-F115W']
+im_fil_keys['snapshot_068']['g']=['NC-F150W']
+im_fil_keys['snapshot_068']['r']=['NC-F200W']
+
+im_fil_keys['snapshot_064']={}
+im_fil_keys['snapshot_064']['b']=['NC-F115W']
+im_fil_keys['snapshot_064']['g']=['NC-F150W']
+im_fil_keys['snapshot_064']['r']=['NC-F200W']
+
+im_fil_keys['snapshot_060']={}
+im_fil_keys['snapshot_060']['b']=['NC-F115W']
+im_fil_keys['snapshot_060']['g']=['NC-F150W']
+im_fil_keys['snapshot_060']['r']=['NC-F200W']
+
+im_fil_keys['snapshot_054']={}
+im_fil_keys['snapshot_054']['b']=['NC-F115W']
+im_fil_keys['snapshot_054']['g']=['NC-F150W']
+im_fil_keys['snapshot_054']['r']=['NC-F200W']
+
+im_fil_keys['snapshot_049']={}
+im_fil_keys['snapshot_049']['b']=['NC-F115W']
+im_fil_keys['snapshot_049']['g']=['NC-F150W']
+im_fil_keys['snapshot_049']['r']=['NC-F200W']
 
 
 def simple_classifier_stats(classifications,labels):
@@ -797,10 +841,86 @@ def make_rf_evolution_plots(rflabel='paramsmod',rf_masscut=0.0):
 
 
 
+def make_pc1_images(msF,merF,bd='/astro/snyder_lab/Illustris_CANDELS/Illustris-1_z1_images_bc03/'):
+
+
+    plot_filen = 'images/pc1_deciles.pdf'
+    if not os.path.lexists('images'):
+        os.mkdir('images')
+    f1 = pyplot.figure(figsize=(8.0,10.0), dpi=600)
+    pyplot.subplots_adjust(left=0.0, right=1.0, bottom=0.0, top=1.0,wspace=0.0,hspace=0.0)
+
+    N_columns = 8
+    N_rows = 10
+    N_pix = 80
+    
+    
+    for j,sk in enumerate(im_snap_keys):
+
+        #pick filter to select PC1 values
+        r_fk = im_fil_keys[sk]['r'][0]
+        g_fk = im_fil_keys[sk]['g'][0]
+        b_fk = im_fil_keys[sk]['b'][0]
+
+        parameters, pcd, pc, pcd = make_pc_dict(msF,sk,r_fk)
+        pc1 = pc.X[:,0].flatten()  #all fk's pc1 values for this snapshot
+        mag = get_all_morph_val(msF,sk,r_fk,'MAG')
+        mstar = get_all_snap_val(msF,sk,'Mstar_Msun')
+        
+        r_imf = get_all_morph_val(msF,sk,r_fk,'IMFILES')
+        g_imf = get_all_morph_val(msF,sk,g_fk,'IMFILES')
+        b_imf = get_all_morph_val(msF,sk,b_fk,'IMFILES')
+
+        #select indices  whose images we want
+        pc1_bins = np.asarray([-2.0,-1.5,-1.0,-0.5,0.0,0.5,1.0,1.5,2.0,2.5])
+        mstar_bins = 10.0**np.asarray([10.0,10.1,10.2,10.3,10.4,10.5,10.7,10.9,11.1,11.3])
+        
+        for i,pb in enumerate(pc1_bins):
+            pi = np.where(np.logical_and( pc1 < pb+0.5, pc1 >= pb) )[0]
+            
+            msi = pi #np.where(np.logical_and( mstar < pb+1.0e9, mstar >=pb))[0]
+            
+            if msi.shape[0]==0:
+                continue
+            
+            mi = -1#np.argmin(mag[msi])
+            
+            r_im = bd+sk+'/'+r_imf[msi[mi]]
+            g_im = bd+sk+'/'+g_imf[msi[mi]]
+            b_im = bd+sk+'/'+b_imf[msi[mi]]
+            
+            r = pyfits.open(r_im)[0].data
+            g = pyfits.open(g_im)[0].data
+            b = pyfits.open(b_im)[0].data
+            print(r_im,r.shape)
+            mid = r.shape[0]/2
+
+            r = r[mid-N_pix/2:mid+N_pix/2,mid-N_pix/2:mid+N_pix/2]
+            g = g[mid-N_pix/2:mid+N_pix/2,mid-N_pix/2:mid+N_pix/2]
+            b = b[mid-N_pix/2:mid+N_pix/2,mid-N_pix/2:mid+N_pix/2]
+
+            
+            axi = f1.add_subplot(N_rows,N_columns,N_columns*(i+1)-j)
+            axi.set_xticks([]) ; axi.set_yticks([])
+            
+            alph=0.2 ; Q=8.0
+            
+            rgbthing = make_color_image.make_interactive(b,g,r,alph,Q)
+            axi.imshow(rgbthing,interpolation='nearest',aspect='auto',origin='lower')
+            
+            
+    f1.savefig(plot_filen,dpi=300)
+    pyplot.close(f1)
+    
+    return 0
+
+
 if __name__=="__main__":
 
 
-    morph_stat_file = '/astro/snyder_lab2/Illustris/MorphologyAnalysis/nonparmorphs_SB25_12filters_all_NEW.hdf5'
+    #morph_stat_file = '/astro/snyder_lab2/Illustris/MorphologyAnalysis/nonparmorphs_SB25_12filters_all_NEW.hdf5'
+    morph_stat_file = '/astro/snyder_lab2/Illustris/MorphologyAnalysis/nonparmorphs_SB25_12filters_all_FILES.hdf5'
+
     #morph_stat_file = '/astro/snyder_lab2/Illustris/MorphologyAnalysis/nonparmorphs_SB27_12filters_all_NEW.hdf5'
 
     merger_file = '/astro/snyder_lab2/Illustris/MorphologyAnalysis/imagedata_mergerinfo.hdf5'
@@ -809,6 +929,7 @@ if __name__=="__main__":
 
     with h5py.File(morph_stat_file,'r') as msF:
         with h5py.File(merger_file,'r') as merF:
-            localvars = make_sfr_radius_mass_plots(msF,merF,rfiter=10)
-            localvars = make_rf_evolution_plots(rflabel='paramsmod',rf_masscut=10.0**(10.5))
+            #localvars = make_sfr_radius_mass_plots(msF,merF,rfiter=10)
+            #localvars = make_rf_evolution_plots(rflabel='paramsmod',rf_masscut=10.0**(10.5))
             #localvars = make_morphology_plots(msF,merF)
+            res = make_pc1_images(msF,merF,bd='/astro/snyder_lab/Illustris_CANDELS/Illustris-1_z1_images_bc03/')
