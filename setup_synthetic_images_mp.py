@@ -178,9 +178,9 @@ def test_image_mags(image_fits,ci,filtable,filter_index,redshift):
 
 
 def initialize_test_figure():
-    fig = pyplot.figure(figsize=(5.0,4.0), dpi=imdpi)
+    fig = pyplot.figure(figsize=(7.0,4.0), dpi=imdpi)
     pyplot.subplots_adjust(left=0.0, right=1.0, bottom=0.0, top=1.0,wspace=0.0,hspace=0.0)
-    nx = 5.0
+    nx = 7.0
     ny = 4.0
 
     return fig,1.0/nx,1.0/ny,int(nx),int(ny)
