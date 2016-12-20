@@ -767,7 +767,7 @@ def process_single_broadband(bbfile,analysis_object,bbase='broadband_red_',clobb
 
     #compress when finished with broadband.fits file
     if is_unzipped is True:
-        subprocess.call(['gzip', '-9', bbfile])
+        subprocess.call(['pigz', '-9', '-p', str(Np), bbfile])
 
 
     #morphology code requires existence of useful segmentation maps
