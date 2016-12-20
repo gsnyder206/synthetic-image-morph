@@ -76,8 +76,8 @@ def process_snapshot(subdirpath='.',mockimage_parameters=None,clobber=False, max
                           'hst/wfc3_f140w',
                           'hst/wfc3_f275w', 'hst/wfc3_f336w',
                           'hst/acs_f814w',
-                          'jwst/miri_f560w','jwst/miri_f770w','jwst/miri_f1000w','jwst/miri_f1130w',
-                          'jwst/miri_f1280w','jwst/miri_f1500w','jwst/miri_f1800w','jwst/miri_f2100w','jwst/miri_f2550w']
+                          'jwst/miri_F560W','jwst/miri_F770W','jwst/miri_F1000W','jwst/miri_F1130W',
+                          'jwst/miri_F1280W','jwst/miri_F1500W','jwst/miri_F1800W','jwst/miri_F2100W','jwst/miri_F2550W']
 
     skip_filter_boolean = [False,
                            False,
@@ -122,6 +122,8 @@ def process_snapshot(subdirpath='.',mockimage_parameters=None,clobber=False, max
 
     filter_indices = []
 
+    print len(filters_to_analyze), len(skip_filter_boolean), len(filter_labels)
+    
     for i,f in enumerate(filters_to_analyze):
         fi = np.where(fils==f)
         print fi[0][0], f, fils[fi[0][0]], filter_labels[i] #, filters_to_analyze[fi]
