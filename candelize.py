@@ -68,27 +68,6 @@ def process_snapshot(subdirpath='.',mockimage_parameters=None,clobber=False, max
     fils = tf['FILTERS'].data.field('filter')
     print fils
 
-    '''
-    filters_to_analyze = ['ACS_F435_NEW.res',
-                          'ACS_F606_NEW.res',
-                          'ACS_F775_NEW.res',
-                          'ACS_F850_NEW.res',
-                          'f105w.IR.res',
-                          'f125w.IR.res',
-                          'f160w.IR.res',
-                          'NIRCAM_prelimfiltersonly_F070W',  #names too long for filter table
-                          'NIRCAM_prelimfiltersonly_F090W',
-                          'NIRCAM_prelimfiltersonly_F115W',
-                          'NIRCAM_prelimfiltersonly_F150W',
-                          'NIRCAM_prelimfiltersonly_F200W',
-                          'NIRCAM_prelimfiltersonly_F277W',
-                          'NIRCAM_prelimfiltersonly_F356W',
-                          'NIRCAM_prelimfiltersonly_F444W',
-                          'f140w.IR.res', 
-                          'f275w.UVIS1.res',
-                          'f336w.UVIS1.res',
-                          'F814W_WFC.res']
-    '''
 
     filters_to_analyze = ['hst/acs_f435w','hst/acs_f606w','hst/acs_f775w','hst/acs_f850lp',
                           'hst/wfc3_f105w','hst/wfc3_f125w','hst/wfc3_f160w',
@@ -96,28 +75,10 @@ def process_snapshot(subdirpath='.',mockimage_parameters=None,clobber=False, max
                           'jwst/nircam_f200w', 'jwst/nircam_f277w', 'jwst/nircam_f356w', 'jwst/nircam_f444w', 
                           'hst/wfc3_f140w',
                           'hst/wfc3_f275w', 'hst/wfc3_f336w',
-                          'hst/acs_f814w']
-    '''
-    skip_filter_boolean = [False,
-                           False,
-                           True,
-                           True,
-                           False,
-                           True,
-                           False,
-                           True,
-                           True,
-                           False,
-                           False,
-                           False,
-                           False,
-                           False,
-                           False,
-                           True,
-                           True,
-                           False,
-                           False]
-    '''
+                          'hst/acs_f814w',
+                          'jwst/miri_f560w','jwst/miri_f770w','jwst/miri_f1000w','jwst/miri_f1130w',
+                          'jwst/miri_f1280w','jwst/miri_f1500w','jwst/miri_f1800w','jwst/miri_f2100w','jwst/miri_f2550w']
+
     skip_filter_boolean = [False,
                            False,
                            False,
@@ -136,16 +97,28 @@ def process_snapshot(subdirpath='.',mockimage_parameters=None,clobber=False, max
                            False,
                            False,
                            False,
-                           False]
+                           False,
+                           False,
+                           False,
+                           False,
+                           False,
+                           False,
+                           False,
+                           False,
+                           False,
+                           False,]
 
 
     print filters_to_analyze
     
-    pixsize_arcsec = [0.03,0.03,0.03,0.03,0.06,0.06,0.06,0.032,0.032,0.032,0.032,0.032,0.065,0.065,0.065,0.06,0.03,0.03,0.03]
+    pixsize_arcsec = [0.03,0.03,0.03,0.03,0.06,0.06,0.06,0.032,0.032,0.032,0.032,0.032,0.065,0.065,0.065,0.06,0.03,0.03,0.03,
+                      0.11,0.11,0.11,0.11,0.11,0.11,0.11,0.11,0.11]
 
     filter_labels = ['ACS-F435W','ACS-F606W','ACS-F775W','ACS-F850LP','WFC3-F105W','WFC3-F125W','WFC3-F160W',
                      'NC-F070W','NC-F090W','NC-F115W','NC-F150W','NC-F200W','NC-F277W','NC-F356W','NC-F444W',
-                     'WFC3-F140W','WFC3-F275W','WFC3-F336W','ACS-F814W']
+                     'WFC3-F140W','WFC3-F275W','WFC3-F336W','ACS-F814W',
+                     'MIRI-F560W','MIRI-F770W','MIRI-F1000W','MIRI-F1130W',
+                     'MIRI-F1280W','MIRI-F1500W','MIRI-F1800W','MIRI-F2100W','MIRI-F2550W']
 
     filter_indices = []
 
@@ -159,16 +132,21 @@ def process_snapshot(subdirpath='.',mockimage_parameters=None,clobber=False, max
 
     print filter_indices
 
+    #order of filter_labels in wavelength space (i.e, F435W is in the "2" position)
     filter_lambda_order = [2,3,4,6,7,8,10,
                            11,12,13,14,15,16,17,18,
-                           9,0,1,5]
+                           9,0,1,5,
+                           19,20,21,22,
+                           23,24,25,26,27]
 
 
     #photfnu units Jy; flux in 1 ct/s
     photfnu_Jy = [1.96e-7,9.17e-8,1.97e-7,4.14e-7,
                   1.13e-7,1.17e-7,1.52e-7,
                   5.09e-8,3.72e-8,3.17e-8,2.68e-8,2.64e-8,2.25e-8,2.57e-8,2.55e-8,
-                  9.52e-8,8.08e-7,4.93e-7,1.52e-7]
+                  9.52e-8,8.08e-7,4.93e-7,1.52e-7,
+                  5.75e-8,3.10e-8,4.21e-8,1.39e-7,
+                  4.65e-8,4.48e-8,5.88e-8,4.98e-8,1.15e-7]
 
     morphcode_dir = "/Users/gsnyder/Documents/pro/morph_december2013/morph_pro/"
     morphcode_files = np.asarray(glob.glob(os.path.join(morphcode_dir,"*.*")))
@@ -188,15 +166,18 @@ def process_snapshot(subdirpath='.',mockimage_parameters=None,clobber=False, max
                  'TinyTim_IllustrisPSFs/F105W_rebin.fits','TinyTim_IllustrisPSFs/F125W_rebin.fits','TinyTim_IllustrisPSFs/F160W_rebin.fits',
                  'WebbPSF_F070W_trunc.fits','WebbPSF_F090W_trunc.fits','WebbPSF_F115W_trunc.fits','WebbPSF_F150W_trunc.fits',
                  'WebbPSF_F200W_trunc.fits','WebbPSF_F277W_trunc.fits','WebbPSF_F356W_trunc.fits','WebbPSF_F444W_trunc.fits',
-                 'TinyTim_IllustrisPSFs/F140W_rebin.fits','TinyTim_IllustrisPSFs/F275W_rebin.fits','TinyTim_IllustrisPSFs/F336W_rebin.fits','TinyTim_IllustrisPSFs/F814W_rebin.fits']
+                 'TinyTim_IllustrisPSFs/F140W_rebin.fits','TinyTim_IllustrisPSFs/F275W_rebin.fits','TinyTim_IllustrisPSFs/F336W_rebin.fits','TinyTim_IllustrisPSFs/F814W_rebin.fits',
+                 'WebbPSF_F560W_trunc.fits','WebbPSF_F770W_trunc.fits','WebbPSF_F1000W_trunc.fits','WebbPSF_F1130W_trunc.fits',
+                 'WebbPSF_F1280W_trunc.fits','WebbPSF_F1500W_trunc.fits','WebbPSF_F1800W_trunc.fits','WebbPSF_F2100W_trunc.fits','WebbPSF_F2550W_trunc.fits']
 
     #psf_pix_arcsec = [0.0125,0.0125,0.0125,0.0125,0.0325,0.0325,0.0325,0.007925,0.007925,0.007925,0.007925,0.007925,0.0162,0.0162,0.0162,0.0325,0.0100,0.0100,0.0125]
     #switch to JWST detector sampling for efficiency.  They're model psfs anyway, full accuracy not essential
 
-    psf_pix_arcsec = [0.03,0.03,0.03,0.03,0.06,0.06,0.06,0.0317,0.0317,0.0317,0.0317,0.0317,0.0648,0.0648,0.0648,0.06,0.03,0.03,0.03]
-    psf_truncate = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
-    psf_hdu_num = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-    psf_fwhm = [0.10,0.11,0.12,0.13,0.14,0.17,0.20,0.11,0.11,0.11,0.11,0.12,0.15,0.18,0.25,0.18,0.07,0.08,0.13]
+    psf_pix_arcsec = [0.03,0.03,0.03,0.03,0.06,0.06,0.06,0.0317,0.0317,0.0317,0.0317,0.0317,0.0648,0.0648,0.0648,0.06,0.03,0.03,0.03,0.11,0.11,0.11,0.11,0.11,0.11,0.11,0.11,0.11]
+    psf_truncate = [None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None]
+    psf_hdu_num = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    psf_fwhm = [0.10,0.11,0.12,0.13,0.14,0.17,0.20,0.11,0.11,0.11,0.11,0.12,0.15,0.18,0.25,0.18,0.07,0.08,0.13,
+                0.035*5.61,0.035*7.57,0.035*9.90,0.035*11.30,0.035*12.75,0.035*14.96,0.035*17.90,0.035*20.65,0.035*25.11]
     #these settings yield full subhalo (4 cams) convolution in 0.92s!  convolve_fft ftw!
 
     for pname in psf_names:
