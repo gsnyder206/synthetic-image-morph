@@ -463,12 +463,17 @@ def analyze_image_morphology(custom_filename,filter_index,segmap_filename,
 #def plot_test_stamp(image_hdu,saveseg_hdu,tbhdu,cmhdu,mhdu,ap_seghdu,figure,nx,ny,totalcount):
 def plot_test_stamp(filename,figure,nx,ny,totalcount):
     
+    #these must exist, I think
     hlist = pyfits.open(filename)
     image_hdu = hlist['SYNTHETIC_IMAGE']
     saveseg_hdu = hlist['SEGMAP']
 
-    tbhdu = hlist['PhotUtilsMeasurements']
-    
+    #this can fail to exist if segmap image does not contain a detected object
+    try:
+        tbhdu = hlist['PhotUtilsMeasurements']
+    except KeyError as e:
+        tbhdu = None
+
     try:
         mhdu = hlist['LotzMorphMeasurements']
     except KeyError as e:
@@ -499,8 +504,9 @@ def plot_test_stamp(filename,figure,nx,ny,totalcount):
 
     centrsize = 1
     #plot centroid
-    axi.plot([tbhdu.header['POS0']],[tbhdu.header['POS1']],'o',color='DodgerBlue',markersize=centrsize,alpha=0.6,mew=0)
-    axi.plot([tbhdu.header['XCENTR']],[tbhdu.header['YCENTR']],'o',color='Yellow',markersize=centrsize,alpha=0.6,mew=0)
+    if tbhdu is not None:
+        axi.plot([tbhdu.header['POS0']],[tbhdu.header['POS1']],'o',color='DodgerBlue',markersize=centrsize,alpha=0.6,mew=0)
+        axi.plot([tbhdu.header['XCENTR']],[tbhdu.header['YCENTR']],'o',color='Yellow',markersize=centrsize,alpha=0.6,mew=0)
 
     #plot asymmetry center and elliptical (and circular) petrosian radii ???
     if mhdu is not None:
