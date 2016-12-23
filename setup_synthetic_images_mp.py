@@ -466,9 +466,15 @@ def plot_test_stamp(filename,figure,nx,ny,totalcount):
     #these must exist, I think
     hlist = pyfits.open(filename)
     image_hdu = hlist['SYNTHETIC_IMAGE']
-    saveseg_hdu = hlist['SEGMAP']
 
-    #this can fail to exist if segmap image does not contain a detected object
+
+    #this can fail to exist if segmap image does not contain a detected object?
+
+    try:
+        saveseg_hdu = hlist['SEGMAP']
+    except KeyError as e:
+        saveseg_hdu = None
+        
     try:
         tbhdu = hlist['PhotUtilsMeasurements']
     except KeyError as e:
@@ -496,10 +502,11 @@ def plot_test_stamp(filename,figure,nx,ny,totalcount):
     axi.annotate('{:3.2f}$\mu m$'.format(image_hdu.header['EFLAMBDA']),xy=(0.05,0.05),xycoords='axes fraction',color='white',ha='left',va='center',size=6)
 
     #plot initial photutils segmentation map contour
-    segmap = saveseg_hdu.data
-    clabel = saveseg_hdu.header['CLABEL']
-    segmap_masked = np.where(segmap==clabel,segmap,np.zeros_like(segmap))
-    axi.contour(segmap_masked, (clabel-0.0001,), linewidths=0.1, colors=('DodgerBlue',))
+    if saveseg_hdu is not None:
+        segmap = saveseg_hdu.data
+        clabel = saveseg_hdu.header['CLABEL']
+        segmap_masked = np.where(segmap==clabel,segmap,np.zeros_like(segmap))
+        axi.contour(segmap_masked, (clabel-0.0001,), linewidths=0.1, colors=('DodgerBlue',))
 
 
     centrsize = 1
