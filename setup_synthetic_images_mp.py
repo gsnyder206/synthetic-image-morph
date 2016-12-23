@@ -557,7 +557,7 @@ def morphology_loop(custom_filename,filter_index,segmap_filename,
         pass
 
         
-    return filename,filter_lambda_order
+    return custom_filename,filter_lambda_order
 
 def test_task(custom_filename,filter_index,segmap_filename,
               seg_image,seg_header,seg_npix,seg_filter_label,clabel,cpos0,cpos1,
