@@ -253,7 +253,7 @@ if __name__=="__main__":
 
 
 
-    res = process_snapshot(subdirpath='.',clobber=False,seg_filter_label='NC-F200W',magsb_limits=[25.0,27.0],camindices=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18],do_idl=False,analyze=True,use_nonscatter=False,Np=10)
-    res = process_snapshot(subdirpath='.',clobber=False,seg_filter_label='NC-F200W',magsb_limits=[25.0,27.0],camindices=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18],do_idl=False,analyze=True,use_nonscatter=True,Np=10)
+    res = process_snapshot(subdirpath='.',clobber=False,seg_filter_label='NC-F200W',magsb_limits=[25.0,27.0],camindices=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18],do_idl=False,analyze=True,use_nonscatter=False,Np=4)
+    res = process_snapshot(subdirpath='.',clobber=False,seg_filter_label='NC-F200W',magsb_limits=[25.0,27.0],camindices=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18],do_idl=False,analyze=True,use_nonscatter=True,Np=4)
 
     
