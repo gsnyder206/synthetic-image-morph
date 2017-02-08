@@ -5,7 +5,6 @@ import string
 import sys
 import struct
 import numpy as np
-import cPickle
 import asciitable
 import scipy.ndimage
 import scipy.stats as ss
@@ -14,12 +13,12 @@ import scipy as sp
 import scipy.odr as odr
 import glob
 import os
-import make_color_image
-import make_fake_wht
+#import make_color_image
+#import make_fake_wht
 import gzip
 import tarfile
 import shutil
-import cosmocalc
+#import cosmocalc
 import congrid
 import astropy.io.ascii as ascii
 import warnings
@@ -289,12 +288,12 @@ def evaluate_primary(basepath,primary_snap,primary_sfid,ratio = 4.0):
         if progs.shape[0] > 1:
             spi = np.argsort(tree_mstar[progs])
             mass_ratio = tree_mstar[progs[spi[-2]]]/tree_mstar[progs[spi[-1]]]
-            print snap, primary_mstar[i], tree_mstar[progs[spi[-1]]], tree_mstar[progs[spi[-2]]]
+            print(snap, primary_mstar[i], tree_mstar[progs[spi[-1]]], tree_mstar[progs[spi[-2]]])
             if mass_ratio > 1.0/ratio:
                return True, snap, age_at_snap(snap) - age_at_snap(primary_snap), age_at_snap(snap), redshift_from_snap(snap), tree['SubhaloMass'][pdi], tree['SubhaloMassInRadType'][pdi,4]
 
         else:
-            print snap, primary_mstar[i]
+            print(snap, primary_mstar[i])
 
     return hasMajorMerger, merger_snapshot, time_until_merger, time_of_merger, merger_redshift, merger_mass, merger_mstar
 
@@ -326,7 +325,7 @@ def evaluate_pair(basepath,primary_snap,primary_sfid,secondary_snap,secondary_sf
         sublink_id_primary,tree_id_primary,primary_mstar,pri_sfr = sublink_id_from_subhalo(basepath,primary_snap,primary_sfid)
         sublink_id_secondary,tree_id_secondary,secondary_mstar,sec_sfr = sublink_id_from_subhalo(basepath,secondary_snap,secondary_sfid)
     except ValueError as e:
-        print e
+        print(e)
         return pairMerges, merger_snapshot, time_until_merger, time_of_merger, merger_redshift, merger_mass, merger_mstar, mass_ratio_tmax,mass_ratio_now,sec_snap_tmax,mhalo_ratio_tmax, pri_sfr, sec_sfr
 
     mass_ratio_now = secondary_mstar/primary_mstar
@@ -467,7 +466,7 @@ def parse_pair_catalog(pairfile):
                 sec_mhalo.append(data[6])
                 sec_mbary.append(data[7])
                 
-                print sc, Nc, pri_snap[-1], pri_sfid[-1], sec_snap[-1], sec_sfid[-1]
+                print(sc, Nc, pri_snap[-1], pri_sfid[-1], sec_snap[-1], sec_sfid[-1])
 
                 if sc==Nc:
                     isPrimary=True
@@ -492,7 +491,7 @@ def parse_pair_catalog(pairfile):
     sec_mbary = np.asarray(sec_mbary,dtype='float32')
     sec_drad_arcsec = np.asarray(sec_drad_arcsec,dtype='float32')
 
-    print pri_tz.shape, sec_mstar.shape
+    print(pri_tz.shape, sec_mstar.shape)
 
     return pri_snap,pri_sfid,pri_iz,pri_tz,pri_mstar,pri_mhalo,pri_mbary,pri_nc,sec_snap,sec_sfid,sec_iz,sec_tz,sec_mstar,sec_mhalo,sec_mbary,sec_drad_arcsec
 
@@ -545,9 +544,9 @@ def evaluate_orbit(xx,yy,zz,vx,vy,vz,tz,snapid,sfid,pri_snap,pri_sfid,sec_snap,s
     else:
         rapo_kpc = 1.0e3*r2/Mpc_in_m
 
-    print ' '
-    print r, r2, kE, pE, E, eccentricity, rperi_kpc
-    print ' '
+    print(' ')
+    print(r, r2, kE, pE, E, eccentricity, rperi_kpc)
+    print(' ')
 
 
     return eccentricity, rperi_kpc, 1.0e3*r2/Mpc_in_m, rdot/1.0e3, rapo_kpc, b_kpc
@@ -594,8 +593,8 @@ def find_pairs(lightconefile,pairfile,sep=100.0,hh=0.704,massmin=10**(10.5),rati
     outfile = os.path.basename(lightconefile)[0:11] + '_'+os.path.basename(lightconefile)[-15:-4]+'_'+label+'_pairs.txt'
     outfile_pri = os.path.basename(lightconefile)[0:11] + '_'+os.path.basename(lightconefile)[-15:-4]+'_'+label+'_primaries.txt'
 
-    print lightconefile
-    print outfile
+    print(lightconefile)
+    print(outfile)
 
     snapid=np.asarray(np.int32(data['col1']))
     shid = np.asarray(np.int32(data['col2']))
@@ -633,7 +632,7 @@ def find_pairs(lightconefile,pairfile,sep=100.0,hh=0.704,massmin=10**(10.5),rati
         primary = np.where(mhalo >= massmin)[0]
         pairs = np.where(pri_mhalo >= massmin)[0]
 
-    print primary.shape
+    print(primary.shape)
 
     #save a primary catalog
     with open(outfile_pri,'w') as outf:
@@ -655,7 +654,7 @@ def find_pairs(lightconefile,pairfile,sep=100.0,hh=0.704,massmin=10**(10.5),rati
                 iz_p = iz[pi]
                 #coord_p = SkyCoord(ra_p,dec_p,unit='deg')
 
-                print iz_p, pi
+                print(iz_p, pi)
                 delta = evaluate_environment(bp,snapid[pi],shid[pi],snapid[pi],shid[pi])
                 hsml = -1.0
 
@@ -669,15 +668,15 @@ def find_pairs(lightconefile,pairfile,sep=100.0,hh=0.704,massmin=10**(10.5),rati
         for j,psnap in enumerate(pri_snap[pairs]):
             i = pairs[j]
 
-            print pri_snap[i],pri_sfid[i],sec_snap[i],sec_sfid[i]
+            print(pri_snap[i],pri_sfid[i],sec_snap[i],sec_sfid[i])
             pairMerges, merger_snapshot, time_until_merger, time_of_merger, merger_redshift, merger_mass, merger_mstar, mass_ratio_tmax,mass_ratio_now,sec_snap_tmax,mhalo_ratio_tmax,pri_sfr,sec_sfr = evaluate_pair(bp,pri_snap[i],pri_sfid[i],sec_snap[i],sec_sfid[i])
-            print i, pri_tz[i], pri_iz[i], pairMerges, psnap, merger_snapshot, time_until_merger, mass_ratio_now, mass_ratio_tmax, sec_snap_tmax
+            print(i, pri_tz[i], pri_iz[i], pairMerges, psnap, merger_snapshot, time_until_merger, mass_ratio_now, mass_ratio_tmax, sec_snap_tmax)
 
             ecc,rperi,rnow,vnow,rapo,b = evaluate_orbit(xx,yy,zz,vx,vy,vz,tz,snapid,shid,pri_snap[i],pri_sfid[i],sec_snap[i],sec_sfid[i],pri_tz[i],sec_tz[i],pri_mhalo[i],sec_mhalo[i])
 
             delta = evaluate_environment(bp,pri_snap[i],pri_sfid[i],sec_snap[i],sec_sfid[i])
             hsml = -1.0
-            print ecc, rperi, delta, hsml
+            print(ecc, rperi, delta, hsml)
 
             sec_drad_kpc = np.float32( sec_drad_arcsec[i]/illcos.arcsec_per_kpc_proper(pri_iz[i]) )
             mhalo_ratio_now = sec_mhalo[i]/pri_mhalo[i]
@@ -688,7 +687,7 @@ def find_pairs(lightconefile,pairfile,sep=100.0,hh=0.704,massmin=10**(10.5),rati
 
             pri_g, sec_g, gratio = evaluate_fluxes(bp,pri_snap[i],pri_sfid[i],sec_snap[i],sec_sfid[i],gmag,snapid,shid,tz,pri_tz[i],sec_tz[i])
             bratio = sec_mbary[i]/pri_mbary[i]
-            print gratio, bratio
+            print(gratio, bratio)
             
             wl = '{:16.10f}  {:8d}  {:12d}  {:12.4e}  {:12.4e}  {:12.4e}  {:6d}'\
                  '  {:16.10f}  {:8d}  {:12d}  {:12.4e}  {:12.4e}  {:12.4e}  {:12.6f}  {:12.6f}'\

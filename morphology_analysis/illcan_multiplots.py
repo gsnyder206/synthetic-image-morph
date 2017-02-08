@@ -52,6 +52,9 @@ fil_keys =  ['ACS-F606W',  'WFC3-F105W',   'ACS-F814W',  'WFC3-F105W',  'WFC3-F1
 im_snap_keys = ['snapshot_103','snapshot_085','snapshot_075','snapshot_068',
              'snapshot_064','snapshot_060','snapshot_054', 'snapshot_049']
 
+im_rf_fil_keys = ['ACS-F606W','ACS-F814W','NC-F115W','NC-F115W',
+                  'NC-F150W','NC-F200W','NC-F200W','NC-F277W']
+
 im_fil_keys = {}
 im_fil_keys['snapshot_103']={}
 im_fil_keys['snapshot_103']['b']=['NC-F115W']
@@ -838,6 +841,144 @@ def make_rf_evolution_plots(rflabel='paramsmod',rf_masscut=0.0):
 
         
     return locals()
+
+
+
+
+
+def make_merger_images(msF,merF,bd='/astro/snyder_lab/Illustris_CANDELS/Illustris-1_z1_images_bc03/',rflabel='paramsmod',rf_masscut=0.0):
+
+
+    for j,sk in enumerate(im_snap_keys):
+    
+        plot_filen = 'images/mergers_'+sk+'.pdf'
+        if not os.path.lexists('images'):
+            os.mkdir('images')
+        f1 = pyplot.figure(figsize=(8.0,10.0), dpi=600)
+        pyplot.subplots_adjust(left=0.0, right=1.0, bottom=0.0, top=1.0,wspace=0.0,hspace=0.0)
+
+        N_columns = 8
+        N_rows = 10
+        N_pix = 80
+    
+    
+
+        #pick filter to select PC1 values
+        r_fk = im_fil_keys[sk]['r'][0]
+        g_fk = im_fil_keys[sk]['g'][0]
+        b_fk = im_fil_keys[sk]['b'][0]
+
+        #parameters, pcd, pc, pcd = make_pc_dict(msF,sk,r_fk)
+        #pc1 = pc.X[:,0].flatten()  #all fk's pc1 values for this snapshot
+        mag = get_all_morph_val(msF,sk,r_fk,'MAG')
+        mstar = get_all_snap_val(msF,sk,'Mstar_Msun')
+        
+        r_imf = get_all_morph_val(msF,sk,r_fk,'IMFILES')
+        g_imf = get_all_morph_val(msF,sk,g_fk,'IMFILES')
+        b_imf = get_all_morph_val(msF,sk,b_fk,'IMFILES')
+
+        #select indices  whose images we want
+
+
+        latest_NumMajorMergersLastGyr = get_mergerinfo_val(merF,sk,'latest_NumMajorMergersLastGyr')
+        boolean_merger1 = latest_NumMajorMergersLastGyr >= 1.0
+        latest_NumMinorMergersLastGyr = get_mergerinfo_val(merF,sk,'latest_NumMinorMergersLastGyr')
+        boolean_merger4 = latest_NumMinorMergersLastGyr >= 1.0
+
+        this_NumMajorMergersLastGyr = get_mergerinfo_val(merF,sk,'this_NumMajorMergersLastGyr')
+        boolean_merger2 = this_NumMajorMergersLastGyr >= 1.0
+        
+
+        mhalo = get_all_snap_val(msF,sk,'Mhalo_Msun')
+        mstar = get_all_snap_val(msF,sk,'Mstar_Msun')
+        log_mstar_mhalo = np.log10( mstar/mhalo )
+
+
+        fk = im_rf_fil_keys[j]
+        
+        redshift = msF['nonparmorphs'][sk][fk]['CAMERA0']['REDSHIFT'].value[0]
+        ins = fk.split('-')[0]
+        if redshift > 4.2:
+            continue
+        
+        data_file = 'rfoutput/'+rflabel+'_data_cut_{}_{}.pkl'.format(sk,fk)
+        result_file= 'rfoutput/'+rflabel+'_result_cut_{}_{}.pkl'.format(sk,fk)
+        labels_file = 'rfoutput/'+rflabel+'_labels_cut_{}_{}.pkl'.format(sk,fk)
+        prob_file = 'rfoutput/'+rflabel+'_label_probability_cut_{}_{}.pkl'.format(sk,fk)
+        pcs_file= 'rfoutput/'+rflabel+'_pc_cut_{}_{}.pkl'.format(sk,fk)
+
+        rf_data = np.load(data_file,encoding='bytes')
+        rf_asym = rf_data['asym'].values
+        rf_flag = rf_data['mergerFlag'].values
+        #rf_sgm20 = rf_data['dGM20'].values
+        rf_cc = rf_data['cc'].values
+        
+        asym_classifier = rf_asym > 0.25
+        asym_com,asym_ppv = simple_classifier_stats(asym_classifier,rf_flag)
+
+        #sgm_classifier = rf_sgm20 > 0.10
+        #sgm_com,sgm_ppv = simple_classifier_stats(sgm_classifier,rf_flag)
+
+        #three_classifier = np.logical_or(rf_asym > 0.35,rf_sgm20 > 0.10)
+        #three_com,three_ppv = simple_classifier_stats(three_classifier,rf_flag)
+        
+
+        result = np.load(result_file)
+        completeness = np.median(result['completeness'].values)
+        ppv = np.median(result['ppv'].values)
+        probs = np.load(prob_file)
+        iters = result['completeness'].values.shape[0]
+
+        print('redshift: {:3.1f}   filter: {:15s}   RF sample size: {:8d}   # True mergers: {} '.format(redshift,fk,rf_asym.shape[0],np.sum(rf_flag)))
+        
+
+        
+        #pc1_bins = np.asarray([-2.0,-1.5,-1.0,-0.5,0.0,0.5,1.0,1.5,2.0,2.5])
+        mstar_bins = 10.0**np.asarray([10.0,10.1,10.2,10.3,10.4,10.5,10.7,10.9,11.1,11.3])
+
+        
+        
+        
+        for i,pb in enumerate(pc1_bins):
+            pi = np.where(np.logical_and( pc1 < pb+0.5, pc1 >= pb) )[0]
+            
+            msi = pi #np.where(np.logical_and( mstar < pb+1.0e9, mstar >=pb))[0]
+            
+            if msi.shape[0]==0:
+                continue
+            
+            mi = -1#np.argmin(mag[msi])
+            
+            r_im = bd+sk+'/'+r_imf[msi[mi]]
+            g_im = bd+sk+'/'+g_imf[msi[mi]]
+            b_im = bd+sk+'/'+b_imf[msi[mi]]
+            
+            r = pyfits.open(r_im)[0].data
+            g = pyfits.open(g_im)[0].data
+            b = pyfits.open(b_im)[0].data
+            print(r_im,r.shape)
+            mid = r.shape[0]/2
+
+            r = r[mid-N_pix/2:mid+N_pix/2,mid-N_pix/2:mid+N_pix/2]
+            g = g[mid-N_pix/2:mid+N_pix/2,mid-N_pix/2:mid+N_pix/2]
+            b = b[mid-N_pix/2:mid+N_pix/2,mid-N_pix/2:mid+N_pix/2]
+
+            
+            axi = f1.add_subplot(N_rows,N_columns,N_columns*(i+1)-j)
+            axi.set_xticks([]) ; axi.set_yticks([])
+            
+            alph=0.2 ; Q=8.0
+            
+            rgbthing = make_color_image.make_interactive(b,g,r,alph,Q)
+            axi.imshow(rgbthing,interpolation='nearest',aspect='auto',origin='lower')
+            
+            
+    f1.savefig(plot_filen,dpi=300)
+    pyplot.close(f1)
+    
+    return 0
+
+
 
 
 
