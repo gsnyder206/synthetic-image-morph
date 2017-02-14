@@ -11,7 +11,6 @@ import matplotlib.colors as pycolors
 import matplotlib.cm as cm
 from matplotlib.ticker import FormatStrFormatter
 import numpy as np
-import cPickle
 import asciitable
 import scipy.ndimage
 import scipy.stats as ss
@@ -20,12 +19,9 @@ import scipy as sp
 import scipy.odr as odr
 import glob
 import os
-import make_color_image
-import make_fake_wht
 import gzip
 import tarfile
 import shutil
-import cosmocalc
 import congrid
 import astropy.io.ascii as ascii
 import warnings
@@ -42,7 +38,7 @@ import copy
 import medianstats_bootstrap as msbs
 import illustris_python as ilpy
 import h5py
-from parse_illustris_morphs import *
+#from parse_illustris_morphs import *
 from PyML import machinelearning as pyml
 from PyML import convexhullclassifier as cvx
 import gfs_sublink_utils as gsu
@@ -121,6 +117,24 @@ def get_merger_quantities(t,times,snaps,sfids,mass,mstar,sfr,snap,sfid,time_span
     return snap_latest, sfid_latest
 
 
+
+#In order to estimate the number of major mergers within +/- 0.5 Gyr, I 
+#assume that you are selecting a galaxy, obtaining its descendant 0.5 Gyr 
+#later, and then using the "NumMajorMergersLastGyr" field from my merger 
+#catalogs. However, this assumes that the galaxy under consideration is 
+#the *main* progenitor of its descendant 0.5 Gyr later. This might be a 
+#good approximation at low redshifts, but I am not so sure at high 
+#redshifts. Are you sure that the galaxy is not merging with an object 
+#more massive than itself in the next 0.5 Gyr?
+
+#This should be very easy to check by comparing the 
+#"MainLeafProgenitorID" of the selected galaxy and that of its descendant 
+#0.5 Gyr later, which should be the same if both objects lie along the 
+#"main branch" of the descendant. If the "MainLeafProgenitorID" values 
+#are not the same, then the galaxy merged with something more massive 
+#than itself and I think it should be discarded from the analysis.
+
+
 def match_progdesc(snap, sfid, snapnums_int, latest_snap, latest_span=0.5,basepath='/astro/snyder_lab2/Illustris/Illustris-1'):
     this_snap_int = np.int32(snap[-3:])
 
@@ -128,16 +142,27 @@ def match_progdesc(snap, sfid, snapnums_int, latest_snap, latest_span=0.5,basepa
 
     sublink_id,tree_id,mstar,sfr = gsu.sublink_id_from_subhalo(basepath,this_snap_int,sfid)
     tree = gsu.load_full_tree(basepath,tree_id)
-    mmpb_sublink_id,snaps,mass,mstar,r1,r2,mmpb_sfid,sfr,times = gsu.mmpb_from_tree(tree,sublink_id)
+    mmpb_sublink_id,snaps,mass,mstar,r1,r2,mmpb_sfid,sfr,times,mlpids = gsu.mmpb_from_tree(tree,sublink_id)
     time_now = gsu.age_at_snap(this_snap_int)
 
     #snap_latest,sfid_latest = get_merger_quantities(time_now,times,snaps,mmpb_sfid,mass,mstar,sfr,this_snap_int,sfid,time_span=latest_span)
     #print snaps, latest_snap
 
+    #print(mlpids,snaps)
+    
     lsi = np.where(snaps==latest_snap)[0]
     sfid_latest = mmpb_sfid[lsi]
 
-    print time_now, latest_snap, sfid_latest, lsi
+    mlpid_latest = mlpids[lsi]
+
+    i_now = np.where(snaps==this_snap_int)[0]
+    mlpid_now = mlpids[i_now]
+
+    mlpid_match = mlpid_latest==mlpid_now
+
+    print(mlpid_latest,mlpid_now,mlpid_match)
+
+    print(time_now, latest_snap, sfid_latest, lsi)
 
     matched_mmpb = np.zeros_like(snaps_int)
     matched_sfid = np.zeros_like(snaps_int)
@@ -151,7 +176,7 @@ def match_progdesc(snap, sfid, snapnums_int, latest_snap, latest_span=0.5,basepa
             matched_mmpb[i] = -1
             matched_sfid[i] = -1
 
-    return matched_mmpb, matched_sfid, sublink_id, latest_snap, sfid_latest
+    return matched_mmpb, matched_sfid, sublink_id, latest_snap, sfid_latest, mlpid_match
 
 
 if __name__=="__main__":
@@ -159,18 +184,18 @@ if __name__=="__main__":
     bp = '/astro/snyder_lab2/Illustris/Illustris-1'  #simulation base path for merger trees
     basepath = bp
 
-    catalogfile = "/astro/snyder_lab2/Illustris/MorphologyAnalysis/nonparmorphs_SB27_12filters_all_NEW.hdf5"   #morphology catalog file
-    mergerdatafile = "/astro/snyder_lab2/Illustris/MorphologyAnalysis/imagedata_mergerinfo_SB27.hdf5"
+    catalogfile = "/astro/snyder_lab2/Illustris/MorphologyAnalysis/nonparmorphs_SB25_12filters_all_FILES.hdf5"   #morphology catalog file
+    mergerdatafile = "/astro/snyder_lab2/Illustris/MorphologyAnalysis/imagedata_mergerinfo_SB25.hdf5"
 
     mdf = h5py.File(mergerdatafile,'w')
     grp = mdf.create_group('mergerinfo')
     
     sfid_dict = {}
 
-    morphcat = h5py.File(catalogfile)
-    topkey = morphcat.keys()[0]
+    morphcat = h5py.File(catalogfile,'r')
+    topkey = 'nonparmorphs' #morphcat.keys()[0]
     snapkeys = morphcat[topkey].keys()
-    print len(snapkeys)
+    print(len(snapkeys))
 
     last_sfid_grid = None
 
@@ -184,18 +209,19 @@ if __name__=="__main__":
     snapnums_int = np.append(snapnums_int,135)
     
     for s,snapkey in enumerate(snapkeys):
-        print snapkey
-        print morphcat[topkey][snapkey].keys()
+        print(snapkey)
+        print(morphcat[topkey][snapkey].keys())
         subfind_id = morphcat[topkey][snapkey]['SubfindID'].value
-        print subfind_id.shape
+        print(subfind_id.shape)
 
         sgrp = grp.create_group(snapkey)
         sgrp.create_dataset('SubfindID',data=np.int64(subfind_id))
         
         this_snap_treesfid = np.zeros((subfind_id.shape[0],len(snapnums_int)),dtype=np.int64 )-1
         latest_snap_treesfid = np.zeros((subfind_id.shape[0]),dtype=np.int64 )-1
-
-        print this_snap_treesfid.shape
+        mlpid_match_list = np.zeros((subfind_id.shape[0]),dtype=np.bool)
+        
+        print(this_snap_treesfid.shape)
 
         this_snap_int = np.int32(snapkey[-3:])
         this_snap_time = gsu.age_at_snap(this_snap_int)
@@ -207,7 +233,7 @@ if __name__=="__main__":
             latest_snap=56
             latest_time = gsu.age_at_snap(latest_snap)
 
-        print latest_snap, latest_i, latest_time, this_snap_time, this_snap_int
+        print(latest_snap, latest_i, latest_time, this_snap_time, this_snap_int)
 
 
         for i,sfid in enumerate(subfind_id):
@@ -218,16 +244,16 @@ if __name__=="__main__":
                     existing_line = last_sfid_grid[tbi[0],:]
             if existing_line is not None:
                 this_snap_treesfid[i,:]=existing_line
-                print 'line exists:', sfid,existing_line
+                print('line exists:', sfid,existing_line)
             else:
-                slid_grid,sfid_grid,sublink_id,snap_latest,sfid_latest = match_progdesc(snapkey,sfid,snapnums_int,latest_snap)
-                print 'new line: ', sfid,sfid_grid
+                slid_grid,sfid_grid,sublink_id,snap_latest,sfid_latest,mlpid_match = match_progdesc(snapkey,sfid,snapnums_int,latest_snap)
+                print('new line: ', sfid,sfid_grid)
                 this_snap_treesfid[i,:]=sfid_grid
                 if sfid_latest.shape[0]==1:
-                    latest_snap_treesfid[i]=sfid_latest
+                    latest_snap_treesfid[i]=sfid_latest   # this is the future subfind ID of the main descendant of sfid
+                    mlpid_match_list[i]=mlpid_match
                 else:
                     latest_snap_treesfid[i]=-1
-
                     
         sfid_dict[snapkey]=this_snap_treesfid
         last_sfid_grid = this_snap_treesfid
@@ -237,7 +263,7 @@ if __name__=="__main__":
         sgrp.create_dataset('LatestTree_SFID',data=np.int64(latest_snap_treesfid))
         sgrp.create_dataset('merger_span_gyr',data=merger_span)
         sgrp.create_dataset('LatestTree_snapnum',data=latest_snap)
-
+        sgrp.create_dataset('MainLeafID_match',data=mlpid_match_list)
         
         merger_history_dir = os.path.join(basepath,'MERGER_HISTORY')
         merger_file_this = os.path.join(merger_history_dir,'merger_history_{:03d}'.format(this_snap_int)+'.hdf5')
@@ -254,7 +280,7 @@ if __name__=="__main__":
 
             sgrp.create_dataset('this_'+f,data=(merger_cat_this[f].value)[subfind_id])
             sgrp.create_dataset('latest_'+f,data=(merger_cat_latest[f].value)[latest_snap_treesfid])
-            print 'latest_'+f, merger_dict['latest_'+f][0:10]
+            print('latest_'+f, merger_dict['latest_'+f][0:10])
 
 
 
@@ -266,10 +292,10 @@ if __name__=="__main__":
     stellar_mass = morphcat[topkey][z1key]['Mstar_Msun'].value
     sfr = morphcat[topkey][z1key]['SFR_Msunperyr'].value
     filters = morphcat[topkey][z1key]['Filters'].value
-    print filters
+    print(filters)
 
     morphkeys = morphcat[topkey][z1key]['WFC3-F160W']['CAMERA1'].keys()
-    print morphkeys
+    print(morphkeys)
 
 
     halflightradius_Hband_z1_cam1 = morphcat[topkey][z1key]['WFC3-F160W']['CAMERA1']['RHALF'].value
