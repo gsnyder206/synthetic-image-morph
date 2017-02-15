@@ -55,8 +55,8 @@ im_snap_keys = ['snapshot_103','snapshot_085','snapshot_075','snapshot_068',
 im_rf_fil_keys = ['ACS-F606W','ACS-F814W','NC-F115W','NC-F115W',
                   'NC-F150W','NC-F200W','NC-F200W','NC-F277W']
 
-im_npix = [400,300,140,140,
-           140,140,100,100]
+im_npix = [600,450,300,300,
+           200,200,100,100]
 
 im_fil_keys = {}
 im_fil_keys['snapshot_103']={}
@@ -177,6 +177,11 @@ def label_merger1(merF,sk):
     label_boolean = latest_NumMajorMergersLastGyr >= 1.0
     return label_boolean
 
+def label_merger4(merF,sk):
+    latest_NumMinorMergersLastGyr = get_mergerinfo_val(merF,sk,'latest_NumMinorMergersLastGyr')
+    label_boolean = latest_NumMinorMergersLastGyr >= 1.0
+    return label_boolean
+
 def make_pc_dict(msF,sk,fk):
 
     parameters = ['C','M20','GINI','ASYM','MPRIME','I','D']
@@ -275,11 +280,13 @@ def run_random_forest(msF,merF,rfiter=3,RUN_RF=True,rf_masscut=10.0**(10.5),labe
         F_GM20 = FGM20(gini,m20)
         
         
-        latest_NumMajorMergersLastGyr = get_mergerinfo_val(merF,sk,'latest_NumMajorMergersLastGyr')
-        boolean_merger1 = latest_NumMajorMergersLastGyr >= 1.0
+        #latest_NumMajorMergersLastGyr = get_mergerinfo_val(merF,sk,'latest_NumMajorMergersLastGyr')
+        #boolean_merger1 = latest_NumMajorMergersLastGyr >= 1.0
+        boolean_flag = eval(labelfunc+'(merF,sk)')
 
-        this_NumMajorMergersLastGyr = get_mergerinfo_val(merF,sk,'this_NumMajorMergersLastGyr')
-        boolean_merger2 = this_NumMajorMergersLastGyr >= 1.0
+        
+        #this_NumMajorMergersLastGyr = get_mergerinfo_val(merF,sk,'this_NumMajorMergersLastGyr')
+        #boolean_merger2 = this_NumMajorMergersLastGyr >= 1.0
         
 
         mhalo = get_all_snap_val(msF,sk,'Mhalo_Msun')
@@ -308,12 +315,12 @@ def run_random_forest(msF,merF,rfiter=3,RUN_RF=True,rf_masscut=10.0**(10.5),labe
             rf_dict['pc5']=pc5[gi]
             rf_dict['pc6']=pc6[gi]
             rf_dict['pc7']=pc7[gi]
-            rf_dict['mergerFlag']=boolean_merger1[gi]
+            rf_dict['mergerFlag']=boolean_flag[gi]
             rf_dict['SubfindID']=sfid[gi]
 
             cols=['pc1','pc2','pc3','pc4','pc5','pc6','pc7']
             rflabel='pcs'
-            label='merger1'
+            label=labelfunc
             
         if PARAMS_ONLY is True:
             gi = np.where(np.isfinite(gini)*np.isfinite(m20)*np.isfinite(asym)*np.isfinite(Mstat)*np.isfinite(Istat)*np.isfinite(Dstat)*np.isfinite(cc)*(mstar >= rf_masscut) != 0)[0]
@@ -325,12 +332,12 @@ def run_random_forest(msF,merF,rfiter=3,RUN_RF=True,rf_masscut=10.0**(10.5),labe
             rf_dict['Istat']=Istat[gi]
             rf_dict['Dstat']=Dstat[gi]
             rf_dict['cc']=cc[gi]
-            rf_dict['mergerFlag']=boolean_merger1[gi]
+            rf_dict['mergerFlag']=boolean_flag[gi]
             rf_dict['SubfindID']=sfid[gi]
 
             cols=['gini','m20','asym','Mstat','Istat','Dstat','cc']
             rflabel='params'
-            label='merger1'
+            label=labelfunc
 
             
         if PARAMS_MOD is True:
@@ -343,12 +350,12 @@ def run_random_forest(msF,merF,rfiter=3,RUN_RF=True,rf_masscut=10.0**(10.5),labe
             rf_dict['Istat']=Istat[gi]
             rf_dict['Dstat']=Dstat[gi]
             rf_dict['cc']=cc[gi]
-            rf_dict['mergerFlag']=boolean_merger1[gi]
+            rf_dict['mergerFlag']=boolean_flag[gi]
             rf_dict['SubfindID']=sfid[gi]
 
             cols=['dGM20','fGM20','asym','Mstat','Istat','Dstat','cc']
             rflabel='paramsmod'
-            label='merger1'
+            label=labelfunc
 
             
         if RUN_RF is True:
@@ -837,7 +844,7 @@ def make_morphology_plots(msF,merF,vardict=None):
     return locals()
 
 
-def make_rf_evolution_plots(rflabel='paramsmod',label='',rf_masscut=0.0):
+def make_rf_evolution_plots(rflabel='paramsmod',labelfunc='label_merger1',rf_masscut=0.0):
 
 
     plot_filen = 'rf_plots/global_stats.pdf'
@@ -923,12 +930,17 @@ def make_rf_evolution_plots(rflabel='paramsmod',label='',rf_masscut=0.0):
         if redshift > 4.2:
             continue
         
-        data_file = 'rfoutput/'+rflabel+'_data_cut_{}_{}.pkl'.format(sk,fk)
-        result_file= 'rfoutput/'+rflabel+'_result_cut_{}_{}.pkl'.format(sk,fk)
-        labels_file = 'rfoutput/'+rflabel+'_labels_cut_{}_{}.pkl'.format(sk,fk)
-        prob_file = 'rfoutput/'+rflabel+'_label_probability_cut_{}_{}.pkl'.format(sk,fk)
-        pcs_file= 'rfoutput/'+rflabel+'_pc_cut_{}_{}.pkl'.format(sk,fk)
 
+        rfdata = 'rfoutput/'+labelfunc+'/'
+        
+        data_file = rfdata+rflabel+'_data_cut_{}_{}.pkl'.format(sk,fk)
+        result_file= rfdata+rflabel+'_result_cut_{}_{}.pkl'.format(sk,fk)
+        labels_file = rfdata+rflabel+'_labels_cut_{}_{}.pkl'.format(sk,fk)
+        prob_file = rfdata+rflabel+'_label_probability_cut_{}_{}.pkl'.format(sk,fk)
+        pcs_file= rfdata+rflabel+'_pc_cut_{}_{}.pkl'.format(sk,fk)
+        
+
+        
         rf_data = np.load(data_file,encoding='bytes')
         rf_asym = rf_data['asym'].values
         rf_flag = rf_data['mergerFlag'].values
@@ -993,7 +1005,7 @@ def make_rf_evolution_plots(rflabel='paramsmod',label='',rf_masscut=0.0):
 
 
 
-def make_merger_images(msF,merF,bd='/astro/snyder_lab/Illustris_CANDELS/Illustris-1_z1_images_bc03/',rflabel='paramsmod',rf_masscut=0.0):
+def make_merger_images(msF,merF,bd='/astro/snyder_lab/Illustris_CANDELS/Illustris-1_z1_images_bc03/',rflabel='paramsmod',rf_masscut=0.0,labelfunc='label_merger1'):
 
 
     for j,sk in enumerate(im_snap_keys):
@@ -1001,10 +1013,10 @@ def make_merger_images(msF,merF,bd='/astro/snyder_lab/Illustris_CANDELS/Illustri
         plot_filen = 'images/mergers_'+sk+'.pdf'
         if not os.path.lexists('images'):
             os.mkdir('images')
-        f1 = pyplot.figure(figsize=(8.0,10.0), dpi=600)
+        f1 = pyplot.figure(figsize=(12.0,10.0), dpi=600)
         pyplot.subplots_adjust(left=0.0, right=1.0, bottom=0.0, top=1.0,wspace=0.0,hspace=0.0)
 
-        N_columns = 8
+        N_columns = 12
         N_rows = 10
         N_pix = im_npix[j]  #140
     
@@ -1071,12 +1083,14 @@ def make_merger_images(msF,merF,bd='/astro/snyder_lab/Illustris_CANDELS/Illustri
         ins = fk.split('-')[0]
         if redshift > 4.2:
             continue
+
+        rfdata = 'rfoutput/'+labelfunc+'/'
         
-        data_file = 'rfoutput/'+rflabel+'_data_cut_{}_{}.pkl'.format(sk,fk)
-        result_file= 'rfoutput/'+rflabel+'_result_cut_{}_{}.pkl'.format(sk,fk)
-        labels_file = 'rfoutput/'+rflabel+'_labels_cut_{}_{}.pkl'.format(sk,fk)
-        prob_file = 'rfoutput/'+rflabel+'_label_probability_cut_{}_{}.pkl'.format(sk,fk)
-        pcs_file= 'rfoutput/'+rflabel+'_pc_cut_{}_{}.pkl'.format(sk,fk)
+        data_file = rfdata+rflabel+'_data_cut_{}_{}.pkl'.format(sk,fk)
+        result_file= rfdata+rflabel+'_result_cut_{}_{}.pkl'.format(sk,fk)
+        labels_file = rfdata+rflabel+'_labels_cut_{}_{}.pkl'.format(sk,fk)
+        prob_file = rfdata+rflabel+'_label_probability_cut_{}_{}.pkl'.format(sk,fk)
+        pcs_file= rfdata+rflabel+'_pc_cut_{}_{}.pkl'.format(sk,fk)
 
         rf_data = np.load(data_file,encoding='bytes')
         rf_asym = rf_data['asym'].values
@@ -1133,8 +1147,8 @@ def make_merger_images(msF,merF,bd='/astro/snyder_lab/Illustris_CANDELS/Illustri
 
             #select up to 8 of these to show
             sortpi = np.argsort(average_prob[pi])  #index into pi
-            nplot = np.min([pi.shape[0],8])
-            plotpi = sortpi[-nplot:]
+            nplot = np.min([pi.shape[0],N_columns])
+            plotpi = sortpi[0:nplot] #sortpi[-nplot:]
 
             for k,pii in enumerate(plotpi):
                 
@@ -1293,7 +1307,10 @@ if __name__=="__main__":
     with h5py.File(morph_stat_file,'r') as msF:
         with h5py.File(merger_file,'r') as merF:
             #localvars = make_sfr_radius_mass_plots(msF,merF,rfiter=10)
-            #localvars = make_rf_evolution_plots(rflabel='paramsmod',rf_masscut=10.0**(10.5))
             #localvars = make_morphology_plots(msF,merF)
             #res = make_pc1_images(msF,merF,bd='/astro/snyder_lab/Illustris_CANDELS/Illustris-1_z1_images_bc03/')
-            res = make_merger_images(msF,merF,rflabel='paramsmod',rf_masscut=10.0**(10.5))
+            #localvars = run_random_forest(msF,merF,rfiter=3,rf_masscut=10.0**(10.5),labelfunc='label_merger4')
+            
+            res = make_merger_images(msF,merF,rflabel='paramsmod',rf_masscut=10.0**(10.5),labelfunc='label_merger4')
+            localvars = make_rf_evolution_plots(rflabel='paramsmod',rf_masscut=10.0**(10.5),labelfunc='label_merger4')
+
