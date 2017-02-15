@@ -13,6 +13,8 @@ import glob
 import os
 import gc
 
+#little_f: helper function for arcsinh scaling
+
 def little_f(x, minx, maxx,Q,alph):
 	
 	f = sp.zeros_like(x)
