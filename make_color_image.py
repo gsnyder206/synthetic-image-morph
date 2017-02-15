@@ -1,17 +1,9 @@
 import math
-import string
-import sys
-import struct
 import matplotlib
 import matplotlib.pyplot as pyplot
 import numpy as np
 import scipy.ndimage
-import scipy.stats as ss
 import scipy as sp
-import astropy.io.fits as pyfits
-import glob
-import os
-import gc
 
 #little_f: helper function for arcsinh scaling
 
