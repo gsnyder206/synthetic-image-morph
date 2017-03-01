@@ -5,13 +5,13 @@ import string
 import sys
 import struct
 import matplotlib
-matplotlib.use('PDF')
+#matplotlib.use('PDF')
 import matplotlib.pyplot as pyplot
 import matplotlib.colors as pycolors
 import matplotlib.cm as cm
 #import matplotlib.patches as patches
 import numpy as np
-import cPickle
+#import cPickle
 import asciitable
 import scipy.ndimage
 import scipy.stats as ss
@@ -25,8 +25,8 @@ import make_fake_wht
 import gzip
 import tarfile
 import shutil
-import cosmocalc
-import congrid
+#import cosmocalc
+#import congrid
 import astropy.io.ascii as ascii
 import warnings
 import subprocess
@@ -37,11 +37,12 @@ from astropy.visualization.mpl_normalize import ImageNormalize
 import astropy.cosmology
 #from astropy.visualization import *
 import astropy.io.fits as pyfits
-import statmorph
+#import statmorph
 import copy
 import medianstats_bootstrap as msbs
 import illustris_python as ilpy
 import h5py
+import pickle as cPickle
 
 
 
@@ -197,7 +198,7 @@ class morphdata:
             subdir = self.subdirs[i]
             imdir = 'images_subhalo_'+self.subhalo_ids[i]
             idlfile = os.path.join(os.path.join(subdir,imdir),self.idlfiles[i])
-            print idlfile
+            #print idlfile
             if not os.path.lexists(idlfile):
                 continue
 
@@ -215,7 +216,7 @@ class morphdata:
             filenames = data['col1']
             filematch = os.path.join(imdir,os.path.basename(imfile))
             ind = np.where(filenames==filematch)[0]
-            print ind
+            #print ind
             if ind.shape[0] != 1:
                 continue
 
@@ -305,8 +306,8 @@ class morphdata:
             self.idlfiles.append('snap'+self.snapnums[-1]+'dir'+header['SUBDIR']+'sh'+self.subhalo_ids[-1]+'_idloutput.txt')
 
             hdulist.close()
-            if i % 100 ==0:
-                print imfile, self.snapnums[-1], self.subdirs[-1], self.subhalo_ids[-1], self.cameras[-1], self.depths[-1], self.flabels[-1]
+            #if i % 100 ==0:
+            #    print imfile, self.snapnums[-1], self.subdirs[-1], self.subhalo_ids[-1], self.cameras[-1], self.depths[-1], self.flabels[-1]
 
 
         self.image_files = np.asarray(self.new_image_files)
@@ -330,7 +331,7 @@ class morphdata:
 #unpack critical values, store in an object, save to disk and/or return to user
 def parse_illustris_morph_snapshot(snapshot_directory='/Users/gsnyder/Dropbox/Projects/snapshot_060',sh_array=None,get_idl=False,depth='SB25',dofull=False):
     if not os.path.lexists(snapshot_directory):
-        print "Error parsing Illustris morphs: directory doesn't exist: "+snapshot_directory
+        print("Error parsing Illustris morphs: directory doesn't exist: "+snapshot_directory)
 
     cwd = os.path.abspath(os.curdir)
     os.chdir(snapshot_directory)
@@ -341,7 +342,7 @@ def parse_illustris_morph_snapshot(snapshot_directory='/Users/gsnyder/Dropbox/Pr
                           'NC-F070W','NC-F090W','NC-F115W','NC-F150W','NC-F200W','NC-F277W','NC-F356W','NC-F444W'])
     #filters = np.asarray(['NC-F200W','NC-F277W'])
 
-    print filters
+    #print filters
 
     depths = np.asarray([depth])
     
@@ -362,11 +363,11 @@ def parse_illustris_morph_snapshot(snapshot_directory='/Users/gsnyder/Dropbox/Pr
     morph_data_obj = morphdata(snapshot_directory,camlist,filters,depths)
     morph_data_obj.parse_image_files(np.sort(np.asarray(glob.glob('subdir_???/images_subhalo_*/snap???dir???sh*cam??_*_'+depths[0]+'.fits'))),sh_array=sh_array,cards=all_cards)
 
-    print morph_data_obj.image_files.shape
-    print morph_data_obj.cam_indices.shape
-    print morph_data_obj.unique_subhalo_inverse.shape
-    print morph_data_obj.fil_indices.shape
-    print morph_data_obj.old_image_files.shape
+    #print morph_data_obj.image_files.shape
+    #print morph_data_obj.cam_indices.shape
+    #print morph_data_obj.unique_subhalo_inverse.shape
+    #print morph_data_obj.fil_indices.shape
+    #print morph_data_obj.old_image_files.shape
 
     return_dict = morph_data_obj.parse_values(extname='SYNTHETIC_IMAGE',card=si_cards)
 
@@ -379,7 +380,7 @@ def parse_illustris_morph_snapshot(snapshot_directory='/Users/gsnyder/Dropbox/Pr
     morph_data_obj.eflambda_um = return_dict['EFLAMBDA']
 
 
-    print "Parsed SI cards"
+    #print "Parsed SI cards"
 
     return_dict = morph_data_obj.parse_values(extname='PhotUtilsMeasurements',card=pum_cards)
     morph_data_obj.pum_dict = return_dict
@@ -397,7 +398,7 @@ def parse_illustris_morph_snapshot(snapshot_directory='/Users/gsnyder/Dropbox/Pr
     morph_data_obj.seg_ymin = return_dict[pum_cards[10]] #morph_data_obj.parse_values(extname='PhotUtilsMeasurements',card='YMIN')
     morph_data_obj.seg_ymax = return_dict[pum_cards[11]] #morph_data_obj.parse_values(extname='PhotUtilsMeasurements',card='YMAX')
 
-    print "Parsed PUM cards"
+    #print "Parsed PUM cards"
 
     return_dict = morph_data_obj.parse_values(card=morph_cards)
     morph_data_obj.morph_dict = return_dict
@@ -467,9 +468,9 @@ def parse_illustris_morph_snapshot(snapshot_directory='/Users/gsnyder/Dropbox/Pr
     morph_data_obj.mid2_dstat = return_dict[morph_cards[57]] #morph_data_obj.parse_values(card='MID2_D')
     morph_data_obj.mid2_darea = return_dict[morph_cards[58]] #morph_data_obj.parse_values(card='MID2_DA')
 
-    print "finished morph cards"
+    #print "finished morph cards"
 
-    print morph_data_obj.gini.shape
+    #print morph_data_obj.gini.shape
     if get_idl:
         morph_data_obj.idlgini = morph_data_obj.parse_idl_values(col='col22')
         morph_data_obj.idlm20 = morph_data_obj.parse_idl_values(col='col23')
@@ -484,7 +485,7 @@ def parse_illustris_morph_snapshot(snapshot_directory='/Users/gsnyder/Dropbox/Pr
         morph_data_obj.idlayc = morph_data_obj.parse_idl_values(col='col14')
         morph_data_obj.idlmxc = morph_data_obj.parse_idl_values(col='col15')
         morph_data_obj.idlmyc = morph_data_obj.parse_idl_values(col='col16')
-        print morph_data_obj.idlgini.shape
+        #print morph_data_obj.idlgini.shape
 
 
 
@@ -590,7 +591,7 @@ def comparison_subplot(f1,ny,nx,n,ylabel,ylim,pyval,idlval,snpix,skip=1,gi=None)
     bin_centers = np.zeros_like(snbins[1:])
     diff_mads = np.zeros_like(snbins[1:])
 
-    print gi.shape
+    #print gi.shape
 
     for i,snb in enumerate(snbins[1:]):
         le = snbins[i]
@@ -691,7 +692,7 @@ def load_all_info(base_directory='/astro/snyder_lab/Illustris_CANDELS/Illustris-
     snapdir = os.path.join(base_directory,'snapshot_{:03d}'.format(snapnum))
     morphcat = os.path.join(snapdir,filename)
 
-    print "loading.. ", morphcat
+    print("loading.. ", morphcat)
 
     loadf = open(morphcat,'r')
     morph_data_obj = cPickle.load(loadf)
