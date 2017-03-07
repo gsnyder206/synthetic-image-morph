@@ -248,7 +248,7 @@ def plot_sfr_radius_mass(msF,merF,sk,fk,FIG,xlim,ylim,rlim,Cval,gridf='median_gr
     size_kpc = size_pixels*pix_arcsec*kpc_per_arcsec
 
     axi,colorobj = gth.make_twod_grid(axi,np.log10(mstar[gi]),np.log10(size_kpc[gi]),{'x':Cval[gi]},gridf,**bin_kwargs)
-    axi.annotate('z = {:3.1f}'.format(redshift) ,xy=(0.80,0.05),ha='center',va='center',xycoords='axes fraction',color='black',size=labs)
+    axi.annotate('$z = {:3.1f}$'.format(redshift) ,xy=(0.80,0.05),ha='center',va='center',xycoords='axes fraction',color='black',size=labs)
     axi.annotate(fk                             ,xy=(0.80,0.15),ha='center',va='center',xycoords='axes fraction',color='black',size=labs)
 
     return colorobj
@@ -432,6 +432,8 @@ def make_sfr_radius_mass_plots(msF,merF,rfiter=3):
 
         mhalo = get_all_snap_val(msF,sk,'Mhalo_Msun')
         mstar = get_all_snap_val(msF,sk,'Mstar_Msun')
+        sfr = get_all_snap_val(msF,sk,'SFR_Msunperyr')
+
         log_mstar_mhalo = np.log10( mstar/mhalo )
 
         redshift = msF['nonparmorphs'][sk][fk]['CAMERA0']['REDSHIFT'].value[0]
@@ -625,6 +627,20 @@ def make_sfr_radius_mass_plots(msF,merF,rfiter=3):
         pyplot.subplots_adjust(left=0.15, right=0.98, bottom=0.08, top=0.88,wspace=0.0,hspace=0.0)
         colorobj = plot_sfr_radius_mass(msF,merF,sk,fk,f1,xlim=xlim,ylim=ylim,rlim=rlim,Cval=np.log10(mhalo),min_bin=3,gridf='median_grid',vmin=11.5,vmax=14.0,bins=bins)
         gth.make_colorbar(colorobj,title='median $log_{10} M_{h}$',ticks=[11.5,12.0,13.0,14.0])
+
+        f1.savefig(plot_filen,dpi=300)
+        pyplot.close(f1)
+
+
+
+        plot_filen = 'ssfr/sfr_radius_mass_'+sk+'_'+fk+'_mhalo.pdf'
+        if not os.path.lexists('ssfr'):
+            os.mkdir('ssfr')
+        
+        f1 = pyplot.figure(figsize=(3.5,5.0), dpi=300)
+        pyplot.subplots_adjust(left=0.15, right=0.98, bottom=0.08, top=0.88,wspace=0.0,hspace=0.0)
+        colorobj = plot_sfr_radius_mass(msF,merF,sk,fk,f1,xlim=xlim,ylim=ylim,rlim=rlim,Cval=np.log10(sfr/mstar),min_bin=3,gridf='median_grid',vmin=-10.0,vmax=-8.0,bins=12)
+        gth.make_colorbar(colorobj,title='median $log_{10} SFR/M_*$',ticks=[-10,-9,-8])
 
         f1.savefig(plot_filen,dpi=300)
         pyplot.close(f1)
@@ -1392,12 +1408,13 @@ if __name__=="__main__":
 
     with h5py.File(morph_stat_file,'r') as msF:
         with h5py.File(merger_file,'r') as merF:
-            #localvars = make_sfr_radius_mass_plots(msF,merF,rfiter=10)
+            localvars = make_sfr_radius_mass_plots(msF,merF,rfiter=10)
+            
             #localvars = make_morphology_plots(msF,merF)
             #res = make_pc1_images(msF,merF,bd='/astro/snyder_lab/Illustris_CANDELS/Illustris-1_z1_images_bc03/')
             
             #localvars = run_random_forest(msF,merF,rfiter=3,rf_masscut=10.0**(10.5),labelfunc='label_merger4')
             
-            res = make_merger_images(msF,merF,rflabel='paramsmod',rf_masscut=10.0**(10.5),labelfunc='label_merger4')
-            localvars = make_rf_evolution_plots(rflabel='paramsmod',rf_masscut=10.0**(10.5),labelfunc='label_merger4')
+            #res = make_merger_images(msF,merF,rflabel='paramsmod',rf_masscut=10.0**(10.5),labelfunc='label_merger4')
+            #localvars = make_rf_evolution_plots(rflabel='paramsmod',rf_masscut=10.0**(10.5),labelfunc='label_merger4')
 
