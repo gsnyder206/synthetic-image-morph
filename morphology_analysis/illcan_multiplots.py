@@ -37,6 +37,7 @@ import gfs_twod_histograms as gth
 import pandas
 import h5py
 import make_color_image
+import photutils
 
 
 ilh = 0.704
@@ -98,6 +99,10 @@ im_fil_keys['snapshot_049']={}
 im_fil_keys['snapshot_049']['b']=['NC-F115W']
 im_fil_keys['snapshot_049']['g']=['NC-F150W']
 im_fil_keys['snapshot_049']['r']=['NC-F200W']
+
+
+def return_rf_variables():
+    return np.asarray(im_snap_keys), np.asarray(im_rf_fil_keys), np.asarray(im_npix)
 
 
 def simple_classifier_stats(classifications,labels):
@@ -1009,10 +1014,13 @@ def make_merger_images(msF,merF,bd='/astro/snyder_lab/Illustris_CANDELS/Illustri
 
 
     for j,sk in enumerate(im_snap_keys):
-    
-        plot_filen = 'images/mergers_'+sk+'.pdf'
-        if not os.path.lexists('images'):
-            os.mkdir('images')
+
+        plotdir = 'images/'+labelfunc
+        plot_filen = plotdir+'/mergers_'+sk+'.pdf'
+        
+        if not os.path.lexists(plotdir):
+            os.mkdir(plotdir)
+        
         f1 = pyplot.figure(figsize=(12.0,10.0), dpi=600)
         pyplot.subplots_adjust(left=0.0, right=1.0, bottom=0.0, top=1.0,wspace=0.0,hspace=0.0)
 
@@ -1040,6 +1048,7 @@ def make_merger_images(msF,merF,bd='/astro/snyder_lab/Illustris_CANDELS/Illustri
 
         fk = im_rf_fil_keys[j]
 
+        forest_imf = np.asarray(get_all_morph_val(msF,sk,fk,'IMFILES'),dtype='str')
         
         asym = get_all_morph_val(msF,sk,fk,'ASYM')
         gini = get_all_morph_val(msF,sk,fk,'GINI')
@@ -1156,13 +1165,15 @@ def make_merger_images(msF,merF,bd='/astro/snyder_lab/Illustris_CANDELS/Illustri
                 morph_sfid = all_sfids[gi[pi[pii]]]
                 rf_sfid = rf_sfids[pi[pii]]
                 assert(morph_sfid==rf_sfid)
+                
                 this_mer4 = boolean_merger4[gi[pi[pii]]]
                 this_match = mlpid_match[gi[pi[pii]]]
                 
                 r_im = bd+sk+'/'+r_imf[im_i]
                 g_im = bd+sk+'/'+g_imf[im_i]
                 b_im = bd+sk+'/'+b_imf[im_i]
-            
+                rf_im = bd+sk+'/'+forest_imf[im_i]
+                
                 r = pyfits.open(r_im)[0].data
                 g = pyfits.open(g_im)[0].data
                 b = pyfits.open(b_im)[0].data
@@ -1173,7 +1184,9 @@ def make_merger_images(msF,merF,bd='/astro/snyder_lab/Illustris_CANDELS/Illustri
                 g = g[mid-delt:mid+delt,mid-delt:mid+delt]
                 b = b[mid-delt:mid+delt,mid-delt:mid+delt]
 
-
+                r_header = pyfits.open(rf_im)[0].header
+                this_camnum_int = r_header['CAMERA']
+                
                 this_prob = average_prob[pi[pii]]
                 
                 axi = f1.add_subplot(N_rows,N_columns,N_columns*(i+1)-k)
@@ -1184,6 +1197,11 @@ def make_merger_images(msF,merF,bd='/astro/snyder_lab/Illustris_CANDELS/Illustri
                 rgbthing = make_color_image.make_interactive(b,g,r,alph,Q)
                 axi.imshow(rgbthing,interpolation='nearest',aspect='auto',origin='lower')
 
+
+                #need to re-center and zoom subsequent plots
+                axi = overplot_morph_data(axi,rf_im,mid,delt)
+
+                
                 this_flag = flags[pi[pii]]
                 
                 if this_flag==True:
@@ -1203,6 +1221,8 @@ def make_merger_images(msF,merF,bd='/astro/snyder_lab/Illustris_CANDELS/Illustri
                 axi.annotate('${:4.2f}$'.format(this_prob),(0.25,0.10),xycoords='axes fraction',ha='center',va='center',color='White',size=7)
                         
                 axi.annotate('${:7d}$'.format(rf_sfid),(0.25,0.90),xycoords='axes fraction',ha='center',va='center',color='White',size=6)
+
+                axi.annotate('${:2d}$'.format(this_camnum_int),(0.25,0.82),xycoords='axes fraction',ha='center',va='center',color='White',size=3 )
                 
                 if this_flag==False and this_mer4==True:
                     axi.annotate('$M$',(0.85,0.15),xycoords='axes fraction',ha='center',va='center',color='Green',size=6)
@@ -1214,7 +1234,73 @@ def make_merger_images(msF,merF,bd='/astro/snyder_lab/Illustris_CANDELS/Illustri
     return 0
 
 
+def overplot_morph_data(axi,rf_im,mid,delt,lw=0.1):
 
+    
+    hlist = pyfits.open(rf_im)
+
+    try:
+        saveseg_hdu = hlist['SEGMAP']
+    except KeyError as e:
+        saveseg_hdu = None
+        
+    try:
+        tbhdu = hlist['PhotUtilsMeasurements']
+    except KeyError as e:
+        tbhdu = None
+
+    try:
+        mhdu = hlist['LotzMorphMeasurements']
+    except KeyError as e:
+        mhdu = None
+
+    try:
+        ap_seghdu = hlist['APSEGMAP']
+    except KeyError as e:
+        ap_seghdu = None
+
+
+    
+    #plot initial photutils segmentation map contour
+    if saveseg_hdu is not None:
+        segmap = saveseg_hdu.data[mid-delt:mid+delt,mid-delt:mid+delt]
+        clabel = saveseg_hdu.header['CLABEL']
+        segmap_masked = np.where(segmap==clabel,segmap,np.zeros_like(segmap))
+        axi.contour(np.transpose(segmap_masked), (clabel-0.0001,), linewidths=lw, colors=('DodgerBlue',))
+
+
+    if tbhdu is not None:
+        centrsize = 1
+        #plot centroid
+        #axi.plot([tbhdu.header['POS0']],[tbhdu.header['POS1']],'o',color='DodgerBlue',markersize=centrsize,alpha=0.6,mew=0)
+        #axi.plot([tbhdu.header['XCENTR']],[tbhdu.header['YCENTR']],'o',color='Yellow',markersize=centrsize,alpha=0.6,mew=0)
+
+        
+    #plot asymmetry center and elliptical (and circular) petrosian radii ???
+    if mhdu is not None:
+        if mhdu.header['FLAG']==0:
+            axc = mhdu.header['AXC']
+            ayc = mhdu.header['AYC']
+            rpe = mhdu.header['RPE']
+            elongation = mhdu.header['ELONG']
+            position = (axc, ayc)
+            a = rpe
+            b = rpe/elongation
+            theta = mhdu.header['ORIENT']
+            aperture = photutils.EllipticalAperture(position, a, b, theta=theta)
+            #aperture.plot(color='Orange', alpha=0.4, ax=axi,linewidth=1)
+            #axi.plot([ayc],[axc],'+',color='Orange',markersize=centrsize,mew=0.1)
+
+
+    #plot petrosian morphology segmap in different linestyle
+    if ap_seghdu is not None:
+        ap_segmap = ap_seghdu.data[mid-delt:mid+delt,mid-delt:mid+delt]
+        axi.contour(np.transpose(ap_segmap), (10.0-0.0001,), linewidths=lw,colors='Orange')
+
+    hlist.close()
+    
+
+    return axi
 
 
 def make_pc1_images(msF,merF,bd='/astro/snyder_lab/Illustris_CANDELS/Illustris-1_z1_images_bc03/'):
@@ -1309,6 +1395,7 @@ if __name__=="__main__":
             #localvars = make_sfr_radius_mass_plots(msF,merF,rfiter=10)
             #localvars = make_morphology_plots(msF,merF)
             #res = make_pc1_images(msF,merF,bd='/astro/snyder_lab/Illustris_CANDELS/Illustris-1_z1_images_bc03/')
+            
             #localvars = run_random_forest(msF,merF,rfiter=3,rf_masscut=10.0**(10.5),labelfunc='label_merger4')
             
             res = make_merger_images(msF,merF,rflabel='paramsmod',rf_masscut=10.0**(10.5),labelfunc='label_merger4')

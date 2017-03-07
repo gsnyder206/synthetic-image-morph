@@ -184,8 +184,10 @@ if __name__=="__main__":
     bp = '/astro/snyder_lab2/Illustris/Illustris-1'  #simulation base path for merger trees
     basepath = bp
 
+    #merger_history_dir = os.path.join(basepath,'MERGER_HISTORY')
+    merger_history_dir = os.path.join(basepath,'merger_history_Feb2017')
     catalogfile = "/astro/snyder_lab2/Illustris/MorphologyAnalysis/nonparmorphs_SB25_12filters_all_FILES.hdf5"   #morphology catalog file
-    mergerdatafile = "/astro/snyder_lab2/Illustris/MorphologyAnalysis/imagedata_mergerinfo_SB25.hdf5"
+    mergerdatafile = "/astro/snyder_lab2/Illustris/MorphologyAnalysis/imagedata_mergerinfo_SB25_2017March3.hdf5"
 
     mdf = h5py.File(mergerdatafile,'w')
     grp = mdf.create_group('mergerinfo')
@@ -265,7 +267,6 @@ if __name__=="__main__":
         sgrp.create_dataset('LatestTree_snapnum',data=latest_snap)
         sgrp.create_dataset('MainLeafID_match',data=mlpid_match_list)
         
-        merger_history_dir = os.path.join(basepath,'MERGER_HISTORY')
         merger_file_this = os.path.join(merger_history_dir,'merger_history_{:03d}'.format(this_snap_int)+'.hdf5')
         merger_file_latest = os.path.join(merger_history_dir,'merger_history_{:03d}'.format(latest_snap)+'.hdf5')
 

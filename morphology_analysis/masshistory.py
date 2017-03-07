@@ -10,6 +10,9 @@ import illustris_python as ilpy
 import h5py
 import gfs_sublink_utils as gsu
 from astropy.cosmology import WMAP7,z_at_value
+import showgalaxy
+import illcan_multiplots as icmp
+import warnings
 
 
 ilh = 0.704
@@ -75,25 +78,33 @@ illcos.redshifts = np.asarray([  4.67730470e+01,   4.45622040e+01,   4.24536740e
 
 illcos.ages = np.asarray( illcos.age(illcos.redshifts) )
 
-def mergerfileinfo(snapnum,subfindID,basepath='/astro/snyder_lab2/Illustris/Illustris-1',size=2,trange=[-2.0,2.0]):
-    merger_file = '/astro/snyder_lab2/Illustris/MorphologyAnalysis/imagedata_mergerinfo_SB25.hdf5'
-    snapnum='068'
+def mergerfileinfo(snapkey,subfindID,size=2,trange=[-2.0,2.0]):
+    #merger_file = '/astro/snyder_lab2/Illustris/MorphologyAnalysis/imagedata_mergerinfo_SB25.hdf5'
+    merger_file = '/astro/snyder_lab2/Illustris/MorphologyAnalysis/imagedata_mergerinfo_SB25_2017March3.hdf5'
+
+
+    #update figure and exploratory quantities here
+    #want to build training sets cleverly from these parameters
+    
     with h5py.File(merger_file,'r') as mcat:
-        vals = mcat['mergerinfo']['snapshot_068']['latest_NumMajorMergersLastGyr'].value
-        sfids = mcat['mergerinfo']['snapshot_068']['SubfindID'].value
-        lsn = mcat['mergerinfo']['snapshot_068']['LatestTree_snapnum'].value
-        last_merger = mcat['mergerinfo']['snapshot_068']['latest_SnapNumLastMajorMerger'].value
-        last_minmerger = mcat['mergerinfo']['snapshot_068']['latest_SnapNumLastMinorMerger'].value
+        vals = mcat['mergerinfo'][snapkey]['latest_NumMajorMergersLastGyr'].value
+        sfids = mcat['mergerinfo'][snapkey]['SubfindID'].value
+        lsn = mcat['mergerinfo'][snapkey]['LatestTree_snapnum'].value
+        last_merger = mcat['mergerinfo'][snapkey]['latest_SnapNumLastMajorMerger'].value
+        last_minmerger = mcat['mergerinfo'][snapkey]['latest_SnapNumLastMinorMerger'].value
 
         
-        sfi = np.where(sfids==subfindID)[0]
+        sfi = np.where(sfids==subfindID)[0][0]
+              
         val=vals[sfi]
         
-        
+
+    #also: get ALL keys for this subhalo
     return gsu.age_at_snap(lsn), gsu.age_at_snap(last_merger[sfi]), gsu.age_at_snap(last_minmerger[sfi])
 
 
-def masshistory(snapnum,subfindID,basepath='/astro/snyder_lab2/Illustris/Illustris-1',size=2,trange=[-1.5,1.5]):
+def masshistory(snapkey,subfindID,camnum=0,basepath='/astro/snyder_lab2/Illustris/Illustris-1',size=2,trange=[-1.5,1.5]):
+    snapnum = snapkey[-3:]
     this_snap_int = np.int64(snapnum)
 
     sublink_id,tree_id,mstar,sfr = gsu.sublink_id_from_subhalo(basepath,this_snap_int,subfindID)
@@ -101,34 +112,63 @@ def masshistory(snapnum,subfindID,basepath='/astro/snyder_lab2/Illustris/Illustr
     mmpb_sublink_id,snaps,mass,mstar,r1,r2,mmpb_sfid,sfr,times,mlpids = gsu.mmpb_from_tree(tree,sublink_id)
     time_now = gsu.age_at_snap(this_snap_int)
 
-    time_latest,time_lastmajor,time_lastminor = mergerfileinfo(snapnum,subfindID)
 
-    print(time_lastmajor,time_lastminor)
+    time_latest,time_lastmajor,time_lastminor = mergerfileinfo(snapkey,subfindID)
+    print(time_latest,time_lastmajor,time_lastminor)
     
     
-    fig=pyplot.figure(figsize=(size,size)) 
-    axi = fig.add_subplot(1,1,1)
-
+    fig=pyplot.figure(figsize=(size*2,size)) 
+    pyplot.subplots_adjust(wspace=0.0,hspace=0.0)
+    
+    #mass history plot
+    axi = fig.add_subplot(1,2,1)
 
     axi.semilogy(times-time_now,mstar)
     axi.plot([0.0,0.0],[1.0e8,1.0e12],marker=None,linestyle='dashed',color='black',linewidth=2.0)
 
-    axi.plot([time_latest-time_now,time_latest-time_now],[1.0e8,1.0e12],marker=None,linestyle='solid',color='gray',linewidth=1.0)
-    axi.plot([time_latest-time_now-1.0,time_latest-time_now-1.0],[1.0e8,1.0e12],marker=None,linestyle='solid',color='gray',linewidth=1.0)
+    axi.plot([time_latest-time_now,time_latest-time_now],[1.0e8,1.0e13],marker=None,linestyle='solid',color='gray',linewidth=1.0)
+    axi.plot([time_latest-time_now-1.0,time_latest-time_now-1.0],[1.0e8,1.0e13],marker=None,linestyle='solid',color='gray',linewidth=1.0)
 
-    axi.plot([time_lastmajor-time_now,time_lastmajor-time_now],[1.0e8,1.0e12],marker=None,linestyle='solid',color='Red',linewidth=4.0)
-    axi.plot([time_lastminor-time_now,time_lastminor-time_now],[1.0e8,1.0e12],marker=None,linestyle='dotted',color='Red',linewidth=4.0)
+    axi.plot([time_lastmajor-time_now,time_lastmajor-time_now],[1.0e8,1.0e13],marker=None,linestyle='solid',color='Red',linewidth=4.0)
+    axi.plot([time_lastminor-time_now,time_lastminor-time_now],[1.0e8,1.0e13],marker=None,linestyle='dotted',color='Red',linewidth=4.0)
 
     axi.set_xlim(trange[0],trange[1])
     inrange=np.where(np.logical_and(times-time_now > trange[0], times-time_now <= trange[1]))[0]
     axi.set_ylim(np.min(mstar[inrange])/2.0,np.max(mstar[inrange])*2.0)
+
+    ls = 20
+    axi.set_xlabel('$t-t_{obs} (Gyr)$',size=ls)
+    axi.set_ylabel('$M_* (t)$',size=ls)
+    axi.tick_params(axis='both', which='major', labelsize=ls)
+    
+    #image(s?)
+    axi = fig.add_subplot(1,2,2)
+
+    camstr='{:02d}'.format(camnum)
+
+    im_snap_keys, im_rf_fil_keys, im_npix = icmp.return_rf_variables()
+
+    try:
+        rfkey=im_rf_fil_keys[im_snap_keys==snapkey]
+        npix=im_npix[im_snap_keys==snapkey]
+    except:
+        rfkey=None
+        npix=400
         
+    axi = showgalaxy.showgalaxy(axi,snapkey,subfindID,camstr,rfkey=rfkey[0],Npix=npix[0])
+
+    
     pyplot.show()
     
     pyplot.close(fig)
     
     
     return 0
+
+
+
+
+
 
 
 def avail():
