@@ -74,6 +74,17 @@ def normed_proportion_grid(indices,other_dict,hist_2d=None,**kwargs):
 
 
 
+def summed_logssfr(indices,other_dict,**kwargs):
+
+    sfr = np.sum( (other_dict['sfr'])[indices] )
+    mass = np.sum( (other_dict['mstar'])[indices] )
+
+    val = np.log10(sfr)-np.log10(mass)
+    #print(sfr,mass,val)
+    
+    return val
+
+
 def test_function():
     print('I am a test function')
     return 1.0
@@ -121,7 +132,6 @@ def make_twod_grid(axi,xparam,yparam,other_params,other_function,bins=20,tiles=(
         xlim_use = xlim
         
     value_twod, hist_twod, xMR, yMR, dx, dy = execute_twodim(xparam,yparam,xlim_use,ylim,other_params,other_function,bins=bins,vmin=vmin,**bin_kwargs) #passive_fractions_twodim(xparam,yparam,xlimits,ylimits,CONDITIONAL,sfr_all,mstar_all,bins=bins)
-
 
     
     themap = cm.viridis
