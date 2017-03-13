@@ -103,7 +103,8 @@ def mergerfileinfo(snapkey,subfindID,size=2,trange=[-2.0,2.0]):
     return gsu.age_at_snap(lsn), gsu.age_at_snap(last_merger[sfi]), gsu.age_at_snap(last_minmerger[sfi])
 
 
-def masshistory(snapkey,subfindID,camnum=0,basepath='/astro/snyder_lab2/Illustris/Illustris-1',size=2,trange=[-1.5,1.5],alph=0.2,Q=8.0,sb='SB25',gyrbox=True):
+def masshistory(snapkey,subfindID,camnum=0,basepath='/astro/snyder_lab2/Illustris/Illustris-1',size=2,trange=[-1.5,1.5],alph=0.2,Q=8.0,sb='SB25',gyrbox=True
+):
     snapnum = snapkey[-3:]
     this_snap_int = np.int64(snapnum)
 
