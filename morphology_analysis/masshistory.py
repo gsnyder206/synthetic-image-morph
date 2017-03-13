@@ -103,7 +103,7 @@ def mergerfileinfo(snapkey,subfindID,size=2,trange=[-2.0,2.0]):
     return gsu.age_at_snap(lsn), gsu.age_at_snap(last_merger[sfi]), gsu.age_at_snap(last_minmerger[sfi])
 
 
-def masshistory(snapkey,subfindID,camnum=0,basepath='/astro/snyder_lab2/Illustris/Illustris-1',size=2,trange=[-1.5,1.5]):
+def masshistory(snapkey,subfindID,camnum=0,basepath='/astro/snyder_lab2/Illustris/Illustris-1',size=2,trange=[-1.5,1.5],alph=0.2,Q=8.0,sb='SB25',gyrbox=True):
     snapnum = snapkey[-3:]
     this_snap_int = np.int64(snapnum)
 
@@ -126,8 +126,9 @@ def masshistory(snapkey,subfindID,camnum=0,basepath='/astro/snyder_lab2/Illustri
     axi.semilogy(times-time_now,mstar)
     axi.plot([0.0,0.0],[1.0e8,1.0e12],marker=None,linestyle='dashed',color='black',linewidth=2.0)
 
-    axi.plot([time_latest-time_now,time_latest-time_now],[1.0e8,1.0e13],marker=None,linestyle='solid',color='gray',linewidth=1.0)
-    axi.plot([time_latest-time_now-1.0,time_latest-time_now-1.0],[1.0e8,1.0e13],marker=None,linestyle='solid',color='gray',linewidth=1.0)
+    if gyrbox is True:
+        axi.plot([time_latest-time_now,time_latest-time_now],[1.0e8,1.0e13],marker=None,linestyle='solid',color='gray',linewidth=1.0)
+        axi.plot([time_latest-time_now-1.0,time_latest-time_now-1.0],[1.0e8,1.0e13],marker=None,linestyle='solid',color='gray',linewidth=1.0)
 
     axi.plot([time_lastmajor-time_now,time_lastmajor-time_now],[1.0e8,1.0e13],marker=None,linestyle='solid',color='Red',linewidth=4.0)
     axi.plot([time_lastminor-time_now,time_lastminor-time_now],[1.0e8,1.0e13],marker=None,linestyle='dotted',color='Red',linewidth=4.0)
@@ -155,7 +156,7 @@ def masshistory(snapkey,subfindID,camnum=0,basepath='/astro/snyder_lab2/Illustri
         rfkey=None
         npix=400
         
-    axi = showgalaxy.showgalaxy(axi,snapkey,subfindID,camstr,rfkey=rfkey[0],Npix=npix[0])
+    axi = showgalaxy.showgalaxy(axi,snapkey,subfindID,camstr,rfkey=rfkey[0],Npix=npix[0],alph=alph,Q=Q,sb=sb)
 
     
     pyplot.show()
