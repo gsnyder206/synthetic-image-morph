@@ -8,6 +8,7 @@ import matplotlib.colors as pycolors
 import matplotlib.cm as cm
 from matplotlib.ticker import FormatStrFormatter
 import numpy as np
+import numpy.ma as ma
 import asciitable
 import scipy.ndimage
 import scipy.stats as ss
@@ -38,6 +39,7 @@ import pandas
 import h5py
 import make_color_image
 import photutils
+import gfs_sublink_utils as gsu
 
 
 ilh = 0.704
@@ -152,19 +154,27 @@ def SGM20(gini,m20):
     return f
 
 
-def get_all_morph_val(msF,sk,fk,keyname):
-    morph_array = np.concatenate( (msF['nonparmorphs'][sk][fk]['CAMERA0'][keyname].value,
-                                   msF['nonparmorphs'][sk][fk]['CAMERA1'][keyname].value,
-                                   msF['nonparmorphs'][sk][fk]['CAMERA2'][keyname].value,
-                                   msF['nonparmorphs'][sk][fk]['CAMERA3'][keyname].value) )
+def get_all_morph_val(msF,sk,fk,keyname,camera=None):
+    if camera is None:
+        morph_array = np.concatenate( (msF['nonparmorphs'][sk][fk]['CAMERA0'][keyname].value,
+                                       msF['nonparmorphs'][sk][fk]['CAMERA1'][keyname].value,
+                                       msF['nonparmorphs'][sk][fk]['CAMERA2'][keyname].value,
+                                       msF['nonparmorphs'][sk][fk]['CAMERA3'][keyname].value) )
+    else:
+        morph_array = msF['nonparmorphs'][sk][fk][camera][keyname].value
+
     return morph_array
 
 
-def get_all_snap_val(msF,sk,keyname):
-    val_array = np.concatenate( (msF['nonparmorphs'][sk][keyname].value,
-                                   msF['nonparmorphs'][sk][keyname].value,
-                                   msF['nonparmorphs'][sk][keyname].value,
-                                   msF['nonparmorphs'][sk][keyname].value) )
+def get_all_snap_val(msF,sk,keyname,camera=None):
+    if camera is None:
+        val_array = np.concatenate( (msF['nonparmorphs'][sk][keyname].value,
+                                     msF['nonparmorphs'][sk][keyname].value,
+                                     msF['nonparmorphs'][sk][keyname].value,
+                                     msF['nonparmorphs'][sk][keyname].value) )
+    else:
+        val_array = msF['nonparmorphs'][sk][keyname].value
+
     return val_array
 
 
@@ -1329,22 +1339,161 @@ def make_pc1_images(msF,merF,bd='/astro/snyder_lab/Illustris_CANDELS/Illustris-1
     return 0
 
 
+
+def make_morphology_evolution_plots(msF,merF):
+
+    final_key='snapshot_068'
+
+    #this is the list of subfindIDs of the MMPB of the given subhalo
+    tree_sfid_grid=merF['mergerinfo'][final_key]['Tree_SFID_grid'].value
+    final_sfids=merF['mergerinfo'][final_key]['SubfindID'].value
+    snap_keys=list(merF['mergerinfo'].keys())
+    snap_keys.append('snapshot_135')
+    print(snap_keys)
+
+    tree_df=pandas.DataFrame(data=tree_sfid_grid,columns=snap_keys)
+
+    evol_keys=np.flipud(np.asarray(['snapshot_103','snapshot_085','snapshot_075','snapshot_068','snapshot_064','snapshot_060','snapshot_054']))
+    filters = np.flipud(np.asarray(['ACS-F606W','ACS-F814W','NC-F115W','NC-F150W','NC-F150W','NC-F200W','NC-F277W']))
+
+    fil_keys = pandas.DataFrame(data=filters.reshape(1,7),columns=evol_keys)
+
+    print(fil_keys)
+
+
+    sub_tree_df=tree_df[evol_keys]
+    m20_df = pandas.DataFrame()
+    mstar_df = pandas.DataFrame()
+    redshifts=[]
+    ages=[]
+
+    for ek in evol_keys:
+        snap_int=int(ek[-3:])
+        redshift =gsu.redshift_from_snapshot(snap_int)
+        redshifts.append(redshift)
+        ages.append(gsu.age_at_snap(snap_int))
+
+        print(ek,snap_int,redshift)
+        fk = fil_keys[ek].values[0]
+        print(fk)
+
+        sfid_search =  np.asarray(sub_tree_df[ek].values)
+
+        m20_values= np.asarray(get_all_morph_val(msF,ek,fk,'M20'))
+        sfid_values=np.asarray(get_all_snap_val(msF,ek,'SubfindID'))
+        mstar_values = get_all_snap_val(msF,ek,'Mstar_Msun')
+
+        print(m20_values.shape,sfid_values.shape)
+
+        m20_array=np.empty(shape=0)
+        mstar_array = np.empty(shape=0)
+
+        for i,search_sfid in enumerate(sfid_search):
+
+            bi= sfid_values==search_sfid
+
+            if np.sum(bi)==4:
+                m20_array=np.append(m20_array,m20_values[bi])
+                mstar_array=np.append(mstar_array,mstar_values[bi])
+            else:
+                m20_array = np.append(m20_array,np.asarray([0.0,0.0,0.0,0.0]))
+                mstar_array = np.append(mstar_array,np.asarray([0.0,0.0,0.0,0.0]))
+
+        m20_df[ek]=m20_array
+        mstar_df[ek]=mstar_array
+        print(np.sum(mstar_df[ek]),np.sum(mstar_df[ek] > 0.0))
+
+    print(m20_df.shape,mstar_df.shape)
+
+    m20_new = m20_df.dropna()
+
+    mstar_new = mstar_df.loc[m20_new.index.values][:]
+    print(m20_new.shape,mstar_new.shape)
+
+    mstar_sort_index = m20_new['snapshot_103'].sort_values(ascending=True).index.values
+
+    #sorted by final stellar mass
+    mstar_sorted = mstar_new.loc[mstar_sort_index,:]
+    m20_sorted = m20_new.loc[mstar_sort_index,:]
+
+
+    plot_filen = 'evolution/m20_evolution.pdf'
+    if not os.path.lexists('evolution'):
+        os.mkdir('evolution')
+        
+    f1 = pyplot.figure(figsize=(10.0,10.0), dpi=600)
+    pyplot.subplots_adjust(left=0.14, right=0.98, bottom=0.14, top=0.98,wspace=0.0,hspace=0.0)
+    axi=f1.add_subplot(1,1,1)
+
+    N=np.sum(mstar_new > 0.0)
+    totalM = np.sum(mstar_new)
+
+
+    axi.plot(ages,N,'ok')
+
+    tstart=[1.0]
+    for a in ages:
+        tstart.append(a)
+    
+    prek=np.append('snapshot_054',evol_keys)
+    print(prek)
+
+    for ek,age,z,ts,pk in zip(evol_keys,ages,redshifts,tstart,prek):
+        print(ek,age,z,ts,pk)
+        Xarr=np.asarray([ts,age])
+
+        #summed=np.cumsum(mstar_sorted[final_key])
+        #Yarr=np.asarray(summed)
+        sum2=np.cumsum(np.ones_like( mstar_sorted[final_key]) )
+        sum1=np.cumsum(np.ones_like( mstar_sorted[final_key]) )
+        Yarr=np.transpose(np.asarray([sum1,sum2]))
+
+        Carr = np.asarray([m20_sorted[ek],m20_sorted[ek]])
+
+        print(Carr.shape,Xarr.shape,Yarr.shape)
+
+        Zm = ma.masked_where(np.logical_or(Carr >= 0.0,np.isnan(Carr) ) , Carr)
+
+        obj=axi.pcolormesh(Xarr,Yarr,np.transpose(Zm),vmin=-2.5,vmax=-1.5,edgecolors='None',shading='flat')
+    
+    gth.make_colorbar(obj,title='$M_{20}$',ticks=[-2.5,-2.0,-1.5],loc=[0.15,0.90,0.40,0.07],fontsize=20)
+
+
+    sp=25
+    axi.set_ylim(0,3.5e3)
+    axi.set_xlim(1,9)
+    axi.set_ylabel('$N$',size=sp)
+    axi.set_xlabel('cosmic time (Gyr)',size=sp)
+    axi.tick_params(labelsize=sp)
+
+    f1.savefig(plot_filen,dpi=600)
+    pyplot.close(f1)
+
+
+    return mstar_sorted
+
+
+
+
 if __name__=="__main__":
 
 
     #morph_stat_file = '/astro/snyder_lab2/Illustris/MorphologyAnalysis/nonparmorphs_SB25_12filters_all_NEW.hdf5'
-    morph_stat_file = '/astro/snyder_lab2/Illustris/MorphologyAnalysis/nonparmorphs_SB25_12filters_all_FILES.hdf5'
-
+    #morph_stat_file = '/astro/snyder_lab2/Illustris/MorphologyAnalysis/nonparmorphs_SB25_12filters_all_FILES.hdf5'
     #morph_stat_file = '/astro/snyder_lab2/Illustris/MorphologyAnalysis/nonparmorphs_SB27_12filters_all_NEW.hdf5'
+    morph_stat_file = os.path.expandvars('$HOME/Dropbox/Workspace/Papers_towrite/Illustris_ObservingMergers/CATALOGS/nonparmorphs_SB25_12filters_all_FILES.hdf5')
+
+
 
     #merger_file = '/astro/snyder_lab2/Illustris/MorphologyAnalysis/imagedata_mergerinfo.hdf5'
     #merger_file = '/astro/snyder_lab2/Illustris/MorphologyAnalysis/imagedata_mergerinfo_SB27.hdf5'
-    merger_file = '/astro/snyder_lab2/Illustris/MorphologyAnalysis/imagedata_mergerinfo_SB25.hdf5'
+    #merger_file = '/astro/snyder_lab2/Illustris/MorphologyAnalysis/imagedata_mergerinfo_SB25.hdf5'
+    merger_file = os.path.expandvars('$HOME/Dropbox/Workspace/Papers_towrite/Illustris_ObservingMergers/CATALOGS/imagedata_mergerinfo_SB25_2017March3.hdf5')
 
 
     with h5py.File(morph_stat_file,'r') as msF:
         with h5py.File(merger_file,'r') as merF:
-            localvars = make_sfr_radius_mass_plots(msF,merF,rfiter=10)
+            #localvars = make_sfr_radius_mass_plots(msF,merF,rfiter=10)
             
             #localvars = make_morphology_plots(msF,merF)
             #res = make_pc1_images(msF,merF,bd='/astro/snyder_lab/Illustris_CANDELS/Illustris-1_z1_images_bc03/')
@@ -1354,3 +1503,5 @@ if __name__=="__main__":
             #res = make_merger_images(msF,merF,rflabel='paramsmod',rf_masscut=10.0**(10.5),labelfunc='label_merger4')
             #localvars = make_rf_evolution_plots(rflabel='paramsmod',rf_masscut=10.0**(10.5),labelfunc='label_merger4')
 
+
+            res = make_morphology_evolution_plots(msF,merF)
