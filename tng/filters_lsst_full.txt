@@ -1,0 +1,11 @@
+galex/fuv_1500
+galex/nuv_2500
+panstarrs/panstarrs_ps1_g
+panstarrs/panstarrs_ps1_open
+lsst/lsst_u
+lsst/lsst_g
+lsst/lsst_r
+lsst/lsst_i
+lsst/lsst_z
+lsst/lsst_y3
+standard/wfcam_j

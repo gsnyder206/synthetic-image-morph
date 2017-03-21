@@ -1,0 +1,4 @@
+panstarrs/panstarrs_ps1_g
+panstarrs/panstarrs_ps1_open
+lsst/lsst_u
+lsst/lsst_y3
