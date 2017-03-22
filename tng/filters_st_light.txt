@@ -1,5 +1,4 @@
 hst/acs_f435w
-hst/acs_f606w
 hst/acs_f814w
 hst/wfc3_f105w
 hst/wfc3_f160w

@@ -73,42 +73,45 @@ if __name__=="__main__":
 
         if z < 0.3:
             imtype='LSST'
-            pix_target_as=0.2   # ~LSST pixel
+            pix_min_as=0.2   # ~LSST pixel
             res_as=0.7
-            fov_target_kpc = 150.0
+            fov_target_kpc = 120.0
+            pix_target_kpc = 0.700
+
         elif z < 1.0:
             imtype='ST'
-            pix_target_as=0.1  #e.g., Euclid, WFIRST
+            pix_min_as=0.1  #e.g., Euclid, WFIRST
             res_as=0.20
-            fov_target_kpc = 150.0
+            fov_target_kpc = 120.0
+            pix_target_kpc = 0.700
         else:
             imtype='ST'
-            pix_target_as=0.032   #~Nircam-Short pixel
+            pix_min_as=0.032   #~Nircam-Short pixel
             res_as=0.10
-            fov_target_kpc = 100.0
-
+            fov_target_kpc = 240.0/(1.0 + z)
+            pix_target_kpc = 1.40/(1.0 + z)
 
         full_bool=tngcos.fullsnap[i]
         if full_bool == True:
-            Ncam=5 #face-on, edge-on, 3 axes, 7 iso/random ?
+            Ncam=10 #face-on, edge-on, 3 axes, 7 iso/random ?
             if imtype=='ST':
-                filter_file='filters_st_full'
+                filter_file='filters_rest'
                 flist=pd.read_table(filter_file+'.txt',header=None)
                 bbz=z*1.0
             else:
-                filter_file='filters_lsst_full'
+                filter_file='filters_rest'
                 flist=pd.read_table(filter_file+'.txt',header=None)
-                bbz=0.1
+                bbz=max([z*1.0,0.1])
         else:
             Ncam=5  #face-on, edge-on, 3 iso/random
             if imtype=='ST':
-                filter_file='filters_st_light'
+                filter_file='filters_rest'
                 flist=pd.read_table(filter_file+'.txt',header=None)
                 bbz=z*1.0
             else:
-                filter_file='filters_lsst_light'
+                filter_file='filters_rest'
                 flist=pd.read_table(filter_file+'.txt',header=None)
-                bbz=0.1
+                bbz=max([z*1.0,0.1])
 
 
         Nfils=flist[0].shape[0]
@@ -121,7 +124,10 @@ if __name__=="__main__":
 
         scale_kpc_per_as = tngcos.kpc_proper_per_arcmin(bbz).value/60.0
 
+        pix_target_as = max([pix_target_kpc/scale_kpc_per_as,pix_min_as])
         pix_target_kpc=scale_kpc_per_as*pix_target_as
+        #pix_target_as = pix_target_kpc/scale_kpc_per_as
+
         res_kpc = scale_kpc_per_as*res_as
 
 
@@ -131,8 +137,9 @@ if __name__=="__main__":
         fov_new = int_npix*pix_target_kpc
 
 
+        Naux=3
 
-        pix_per_galaxy=(int_npix**2)*(Nfils+3.0)*Ncam
+        pix_per_galaxy=(int_npix**2)*(Nfils+Naux)*Ncam
         bytes_per_pix=4.0
 
         GB_per_galaxy=bytes_per_pix*pix_per_galaxy/1.0e9
@@ -142,7 +149,7 @@ if __name__=="__main__":
         total_GB = total_GB + GB_estimated
 
         print('{:03d}  {:9.6f}   {:5s}   {:4s}   {:3d}    {:20s} '
-              '{:5.3f}    {:5.3f}    {:7.3f}    {:4d}  {:4d}     {:5.2f}  {:7d}   {:7.1f}'.format(sn,z,str(full_bool),imtype, Ncam, filter_file,
-                                                                                               pix_target_kpc,res_kpc,fov_new,int_npix, Nfils, GB_per_galaxy,Ng,GB_estimated )  )
+              '{:5.3f}    {:5.3f}    {:5.3f}    {:7.3f}    {:4d}  {:4d}     {:5.2f}  {:7d}   {:7.1f}'.format(sn,z,str(full_bool),imtype, Ncam, filter_file,
+                                                                                               pix_target_kpc,pix_target_as,res_kpc,fov_new,int_npix, Nfils, GB_per_galaxy,Ng,GB_estimated )  )
 
     print('Expected TB Size: ', total_GB/1.0e3)
