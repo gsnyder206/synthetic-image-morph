@@ -127,7 +127,7 @@ def load_full_tree(basepath,tree_id):
 
     result = {'id':tree_id}
 
-    fields = ['TreeID','SubhaloID','SnapNum','SubfindID','DescendantID','FirstProgenitorID','MassHistory','RootDescendantID','SubhaloMass','SubhaloMassInRadType','SubhaloMassInHalfRadType','SubhaloSFR','SubhaloParent','SubhaloPos','SubhaloVel','SubhaloStellarPhotometricsMassInRad','MainLeafProgenitorID']
+    fields = ['TreeID','SubhaloID','SnapNum','SubfindID','DescendantID','FirstProgenitorID','MassHistory','RootDescendantID','SubhaloMass','SubhaloMassInRadType','SubhaloMassInHalfRadType','SubhaloSFR','SubhaloParent','SubhaloPos','SubhaloVel','SubhaloStellarPhotometricsMassInRad','MainLeafProgenitorID','SubhaloBHMdot','SubhaloBHMass']
 
     with h5py.File(this_file,'r') as f:
         tree_id_values = f['TreeID'].value
@@ -202,6 +202,8 @@ def descendants_from_tree(tree,sublink_id):
     sfid = [tree['SubfindID'][sl_ind[0]]]
     sfr = [tree['SubhaloSFR'][sl_ind[0]]]
     mlpid = [tree['MainLeafProgenitorID'][sl_ind[0]]]
+    bhmdot = [tree['SubhaloBHMdot'][sl_ind[0]]]
+    bhm = [tree['SubhaloBHMass'][sl_ind[0]]]
     
     desc_sli = sublink_id
 
@@ -216,8 +218,10 @@ def descendants_from_tree(tree,sublink_id):
             sfid.append(tree['SubfindID'][sl_ind])
             sfr.append(tree['SubhaloSFR'][sl_ind])
             mlpid.append(tree['MainLeafProgenitorID'][sl_ind])
-
-    return np.asarray(desc,dtype='int64'),np.asarray(snap),rootid,np.asarray(mass)*(1.0e10)/ilh,np.asarray(mstar)*(1.0e10)/ilh, np.asarray(sfid), np.asarray(sfr), np.asarray(mlpid)
+            bhmdot.append(tree['SubhaloBHMdot'][sl_ind])
+            bhm.append(tree['SubhaloBHMass'][sl_ind])
+            
+    return np.asarray(desc,dtype='int64'),np.asarray(snap),rootid,np.asarray(mass)*(1.0e10)/ilh,np.asarray(mstar)*(1.0e10)/ilh, np.asarray(sfid), np.asarray(sfr), np.asarray(mlpid), np.asarray(bhmdot), np.asarray(bhm)
 
 
 def mainprogs_from_tree(tree,sublink_id):
@@ -236,6 +240,8 @@ def mainprogs_from_tree(tree,sublink_id):
     sfid = [tree['SubfindID'][sl_ind[0]]]
     sfr = [tree['SubhaloSFR'][sl_ind[0]]]
     mlpid = [tree['MainLeafProgenitorID'][sl_ind[0]]]
+    bhmdot = [tree['SubhaloBHMdot'][sl_ind[0]]]
+    bhm = [tree['SubhaloBHMass'][sl_ind[0]]]
 
     desc_sli = sublink_id
 
@@ -250,14 +256,16 @@ def mainprogs_from_tree(tree,sublink_id):
             sfid.append(tree['SubfindID'][sl_ind])
             sfr.append(tree['SubhaloSFR'][sl_ind])
             mlpid.append(tree['MainLeafProgenitorID'][sl_ind])
+            bhmdot.append(tree['SubhaloBHMdot'][sl_ind])
+            bhm.append(tree['SubhaloBHMass'][sl_ind])
 
-    return np.asarray(desc,dtype='int64'),np.asarray(snap),rootid,np.asarray(mass)*(1.0e10)/ilh,np.asarray(mstar)*(1.0e10)/ilh, np.asarray(sfid), np.asarray(sfr), np.asarray(mlpid)
+    return np.asarray(desc,dtype='int64'),np.asarray(snap),rootid,np.asarray(mass)*(1.0e10)/ilh,np.asarray(mstar)*(1.0e10)/ilh, np.asarray(sfid), np.asarray(sfr), np.asarray(mlpid), np.asarray(bhmdot), np.asarray(bhm)
 
 
 def mmpb_from_tree(tree,sublink_id):
 
-    desc1,snap1,rootid1,mass1,mstar1,sfid1,sfr1,mlpid1 = descendants_from_tree(tree,sublink_id)
-    desc2,snap2,rootid2,mass2,mstar2,sfid2,sfr2,mlpid2 = mainprogs_from_tree(tree,sublink_id)
+    desc1,snap1,rootid1,mass1,mstar1,sfid1,sfr1,mlpid1,bhmdot1,bhm1 = descendants_from_tree(tree,sublink_id)
+    desc2,snap2,rootid2,mass2,mstar2,sfid2,sfr2,mlpid2,bhmdot2,bhm2 = mainprogs_from_tree(tree,sublink_id)
     
     sli = np.concatenate((np.flipud(desc2),desc1[1:]))
     snap = np.concatenate((np.flipud(snap2),snap1[1:]))
@@ -266,12 +274,14 @@ def mmpb_from_tree(tree,sublink_id):
     sfid = np.concatenate((np.flipud(sfid2),sfid1[1:]))
     sfr = np.concatenate((np.flipud(sfr2),sfr1[1:]))
     mlpid = np.concatenate((np.flipud(mlpid2),mlpid1[1:]))
-    
+    bhmdot = np.concatenate((np.flipud(bhmdot2),bhmdot1[1:]))
+    bhm = np.concatenate((np.flipud(bhm2),bhm1[1:]))
+
     times = np.zeros_like(mstar)
     for i,sn in enumerate(snap):
         times[i]=age_at_snap(sn)
 
-    return sli,snap,mass,mstar,rootid1,rootid2,sfid,sfr,times,mlpid
+    return sli,snap,mass,mstar,rootid1,rootid2,sfid,sfr,times,mlpid,bhmdot,bhm
 
 
 def evaluate_primary(basepath,primary_snap,primary_sfid,ratio = 4.0):

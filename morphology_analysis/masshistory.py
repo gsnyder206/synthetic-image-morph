@@ -10,6 +10,7 @@ import illustris_python as ilpy
 import h5py
 import gfs_sublink_utils as gsu
 from astropy.cosmology import WMAP7,z_at_value
+import astropy.units as u
 import showgalaxy
 import illcan_multiplots as icmp
 import warnings
@@ -103,20 +104,23 @@ def mergerfileinfo(snapkey,subfindID,size=2,trange=[-2.0,2.0]):
     return gsu.age_at_snap(lsn), gsu.age_at_snap(last_merger[sfi]), gsu.age_at_snap(last_minmerger[sfi])
 
 
-def masshistory(snapkey,subfindID,camnum=0,basepath='/astro/snyder_lab2/Illustris/Illustris-1',size=2,trange=[-1.5,1.5],alph=0.2,Q=8.0,sb='SB25',gyrbox=True
-):
+def masshistory(snapkey,subfindID,camnum=0,basepath='/astro/snyder_lab2/Illustris/Illustris-1',size=2,trange=[-1.5,1.5],alph=0.2,Q=8.0,sb='SB25',gyrbox=True,filters=['NC-F115W','NC-F150W','NC-F200W'],use_rfkey=True,npix=None,radeff=0.2,dx=0,dy=0,savefile=None):
     snapnum = snapkey[-3:]
     this_snap_int = np.int64(snapnum)
 
     sublink_id,tree_id,mstar,sfr = gsu.sublink_id_from_subhalo(basepath,this_snap_int,subfindID)
     tree = gsu.load_full_tree(basepath,tree_id)
-    mmpb_sublink_id,snaps,mass,mstar,r1,r2,mmpb_sfid,sfr,times,mlpids = gsu.mmpb_from_tree(tree,sublink_id)
+    mmpb_sublink_id,snaps,mass,mstar,r1,r2,mmpb_sfid,sfr,times,mlpids,bhmdot,bhm = gsu.mmpb_from_tree(tree,sublink_id)
     time_now = gsu.age_at_snap(this_snap_int)
 
 
     time_latest,time_lastmajor,time_lastminor = mergerfileinfo(snapkey,subfindID)
     print(time_latest,time_lastmajor,time_lastminor)
-    
+
+    bhlum = radeff*((u.Msun/u.year)*bhmdot*((1.0e10)/ilh)/(0.978*1.0e9/ilh))*(astropy.constants.c**2)
+    bhlum_lsun = bhlum.to('solLum')
+
+    bhm_msun = bhm*(1.0e10)/ilh
     
     fig=pyplot.figure(figsize=(size*2,size)) 
     pyplot.subplots_adjust(wspace=0.0,hspace=0.0)
@@ -125,6 +129,11 @@ def masshistory(snapkey,subfindID,camnum=0,basepath='/astro/snyder_lab2/Illustri
     axi = fig.add_subplot(1,2,1)
 
     axi.semilogy(times-time_now,mstar)
+    
+    axi.semilogy(times[bhm_msun > 0]-time_now,bhm_msun[bhm_msun > 0]*2.0e2)
+
+    axi.legend(['$M_* (t)$','$M_{bh} (t)/200$'],loc='upper left',fontsize=25)
+    
     axi.plot([0.0,0.0],[1.0e8,1.0e12],marker=None,linestyle='dashed',color='black',linewidth=2.0)
 
     if gyrbox is True:
@@ -138,9 +147,9 @@ def masshistory(snapkey,subfindID,camnum=0,basepath='/astro/snyder_lab2/Illustri
     inrange=np.where(np.logical_and(times-time_now > trange[0], times-time_now <= trange[1]))[0]
     axi.set_ylim(np.min(mstar[inrange])/2.0,np.max(mstar[inrange])*2.0)
 
-    ls = 20
+    ls = 25
     axi.set_xlabel('$t-t_{obs} (Gyr)$',size=ls)
-    axi.set_ylabel('$M_* (t)$',size=ls)
+    #axi.set_ylabel('$M_* (t)$,   $M_{bh} (t)/200$',size=ls)
     axi.tick_params(axis='both', which='major', labelsize=ls)
     
     #image(s?)
@@ -150,18 +159,25 @@ def masshistory(snapkey,subfindID,camnum=0,basepath='/astro/snyder_lab2/Illustri
 
     im_snap_keys, im_rf_fil_keys, im_npix = icmp.return_rf_variables()
 
-    try:
-        rfkey=im_rf_fil_keys[im_snap_keys==snapkey]
-        npix=im_npix[im_snap_keys==snapkey]
-    except:
+    if use_rfkey is True:
+        try:
+            rfkey=im_rf_fil_keys[im_snap_keys==snapkey][0]
+            npix=im_npix[im_snap_keys==snapkey][0]
+        except:
+            rfkey=None
+            npix=400
+    else:
         rfkey=None
-        npix=400
-        
-    axi = showgalaxy.showgalaxy(axi,snapkey,subfindID,camstr,rfkey=rfkey[0],Npix=npix[0],alph=alph,Q=Q,sb=sb)
+        if npix is None:
+            npix=400
+    
+    axi = showgalaxy.showgalaxy(axi,snapkey,subfindID,camstr,rfkey=rfkey,Npix=npix,alph=alph,Q=Q,sb=sb,filters=filters,dx=dx,dy=dy)
 
-    
-    pyplot.show()
-    
+    if savefile is None:
+        pyplot.show()
+    else:
+        fig.savefig(savefile,dpi=500)
+
     pyplot.close(fig)
     
     
