@@ -132,7 +132,7 @@ def masshistory(snapkey,subfindID,camnum=0,basepath='/astro/snyder_lab2/Illustri
     
     axi.semilogy(times[bhm_msun > 0]-time_now,bhm_msun[bhm_msun > 0]*2.0e2)
 
-    axi.legend(['$M_* (t)$','$M_{bh} (t)/200$'],loc='upper left',fontsize=25)
+    axi.legend(['$M_* (t)$','$M_{bh} (t) x200$'],loc='upper left',fontsize=25)
     
     axi.plot([0.0,0.0],[1.0e8,1.0e12],marker=None,linestyle='dashed',color='black',linewidth=2.0)
 
