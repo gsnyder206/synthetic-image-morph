@@ -683,7 +683,7 @@ def process_mag(analysis_object,bb_dir,snap_prefix,camstring,maglim,analyze,
 
 
 
-def process_single_broadband(bbfile,analysis_object,bbase='broadband_red_',clobber=False, analyze=True, do_idl=False, Np=2,maxq=10000,lim=None):
+def process_single_broadband(bbfile,analysis_object,bbase='broadband_red_',clobber=False, analyze=True, do_idl=False, Np=2,maxq=10000,lim=None,zip_after=True):
     #create subdirectory to hold mock images and analyses
     end = bbfile[-3:]
     if end=='.gz':
@@ -779,8 +779,9 @@ def process_single_broadband(bbfile,analysis_object,bbase='broadband_red_',clobb
     
 
     #compress when finished with broadband.fits file
-    if is_unzipped is True:
-        subprocess.call(['pigz', '-9', '-p', str(Np), bbfile])
+    if zip_after is True:
+        if is_unzipped is True:
+            subprocess.call(['pigz', '-9', '-p', str(Np), bbfile])
 
 
     #morphology code requires existence of useful segmentation maps

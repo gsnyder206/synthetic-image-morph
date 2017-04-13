@@ -56,7 +56,7 @@ sq_arcsec_per_sr = 42545170296.0
 im_snap_keys = ['snapshot_103','snapshot_085','snapshot_075','snapshot_068',
              'snapshot_064','snapshot_060','snapshot_054', 'snapshot_049']
 
-im_rf_fil_keys = ['ACS-F606W','ACS-F814W','NC-F115W','NC-F150W',
+im_rf_fil_keys = ['ACS-F606W','ACS-F814W','WFC3-F105W','NC-F150W',
                   'NC-F150W','NC-F200W','NC-F200W','NC-F277W']
 
 
@@ -323,6 +323,8 @@ def make_rf_evolution_plots(rflabel='paramsmod',labelfunc='label_merger1',rf_mas
 
 
 
+    
+
 
     
     labs=11
@@ -415,6 +417,7 @@ def make_rf_evolution_plots(rflabel='paramsmod',labelfunc='label_merger1',rf_mas
         rf_flag = rf_data['mergerFlag'].values
         #rf_sgm20 = rf_data['dGM20'].values
         rf_cc = rf_data['cc'].values
+        rf_mstar = rf_data['Mstar_Msun'].values
         
         asym_classifier = rf_asym > 0.25
         asym_com,asym_ppv = simple_classifier_stats(asym_classifier,rf_flag)
@@ -475,7 +478,27 @@ def make_rf_evolution_plots(rflabel='paramsmod',labelfunc='label_merger1',rf_mas
         pyplot.close(f3)
 
 
+        
+        scat_filen = 'rf_plots/'+labelfunc+'/'+rflabel+'_'+sk+'_'+fk+'_scatterplot.pdf'
+        f4 = pyplot.figure(figsize=(3.5,3.0), dpi=300)
+        pyplot.subplots_adjust(left=0.22, right=0.99, bottom=0.17, top=0.99,wspace=0.0,hspace=0.0)
+    
+        axi4=f4.add_subplot(1,1,1)
+        axi4.locator_params(nbins=5,prune='both')
 
+        axi4.semilogy(np.log10(rf_mstar),np.mean(probs[[0,1,2,3,4]],axis=1),'ok',markersize=4)
+        axi4.semilogy(np.log10(rf_mstar[rf_flag==True]),np.mean(probs[[0,1,2,3,4]],axis=1)[rf_flag==True],'o',markersize=6,markerfacecolor=None,markeredgecolor='Orange')
+
+        axi4.legend(['nonmerger','true merger'],loc='lower right',fontsize=10,framealpha=1.0)
+        sp=12
+        axi4.set_xlim(10.4,11.95)
+        axi4.set_ylim(0.05,1.10)
+        axi4.set_xlabel('log$_{10} M_*$',size=sp)
+        axi4.set_ylabel('HST morphology merger probability',size=sp)
+        axi4.tick_params(labelsize=sp)
+
+        f4.savefig(scat_filen,dpi=300)
+        pyplot.close(f4)
         
     f1.savefig(plot_filen,dpi=300)
     pyplot.close(f1)
@@ -484,12 +507,13 @@ def make_rf_evolution_plots(rflabel='paramsmod',labelfunc='label_merger1',rf_mas
     f2.savefig(imp_filen,dpi=300)
     pyplot.close(f2)
 
+    
         
     return locals()
 
 
 
-def run_random_forest(msF,merF,rfiter=3,RUN_RF=True,rf_masscut=10.0**(10.5),labelfunc='label_merger1'):
+def run_random_forest(msF,merF,rfiter=3,RUN_RF=True,rf_masscut=10.0**(10.5),labelfunc='label_merger1',balancetrain=True):
     
     for sk,fk in zip(snap_keys,fil_keys):
 
@@ -569,6 +593,7 @@ def run_random_forest(msF,merF,rfiter=3,RUN_RF=True,rf_masscut=10.0**(10.5),labe
             rf_dict['cc']=cc[gi]
             rf_dict['mergerFlag']=boolean_flag[gi]
             rf_dict['SubfindID']=sfid[gi]
+            rf_dict['Mstar_Msun']=mstar[gi]
 
             cols=['gini','m20','asym','Mstat','Istat','Dstat','cc']
             rflabel='params'
@@ -602,14 +627,17 @@ def run_random_forest(msF,merF,rfiter=3,RUN_RF=True,rf_masscut=10.0**(10.5),labe
                 df=pandas.DataFrame(rf_dict)
 
                 #get a balanced training set
-                mergers = df.where(df['mergerFlag']==True).dropna()
-                Nmergers=mergers.shape[0]
-                nonmergers=df.drop(mergers.index)
-                rows=random.sample(list(nonmergers.index),5*int(Nmergers))
-                newdf=mergers.append(nonmergers.ix[rows])
-                
+                if balancetrain is True:
+                    mergers = df.where(df['mergerFlag']==True).dropna()
+                    Nmergers=mergers.shape[0]
+                    nonmergers=df.drop(mergers.index)
+                    rows=random.sample(list(nonmergers.index),5*int(Nmergers))
+                    newdf=mergers.append(nonmergers.ix[rows])
+                else:
+                    newdf = df
+                    
                 print("Running Random Forest... ", sk, fk)
-                result, labels, label_probability, rf_objs,roc_results = PyML.randomForestMC(newdf,iterations=RF_ITER,cols=cols,max_leaf_nodes=30,n_estimators=50)
+                result, labels, label_probability, rf_objs,roc_results = PyML.randomForestMC(newdf,iterations=RF_ITER,cols=cols)    #,max_leaf_nodes=30,n_estimators=50
                 #result = summary statistics, feature importances (N iterations x N statistics/importances)
                 #labels = labels following random forest (N galaxies x N iterations)
                 #label_probability = probability of label following random forest (N galaxies x N iterations)
@@ -1581,7 +1609,7 @@ if __name__=="__main__":
             #localvars = make_morphology_plots(msF,merF)
             #res = make_pc1_images(msF,merF,bd='/astro/snyder_lab/Illustris_CANDELS/Illustris-1_z1_images_bc03/')
             
-            localvars = run_random_forest(msF,merF,rfiter=5,rf_masscut=10.0**(10.5),labelfunc='label_merger_window500_both')
+            #localvars = run_random_forest(msF,merF,rfiter=5,rf_masscut=10.0**(10.5),labelfunc='label_merger_window500_both',balancetrain=False)
             localvars = make_rf_evolution_plots(rflabel='params',rf_masscut=10.0**(10.5),labelfunc='label_merger_window500_both')
 
             

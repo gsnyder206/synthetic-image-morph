@@ -50,7 +50,7 @@ def process_snapshot(subdirpath='.',mockimage_parameters=None,clobber=False, max
     os.chdir(subdirpath)
 
     bbfile_list = np.sort(np.asarray(glob.glob('broadbandz.fits*')))   #enable reading .fits.gz files
-    print bbfile_list
+    print(bbfile_list)
 
     if galaxy is not None:
         thisbb = np.where(bbfile_list==galaxy)[0]
@@ -58,15 +58,15 @@ def process_snapshot(subdirpath='.',mockimage_parameters=None,clobber=False, max
 
     test_file = bbfile_list[0]
     tf = pyfits.open(test_file)
-    print tf.info()
-    print tf['BROADBAND'].header.cards
-    print tf['SFRHIST'].header.get('star_adaptive_smoothing')
-    print tf['SFRHIST'].header.get('star_radius_factor')
+    print(tf.info())
+    print(tf['BROADBAND'].header.cards)
+    print(tf['SFRHIST'].header.get('star_adaptive_smoothing'))
+    print(tf['SFRHIST'].header.get('star_radius_factor'))
 
     #this is critical for later
     
     fils = tf['FILTERS'].data.field('filter')
-    print fils
+    print(fils)
 
 
     filters_to_analyze = ['hst/acs_f435w','hst/acs_f606w','hst/acs_f775w','hst/acs_f850lp',
@@ -109,7 +109,7 @@ def process_snapshot(subdirpath='.',mockimage_parameters=None,clobber=False, max
                            False,]
 
 
-    print filters_to_analyze
+    print(filters_to_analyze)
     
     pixsize_arcsec = [0.03,0.03,0.03,0.03,0.06,0.06,0.06,0.032,0.032,0.032,0.032,0.032,0.065,0.065,0.065,0.06,0.03,0.03,0.03,
                       0.11,0.11,0.11,0.11,0.11,0.11,0.11,0.11,0.11]
@@ -122,17 +122,17 @@ def process_snapshot(subdirpath='.',mockimage_parameters=None,clobber=False, max
 
     filter_indices = []
 
-    print len(filters_to_analyze), len(skip_filter_boolean), len(filter_labels)
+    print(len(filters_to_analyze), len(skip_filter_boolean), len(filter_labels))
     
     for i,f in enumerate(filters_to_analyze):
         fi = np.where(fils==f)
-        print fi[0][0], f, fils[fi[0][0]], filter_labels[i] #, filters_to_analyze[fi]
+        print(fi[0][0], f, fils[fi[0][0]], filter_labels[i]) #, filters_to_analyze[fi]
         filter_indices.append(fi[0][0])
 
 
     filter_indices = np.asarray(filter_indices)
 
-    print filter_indices
+    print(filter_indices)
 
     #order of filter_labels in wavelength space (i.e, F435W is in the "2" position)
     filter_lambda_order = [2,3,4,6,7,8,10,
@@ -185,7 +185,7 @@ def process_snapshot(subdirpath='.',mockimage_parameters=None,clobber=False, max
     for pname in psf_names:
         psf_file = os.path.join(psf_dir,pname)
         psf_files.append(psf_file)
-        print psf_file, os.path.lexists(psf_file)
+        print(psf_file, os.path.lexists(psf_file))
 
     ###  PSFSTD; WFC3 = 0.06 arcsec, ACS = 0.03 arcsec... I think
     ### NIRCAM in header with keyword 'PIXELSCL';  short 0.07925 long 0.0162
@@ -220,8 +220,8 @@ def process_snapshot(subdirpath='.',mockimage_parameters=None,clobber=False, max
     mockimage_parameters.segment_filter_label = seg_filter_label
     mockimage_parameters.segment_filter_index = np.where(np.asarray(mockimage_parameters.filter_labels) == seg_filter_label)[0][0]
 
-    print mockimage_parameters.segment_filter_label
-    print mockimage_parameters.segment_filter_index
+    print(mockimage_parameters.segment_filter_label)
+    print(mockimage_parameters.segment_filter_index)
     
     assert(len(psf_pix_arcsec)==len(pixsize_arcsec))
     assert(len(filter_labels)==len(mockimage_parameters.psf_files))
@@ -234,13 +234,13 @@ def process_snapshot(subdirpath='.',mockimage_parameters=None,clobber=False, max
             bbdir = ssimp.process_single_broadband(bbfile,mockimage_parameters,clobber=clobber,do_idl=do_idl,analyze=analyze,bbase="broadbandz",Np=Np)
             bbdirs.append(bbdir)
         except (KeyboardInterrupt,NameError,AttributeError,KeyError,TypeError,IndexError) as e:
-            print e
+            print(e)
             raise
         except:
-            print "Exception while processing broadband: ", bbfile
-            print "Error:", sys.exc_info()[0]
+            print("Exception while processing broadband: ", bbfile)
+            print("Error:", sys.exc_info()[0])
         else:
-            print "Successfully processed broadband: ", bbfile
+            print("Successfully processed broadband: ", bbfile)
 
     os.chdir(cwd)
 

@@ -123,7 +123,7 @@ def masshistory(snapkey,subfindID,camnum=0,basepath='/astro/snyder_lab2/Illustri
     bhm_msun = bhm*(1.0e10)/ilh
     
     fig=pyplot.figure(figsize=(size*2,size)) 
-    pyplot.subplots_adjust(wspace=0.0,hspace=0.0)
+    pyplot.subplots_adjust(wspace=0.0,hspace=0.0,top=0.99,right=0.99)
     
     #mass history plot
     axi = fig.add_subplot(1,2,1)
