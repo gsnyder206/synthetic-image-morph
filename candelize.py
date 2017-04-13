@@ -18,9 +18,6 @@ import tarfile
 import shutil
 import congrid
 import astropy.io.ascii as ascii
-import sunpy__load
-import sunpy__plot
-import sunpy__synthetic_image
 from sunpy.sunpy__plot import *
 import warnings
 import subprocess
