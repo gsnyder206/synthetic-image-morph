@@ -5,13 +5,7 @@ import string
 import sys
 import struct
 import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as pyplot
-import matplotlib.colors as pycolors
-import matplotlib.cm as cm
-import matplotlib.patches as patches
 import numpy as np
-import cPickle
 import scipy.ndimage
 import scipy.stats as ss
 import scipy.signal
@@ -19,8 +13,6 @@ import scipy as sp
 import scipy.odr as odr
 import glob
 import os
-import make_color_image
-#import make_fake_wht
 import gzip
 import tarfile
 import shutil
