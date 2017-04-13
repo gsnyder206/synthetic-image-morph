@@ -18,7 +18,6 @@ import tarfile
 import shutil
 import congrid
 import astropy.io.ascii as ascii
-from sunpy.sunpy__plot import *
 import warnings
 import subprocess
 import photutils
