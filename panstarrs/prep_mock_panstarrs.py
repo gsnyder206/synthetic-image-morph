@@ -31,7 +31,9 @@ def prep_mock_panstarrs(input_catalog):
         #get_parent means it downloads the FOF group but points to each individual subhalo (duplicates data, but OK)
 
         #may want to create new functions based around setup_sunrise_illustris_panstarrs(f,s,redshift_override=use_z,filters='$MOCK_SURVEYS/tng/filters_lsst_light.txt')  ?
+        #examples in "isu" code:
         #isu.setup_sunrise_illustris_subhalo(f,s,redshift_override=use_z)
+
         #this also needs to be edited to include the realism and morphology steps in the job scripts, and output job submission scripts a la the lightcone function in "isu" module.
         script=setup_sunrise_illustris_panstarrs(f,s,redshift_override=use_z)        
         #the result will be all necessary snapshot data plus ancillary Sunrise data and input files, plus submission scripts
