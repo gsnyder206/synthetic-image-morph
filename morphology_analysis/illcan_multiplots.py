@@ -359,46 +359,50 @@ def make_rf_evolution_plots(rflabel='paramsmod',labelfunc='label_merger1',rf_mas
         assert(False)
 
 
+    snap_keys.append('combined')
+    fil_keys.append('subset')
+    
     for sk,fk in zip(snap_keys,fil_keys):
-        parameters, pcd, pc, pcd = make_pc_dict(msF,sk,fk)
-        pc1 = pc.X[:,0].flatten()
-        pc2 = pc.X[:,1].flatten()
-        pc3 = pc.X[:,2].flatten()
-        pc4 = pc.X[:,3].flatten()
-        pc5 = pc.X[:,4].flatten()
-        pc6 = pc.X[:,5].flatten()
-        pc7 = pc.X[:,6].flatten()
-        PCs=pandas.DataFrame(pc.X)
+        if sk != 'combined':
+            parameters, pcd, pc, pcd = make_pc_dict(msF,sk,fk)
+            pc1 = pc.X[:,0].flatten()
+            pc2 = pc.X[:,1].flatten()
+            pc3 = pc.X[:,2].flatten()
+            pc4 = pc.X[:,3].flatten()
+            pc5 = pc.X[:,4].flatten()
+            pc6 = pc.X[:,5].flatten()
+            pc7 = pc.X[:,6].flatten()
+            PCs=pandas.DataFrame(pc.X)
         
-        asym = get_all_morph_val(msF,sk,fk,'ASYM')
-        gini = get_all_morph_val(msF,sk,fk,'GINI')
-        m20 = get_all_morph_val(msF,sk,fk,'M20')
-        cc = get_all_morph_val(msF,sk,fk,'CC')
-        Mstat = get_all_morph_val(msF,sk,fk,'MID1_MPRIME')
-        Istat = get_all_morph_val(msF,sk,fk,'MID1_ISTAT')
-        Dstat = get_all_morph_val(msF,sk,fk,'MID1_DSTAT')
+            asym = get_all_morph_val(msF,sk,fk,'ASYM')
+            gini = get_all_morph_val(msF,sk,fk,'GINI')
+            m20 = get_all_morph_val(msF,sk,fk,'M20')
+            cc = get_all_morph_val(msF,sk,fk,'CC')
+            Mstat = get_all_morph_val(msF,sk,fk,'MID1_MPRIME')
+            Istat = get_all_morph_val(msF,sk,fk,'MID1_ISTAT')
+            Dstat = get_all_morph_val(msF,sk,fk,'MID1_DSTAT')
 
-        #S_GM20 = SGM20(gini,m20)
-        #F_GM20 = FGM20(gini,m20)
+            #S_GM20 = SGM20(gini,m20)
+            #F_GM20 = FGM20(gini,m20)
         
         
-        latest_NumMajorMergersLastGyr = get_mergerinfo_val(merF,sk,'latest_NumMajorMergersLastGyr')
-        boolean_merger1 = latest_NumMajorMergersLastGyr >= 1.0
-        latest_NumMinorMergersLastGyr = get_mergerinfo_val(merF,sk,'latest_NumMinorMergersLastGyr')
-        boolean_merger4 = latest_NumMinorMergersLastGyr >= 1.0
-
-        this_NumMajorMergersLastGyr = get_mergerinfo_val(merF,sk,'this_NumMajorMergersLastGyr')
-        boolean_merger2 = this_NumMajorMergersLastGyr >= 1.0
+            latest_NumMajorMergersLastGyr = get_mergerinfo_val(merF,sk,'latest_NumMajorMergersLastGyr')
+            boolean_merger1 = latest_NumMajorMergersLastGyr >= 1.0
+            latest_NumMinorMergersLastGyr = get_mergerinfo_val(merF,sk,'latest_NumMinorMergersLastGyr')
+            boolean_merger4 = latest_NumMinorMergersLastGyr >= 1.0
+            
+            this_NumMajorMergersLastGyr = get_mergerinfo_val(merF,sk,'this_NumMajorMergersLastGyr')
+            boolean_merger2 = this_NumMajorMergersLastGyr >= 1.0
         
 
-        mhalo = get_all_snap_val(msF,sk,'Mhalo_Msun')
-        mstar = get_all_snap_val(msF,sk,'Mstar_Msun')
-        log_mstar_mhalo = np.log10( mstar/mhalo )
+            mhalo = get_all_snap_val(msF,sk,'Mhalo_Msun')
+            mstar = get_all_snap_val(msF,sk,'Mstar_Msun')
+            log_mstar_mhalo = np.log10( mstar/mhalo )
 
-        redshift = msF['nonparmorphs'][sk][fk]['CAMERA0']['REDSHIFT'].value[0]
-        ins = fk.split('-')[0]
-        if redshift > 4.2:
-            continue
+            redshift = msF['nonparmorphs'][sk][fk]['CAMERA0']['REDSHIFT'].value[0]
+            ins = fk.split('-')[0]
+            if redshift > 4.2:
+                continue
         
 
         rfdata = 'rfoutput/'+labelfunc+'/'
@@ -435,32 +439,37 @@ def make_rf_evolution_plots(rflabel='paramsmod',labelfunc='label_merger1',rf_mas
         probs = np.load(prob_file)
         iters = result['completeness'].values.shape[0]
 
-        print('redshift: {:3.1f}   filter: {:15s}   RF sample size: {:8d}   # True mergers: {} '.format(redshift,fk,rf_asym.shape[0],np.sum(rf_flag)))
+        if sk !='combined':
+            print('redshift: {:3.1f}   filter: {:15s}   RF sample size: {:8d}   # True mergers: {} '.format(redshift,fk,rf_asym.shape[0],np.sum(rf_flag)))
         
 
-        for ck,sym in zip(cols,syms):
-            imp = np.median(result[ck])/imp_norm
-            axi2.plot(redshift,imp,sym,markersize=6)
+            for ck,sym in zip(cols,syms):
+                imp = np.median(result[ck])/imp_norm
+                axi2.plot(redshift,imp,sym,markersize=6)
 
-        if ins=='WFC3':
-            symbol='o'
-            symcol='black'
-            symsiz=8
-        if ins=='ACS':
-            symbol='s'
-            symcol='Blue'
-            symsiz=8
-        if ins=='NC':
-            symbol='^'
-            symcol='red'
-            symsiz=8
+            if ins=='WFC3':
+                symbol='o'
+                symcol='black'
+                symsiz=8
+            if ins=='ACS':
+                symbol='s'
+                symcol='Blue'
+                symsiz=8
+            if ins=='NC':
+                symbol='^'
+                symcol='red'
+                symsiz=8
             
         
-        axi.plot(redshift,completeness,marker=symbol,markersize=symsiz,markerfacecolor=symcol,markeredgecolor='None')
-        axi.plot(redshift,ppv,marker=symbol,markersize=symsiz,markeredgecolor=symcol,markerfacecolor='None')
+            axi.plot(redshift,completeness,marker=symbol,markersize=symsiz,markerfacecolor=symcol,markeredgecolor='None')
+            axi.plot(redshift,ppv,marker=symbol,markersize=symsiz,markeredgecolor=symcol,markerfacecolor='None')
 
-        axi.plot(redshift,asym_com,marker=symbol,markersize=symsiz/2,markerfacecolor=symcol,markeredgecolor='None')
-        axi.plot(redshift,asym_ppv,marker=symbol,markersize=symsiz/2,markeredgecolor=symcol,markerfacecolor='None')
+            axi.plot(redshift,asym_com,marker=symbol,markersize=symsiz/2,markerfacecolor=symcol,markeredgecolor='None')
+            axi.plot(redshift,asym_ppv,marker=symbol,markersize=symsiz/2,markeredgecolor=symcol,markerfacecolor='None')
+
+        else:
+            axi.plot([0,5],[completeness,completeness],linestyle='solid',marker='None')    
+            axi.plot([0,5],[ppv,ppv],linestyle='dotted',marker='None')    
 
 
         roc_filen = 'rf_plots/'+labelfunc+'/'+rflabel+'_'+sk+'_'+fk+'_roc_stats.pdf'
@@ -486,8 +495,8 @@ def make_rf_evolution_plots(rflabel='paramsmod',labelfunc='label_merger1',rf_mas
         axi4=f4.add_subplot(1,1,1)
         axi4.locator_params(nbins=5,prune='both')
 
-        axi4.semilogy(np.log10(rf_mstar),np.mean(probs[[0,1,2,3,4]],axis=1),'ok',markersize=4)
-        axi4.semilogy(np.log10(rf_mstar[rf_flag==True]),np.mean(probs[[0,1,2,3,4]],axis=1)[rf_flag==True],'o',markersize=6,markerfacecolor=None,markeredgecolor='Orange')
+        axi4.semilogy(np.log10(rf_mstar),np.mean(probs[[0,1,2]],axis=1),'ok',markersize=4)
+        axi4.semilogy(np.log10(rf_mstar[rf_flag==True]),np.mean(probs[[0,1,2]],axis=1)[rf_flag==True],'o',markersize=6,markerfacecolor=None,markeredgecolor='Orange')
 
         axi4.legend(['nonmerger','true merger'],loc='lower right',fontsize=10,framealpha=1.0)
         sp=12
@@ -514,6 +523,8 @@ def make_rf_evolution_plots(rflabel='paramsmod',labelfunc='label_merger1',rf_mas
 
 
 def run_random_forest(msF,merF,rfiter=3,RUN_RF=True,rf_masscut=10.0**(10.5),labelfunc='label_merger1',balancetrain=True):
+
+    full_df=pandas.DataFrame()
     
     for sk,fk in zip(snap_keys,fil_keys):
 
@@ -620,7 +631,10 @@ def run_random_forest(msF,merF,rfiter=3,RUN_RF=True,rf_masscut=10.0**(10.5),labe
             rflabel='paramsmod'
             label=labelfunc
 
-            
+
+
+        
+        
         if RUN_RF is True:
             if redshift < 4.2:
             
@@ -635,7 +649,11 @@ def run_random_forest(msF,merF,rfiter=3,RUN_RF=True,rf_masscut=10.0**(10.5),labe
                     newdf=mergers.append(nonmergers.ix[rows])
                 else:
                     newdf = df
-                    
+
+
+                
+                full_df=full_df.append(newdf,ignore_index=True)
+                
                 print("Running Random Forest... ", sk, fk)
                 result, labels, label_probability, rf_objs,roc_results = PyML.randomForestMC(newdf,iterations=RF_ITER,cols=cols)    #,max_leaf_nodes=30,n_estimators=50
                 #result = summary statistics, feature importances (N iterations x N statistics/importances)
@@ -648,6 +666,7 @@ def run_random_forest(msF,merF,rfiter=3,RUN_RF=True,rf_masscut=10.0**(10.5),labe
                 if not os.path.lexists('rfoutput/'+label):
                     os.mkdir('rfoutput/'+label)
 
+                #is this the right df?
                 labels['mergerFlag']=df['mergerFlag']
                 label_probability['mergerFlag']=df['mergerFlag']
                 labels['SubfindID']=df['SubfindID']
@@ -664,7 +683,44 @@ def run_random_forest(msF,merF,rfiter=3,RUN_RF=True,rf_masscut=10.0**(10.5),labe
                 
                 np.save(arr=roc_results,file='rfoutput/'+label+'/'+rflabel+'_roc_{}_{}.npy'.format(sk,fk) )  #.to_pickle('rfoutput/'+label+'/'+rflabel+'_roc_{}_{}.pkl'.format(sk,fk))
                 np.save(arr=rf_objs,file='rfoutput/'+label+'/'+rflabel+'_rfobj_{}_{}.npy'.format(sk,fk))
+
+
+
+    
+    sk='combined'
+    fk='subset'
+    print("Running Random Forest on combined dataset... ")
+    result, labels, label_probability, rf_objs,roc_results = PyML.randomForestMC(full_df,iterations=RF_ITER,cols=cols)    #,max_leaf_nodes=30,n_estimators=50
+    #result = summary statistics, feature importances (N iterations x N statistics/importances)
+    #labels = labels following random forest (N galaxies x N iterations)
+    #label_probability = probability of label following random forest (N galaxies x N iterations)
+    
+    #saves the output as a file
+    if not os.path.lexists('rfoutput'):
+        os.mkdir('rfoutput')
+    if not os.path.lexists('rfoutput/'+label):
+        os.mkdir('rfoutput/'+label)
+
+    labels['mergerFlag']=full_df['mergerFlag']
+    label_probability['mergerFlag']=full_df['mergerFlag']
+    labels['SubfindID']=full_df['SubfindID']
+    label_probability['SubfindID']=full_df['SubfindID']
+
+        
+    full_df.to_pickle('rfoutput/'+label+'/'+rflabel+'_data_{}_{}.pkl'.format(sk,fk))
+    full_df.to_pickle('rfoutput/'+label+'/'+rflabel+'_traindata_{}_{}.pkl'.format(sk,fk))
+        
+    result.to_pickle('rfoutput/'+label+'/'+rflabel+'_result_{}_{}.pkl'.format(sk,fk))
+    labels.to_pickle('rfoutput/'+label+'/'+rflabel+'_labels_{}_{}.pkl'.format(sk,fk))
+    label_probability.to_pickle('rfoutput/'+label+'/'+rflabel+'_label_probability_{}_{}.pkl'.format(sk,fk))
+    PCs.to_pickle('rfoutput/'+label+'/'+rflabel+'_pc_{}_{}.pkl'.format(sk,fk))
+    
+    np.save(arr=roc_results,file='rfoutput/'+label+'/'+rflabel+'_roc_{}_{}.npy'.format(sk,fk) )  #.to_pickle('rfoutput/'+label+'/'+rflabel+'_roc_{}_{}.pkl'.format(sk,fk))
+    np.save(arr=rf_objs,file='rfoutput/'+label+'/'+rflabel+'_rfobj_{}_{}.npy'.format(sk,fk))
+
+
                 
+    
     return
     
 
@@ -1609,7 +1665,7 @@ if __name__=="__main__":
             #localvars = make_morphology_plots(msF,merF)
             #res = make_pc1_images(msF,merF,bd='/astro/snyder_lab/Illustris_CANDELS/Illustris-1_z1_images_bc03/')
             
-            #localvars = run_random_forest(msF,merF,rfiter=5,rf_masscut=10.0**(10.5),labelfunc='label_merger_window500_both',balancetrain=False)
+            localvars = run_random_forest(msF,merF,rfiter=5,rf_masscut=10.0**(10.5),labelfunc='label_merger_window500_both',balancetrain=False)
             localvars = make_rf_evolution_plots(rflabel='params',rf_masscut=10.0**(10.5),labelfunc='label_merger_window500_both')
 
             
