@@ -59,6 +59,8 @@ im_snap_keys = ['snapshot_103','snapshot_085','snapshot_075','snapshot_068',
 im_rf_fil_keys = ['ACS-F606W','ACS-F814W','WFC3-F105W','NC-F150W',
                   'NC-F150W','NC-F200W','NC-F200W','NC-F277W']
 
+im_rf_fil_keys_hst= ['ACS-F606W','ACS-F814W','WFC3-F105W','WFC3-F160W',
+                  'WFC3-F160W','WFC3-F160W','WFC3-F160W','WFC3-F160W']
 
 
 snap_keys = im_snap_keys
