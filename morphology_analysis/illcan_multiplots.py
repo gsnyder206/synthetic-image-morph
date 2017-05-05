@@ -1644,6 +1644,141 @@ def make_morphology_evolution_plots(msF,merF):
 
 
 
+
+
+def plot_sfr_mass(msF,merF,sk,fk,AXI,xlim,ylim,Cval,gridf='median_grid',**bin_kwargs):
+
+    sfr  = get_all_snap_val(msF,sk,'SFR_Msunperyr')
+    mstar  = get_all_snap_val(msF,sk,'Mstar_Msun')
+    
+    labs=11
+    
+    redshift = msF['nonparmorphs'][sk][fk]['CAMERA0']['REDSHIFT'].value[0]
+
+    #if given array, use it
+    if type(Cval)==np.ndarray:
+        gi = np.where(np.isfinite(Cval)==True)[0]
+        data_dict = {'x':Cval[gi]}
+    else:
+        #otherwise, loop over dict keys and send to plotter
+        #this assumes that all values are finite!
+        gi = np.arange(mstar.shape[0])
+        data_dict = copy.copy(Cval)
+
+    
+    res,colorobj = gth.make_twod_grid(AXI,np.log10(mstar[gi]),np.log10(sfr[gi]),data_dict,gridf,**bin_kwargs)
+    AXI.annotate('$z = {:3.1f}$'.format(redshift) ,xy=(0.80,0.05),ha='center',va='center',xycoords='axes fraction',color='black',size=labs)
+    AXI.annotate(fk                             ,xy=(0.80,0.15),ha='center',va='center',xycoords='axes fraction',color='black',size=labs)
+
+    return colorobj
+
+
+
+
+#    kpc_per_arcsec = illcos.kpc_proper_per_arcmin(redshift).value/60.0
+
+#    size_pixels = get_all_morph_val(msF,sk,fk,'RP')
+#    pix_arcsec  = get_all_morph_val(msF,sk,fk,'PIX_ARCSEC')
+
+#    size_kpc = size_pixels*pix_arcsec*kpc_per_arcsec
+
+    
+#    axi,colorobj = gth.make_twod_grid(axi,np.log10(mstar[gi]),np.log10(size_kpc[gi]),data_dict,gridf,**bin_kwargs)
+
+
+def make_structure_plots(msF,merF):
+    
+
+    #start with PC1 or M20
+    plot_filen = 'structure/sfr_mstar_m20_evolution.pdf'
+    if not os.path.lexists('structure'):
+        os.mkdir('structure')
+
+    f1 = pyplot.figure(figsize=(6.5,4.0), dpi=300)
+    pyplot.subplots_adjust(left=0.15, right=0.98, bottom=0.15, top=0.98,wspace=0.0,hspace=0.0)
+
+    nx=4
+    ny=2
+    
+    i=0
+    for sk,fk in zip(snap_keys,fil_keys):
+        i=i+1
+
+        parameters, pcd, pc, pcd = make_pc_dict(msF,sk,fk)
+        pc1 = pc.X[:,0].flatten()
+        pc2 = pc.X[:,1].flatten()
+        pc3 = pc.X[:,2].flatten()
+        pc4 = pc.X[:,3].flatten()
+        pc5 = pc.X[:,4].flatten()
+        pc6 = pc.X[:,5].flatten()
+        pc7 = pc.X[:,6].flatten()
+        PCs=pandas.DataFrame(pc.X)
+        
+        asym = get_all_morph_val(msF,sk,fk,'ASYM')
+        gini = get_all_morph_val(msF,sk,fk,'GINI')
+        m20 = get_all_morph_val(msF,sk,fk,'M20')
+        cc = get_all_morph_val(msF,sk,fk,'CC')
+        Mstat = get_all_morph_val(msF,sk,fk,'MID1_MPRIME')
+        Istat = get_all_morph_val(msF,sk,fk,'MID1_ISTAT')
+        Dstat = get_all_morph_val(msF,sk,fk,'MID1_DSTAT')
+
+        sfid = get_all_snap_val(msF,sk,'SubfindID')
+        
+        S_GM20 = SGM20(gini,m20)
+        F_GM20 = FGM20(gini,m20)
+        
+
+        mhalo = get_all_snap_val(msF,sk,'Mhalo_Msun')
+        mstar = get_all_snap_val(msF,sk,'Mstar_Msun')
+        sfr = get_all_snap_val(msF,sk,'SFR_Msunperyr')
+
+        log_mstar_mhalo = np.log10( mstar/mhalo )
+
+        redshift = msF['nonparmorphs'][sk][fk]['CAMERA0']['REDSHIFT'].value[0]
+        
+        bins=18
+
+        xlim=[9.7,12.2]
+        ylim=[-2.0,3.0]
+        rlim=[0.1,1.7]
+        
+
+
+        if i <=4:
+            ii=2
+        else:
+            ii=1
+
+        jj= 5 - (i % 4)
+            
+        print(i,ii,jj)
+        
+        axi=f1.add_subplot(8,jj,ii)
+        
+        colorobj = plot_sfr_mass(msF,merF,sk,fk,axi,xlim=xlim,ylim=ylim,Cval=pc1,vmin=-2,vmax=3,bins=bins)
+        
+        axi.set_xlim(xlim[0],xlim[1])
+        axi.set_ylim(ylim[0],ylim[1])
+
+        #axi.set_ylabel('$log_{10}\ R_p$ [$kpc$]',labelpad=1,size=labs)
+        #axi.set_xlabel('$log_{10}\ M_{*} [M_{\odot}]$',labelpad=1,size=labs)
+        #axi.tick_params(axis='both',which='both',labelsize=labs)
+        #axi.locator_params(nbins=5,prune='both')
+
+    
+    gth.make_colorbar(colorobj,title='median PC1',ticks=[-2,-1,0,1,2,3])
+
+    f1.savefig(plot_filen,dpi=300)
+    pyplot.close(f1)
+
+
+        
+    #also show PC3 or Asym
+
+    #if RF results exist, also make that one
+
+    
+
 if __name__=="__main__":
 
 
@@ -1667,8 +1802,8 @@ if __name__=="__main__":
             #localvars = make_morphology_plots(msF,merF)
             #res = make_pc1_images(msF,merF,bd='/astro/snyder_lab/Illustris_CANDELS/Illustris-1_z1_images_bc03/')
             
-            localvars = run_random_forest(msF,merF,rfiter=5,rf_masscut=10.0**(10.5),labelfunc='label_merger_window500_both',balancetrain=False)
-            localvars = make_rf_evolution_plots(rflabel='params',rf_masscut=10.0**(10.5),labelfunc='label_merger_window500_both')
+            #localvars = run_random_forest(msF,merF,rfiter=5,rf_masscut=10.0**(10.5),labelfunc='label_merger_window500_both',balancetrain=False)
+            #localvars = make_rf_evolution_plots(rflabel='params',rf_masscut=10.0**(10.5),labelfunc='label_merger_window500_both')
 
             
             #res = make_merger_images(msF,merF,rflabel='params',rf_masscut=10.0**(10.5),labelfunc='label_merger4')
@@ -1676,3 +1811,6 @@ if __name__=="__main__":
 
             
             #res = make_morphology_evolution_plots(msF,merF)
+
+
+            res = make_structure_plots(msF,merF)
