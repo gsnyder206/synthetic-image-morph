@@ -40,7 +40,7 @@ def median_grid(indices,other_dict,**kwargs):
     
     val = np.median(x[indices])
 
-    return val
+    return val,1
 
 def fraction_grid(indices,other_dict,**kwargs):
 
@@ -53,8 +53,21 @@ def fraction_grid(indices,other_dict,**kwargs):
     
     val = float(numerator)/float(denominator)
     
-    return val
+    return val,1
 
+
+def log_fraction_grid(indices,other_dict,**kwargs):
+
+    #x must be a boolean array
+    x = other_dict['x']
+    denominator = x[indices].shape[0]
+    xw = np.where(x[indices])[0]
+    numerator = xw.shape[0]
+
+    #print(numerator, denominator)
+    val = np.where(numerator > 0, np.log10( float(numerator)/float(denominator)),-99.0 )
+    
+    return val,1
 
 def normed_proportion_grid(indices,other_dict,hist_2d=None,**kwargs):
 
@@ -70,7 +83,7 @@ def normed_proportion_grid(indices,other_dict,hist_2d=None,**kwargs):
     
     val = N*float(numerator)/float(denominator)
     
-    return val
+    return val,val
 
 
 
@@ -82,12 +95,12 @@ def summed_logssfr(indices,other_dict,**kwargs):
     val = np.log10(sfr)-np.log10(mass)
     #print(sfr,mass,val)
     
-    return val
+    return val,1
 
 
 def test_function():
     print('I am a test function')
-    return 1.0
+    return 1.0,1
 
 
 def execute_twodim(xparam,yparam,xlim,ylim,other_params,other_function,bins=20,min_bin=3,vmin=0.0,bad_offset=-1000.0):
@@ -97,6 +110,7 @@ def execute_twodim(xparam,yparam,xlim,ylim,other_params,other_function,bins=20,m
     dy = yMR[1] - yMR[0]
 
     value_twod = np.zeros_like(MR_hist) + bad_offset
+    norm2d = np.ones_like(MR_hist)
 
     i=0
     for xe in xMR[1:]:
@@ -108,13 +122,15 @@ def execute_twodim(xparam,yparam,xlim,ylim,other_params,other_function,bins=20,m
             if (fli.shape)[0] >= min_bin:
                 
                 #result = eval(other_function,{'indices':fli,'other_dict':other_params})
-                result = eval(other_function+'(fli,other_params,hist_2d=MR_hist)')
+                result,norm = eval(other_function+'(fli,other_params,hist_2d=MR_hist)')
 
                 value_twod[i,j] = result
-
+                norm2d[i,j]=norm
                 
             j = j+1
         i = i+1
+
+    value_twod = np.where(value_twod > bad_offset, value_twod/np.max(norm2d), np.ones_like(value_twod)*bad_offset)
 
     return value_twod, MR_hist, xMR, yMR, dx, dy
 
@@ -156,10 +172,10 @@ def make_twod_grid(axi,xparam,yparam,other_params,other_function,bins=20,tiles=(
 
 
 
-def make_colorbar(colorcontourobject, loc=[0.15,0.95,0.75,0.049], title='value',ticks=[0.0,0.5,1.0],fontsize=10,labelpad=1,format='%.1f'):
+def make_colorbar(colorcontourobject, fig, loc=[0.15,0.95,0.75,0.049], title='value',ticks=[0.0,0.5,1.0],fontsize=10,labelpad=1,format='%.1f'):
 
 
-    fake_subplot = pyplot.axes(loc, frameon=True)
+    fake_subplot = fig.add_axes(loc, frameon=True)
     #fake_subplot.set_axis_off()
     fake_subplot.set_xticks([]) ; fake_subplot.set_yticks([])
 

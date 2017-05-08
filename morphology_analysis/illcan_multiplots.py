@@ -113,6 +113,36 @@ im_fil_keys['snapshot_049']['g']=['NC-F150W']
 im_fil_keys['snapshot_049']['r']=['NC-F200W']
 
 
+
+def VRG_dndt(mulo,muhi,M,z):
+
+    dndt,abserr = quad(VRG_dndmudt,mulo,muhi,args=(M,z))
+
+    return dndt,abserr
+
+
+def VRG_dndmudt(mu,M,z):
+    M0 = 2.0e11
+    log10A = -2.2287
+    eta = 2.4644
+    alpha0 = 0.2241
+    alpha1 = -1.1759
+    beta0 = -1.2595
+    beta1 = 0.0611
+    gamma = -0.0477
+    delta0 = 0.7668
+    delta1 = -0.4695
+
+    Az = ((1.0 + z)**eta)*10.0**(log10A) #Gyr^-1
+    alphaz = alpha0*(1.0 + z)**(alpha1)
+    betaz = beta0*(1.0 + z)**(beta1)
+    deltaz = delta0*(1.0 + z)**(delta1)
+
+    dndmudt = Az*((M/1.0e10)**alphaz)*(1.0 + (M/M0)**(deltaz))*(mu**(betaz + gamma*np.log10(M/1.0e10)))
+
+    return dndmudt
+
+
 def return_rf_variables():
     return np.asarray(im_snap_keys), np.asarray(im_rf_fil_keys), np.asarray(im_npix)
 
@@ -219,12 +249,40 @@ def label_merger_window500_major(merF,sk):
     return label_boolean    
 
 
+#assumes merger_span = 0.25 Gyr so this covers 500Myr around image
 def label_merger_window500_both(merF,sk):
     latest_NumMajorMergerLast500Myr = get_mergerinfo_val(merF,sk,'latest_NumMajorMergersLast500Myr')
     latest_NumMinorMergerLast500Myr = get_mergerinfo_val(merF,sk,'latest_NumMinorMergersLast500Myr')
+    merger_number = latest_NumMajorMergerLast500Myr + latest_NumMinorMergerLast500Myr
 
     label_boolean = np.logical_or( latest_NumMajorMergerLast500Myr >= 1.0, latest_NumMinorMergerLast500Myr >= 1.0 )
-    return label_boolean    
+    print('N mergers per True: ', np.sum(merger_number[label_boolean])/np.sum(label_boolean))
+
+    return label_boolean,merger_number
+
+#assumes merger_span = 0.25 Gyr so this covers 250Myr after image
+def label_merger_forward250_both(merF,sk):
+    latest_NumMajorMergerLast250Myr = get_mergerinfo_val(merF,sk,'latest_NumMajorMergersLast250Myr')
+    latest_NumMinorMergerLast250Myr = get_mergerinfo_val(merF,sk,'latest_NumMinorMergersLast250Myr')
+    merger_number = latest_NumMajorMergerLast250Myr + latest_NumMinorMergerLast250Myr
+
+    label_boolean = np.logical_or( latest_NumMajorMergerLast250Myr >= 1.0, latest_NumMinorMergerLast250Myr >= 1.0 )
+    print('N mergers per True: ', np.sum(merger_number[label_boolean])/np.sum(label_boolean))
+
+    return label_boolean,merger_number
+
+#!!!!!
+#NOTE USE ONLY IF MERGERDATA FILE HAS SPAN=0.5 Gyr i.e. the March2017 numbers not the May2017 one!!!
+#assumes merger_span = 0.5 Gyr so this covers 500Myr after image
+def label_merger_forward500_both(merF,sk):
+    latest_NumMajorMergerLast500Myr = get_mergerinfo_val(merF,sk,'latest_NumMajorMergersLast500Myr')
+    latest_NumMinorMergerLast500Myr = get_mergerinfo_val(merF,sk,'latest_NumMinorMergersLast500Myr')
+    merger_number = latest_NumMajorMergerLast500Myr + latest_NumMinorMergerLast500Myr
+
+    label_boolean = np.logical_or( latest_NumMajorMergerLast500Myr >= 1.0, latest_NumMinorMergerLast500Myr >= 1.0 )
+    print('N mergers per True: ', np.sum(merger_number[label_boolean])/np.sum(label_boolean))
+
+    return label_boolean,merger_number
 
 
 
@@ -304,7 +362,7 @@ def plot_sfr_radius_mass(msF,merF,sk,fk,FIG,xlim,ylim,rlim,Cval,gridf='median_gr
 
 
 
-def make_rf_evolution_plots(rflabel='paramsmod',labelfunc='label_merger1',rf_masscut=0.0):
+def make_rf_evolution_plots(snap_keys,fil_keys,rflabel='paramsmod',labelfunc='label_merger1',rf_masscut=0.0,twin=0.5):
 
 
     plot_filen = 'rf_plots/'+labelfunc+'/'+rflabel+'_global_stats.pdf'
@@ -323,6 +381,10 @@ def make_rf_evolution_plots(rflabel='paramsmod',labelfunc='label_merger1',rf_mas
     pyplot.subplots_adjust(left=0.18, right=0.98, bottom=0.15, top=0.98,wspace=0.0,hspace=0.0)
 
 
+
+    fm_filen = 'rf_plots/'+labelfunc+'/'+rflabel+'_merger_stats.pdf'
+    f5 = pyplot.figure(figsize=(3.5,3.0), dpi=300)
+    pyplot.subplots_adjust(left=0.22, right=0.98, bottom=0.15, top=0.98,wspace=0.0,hspace=0.0)
 
 
     
@@ -347,7 +409,29 @@ def make_rf_evolution_plots(rflabel='paramsmod',labelfunc='label_merger1',rf_mas
 
     axi2.set_xlabel('redshift')
     axi2.set_ylabel('relative importance')
-    
+  
+
+    axi5 = f5.add_subplot(1,1,1)
+    axi5.set_xlim(0.2,4.5)
+    axi5.set_ylim(1.0e-3,1.05)
+    axi5.tick_params(axis='both',which='both',labelsize=labs)
+    axi5.locator_params(nbins=7,prune='both')
+
+    axi5.set_xlabel(r'$redshift$',size=labs)
+    axi5.set_ylabel(r'$fraction$',size=labs)
+
+    #fakez=np.linspace(0.5,5.0,50)
+    #ratez=np.zeros_like(fakez)
+
+    #for i,z in enumerate(fakez):
+    #    vrg_rate,vrg_err=VRG_dndt(0.10,1.0,10.0**10.5,z)
+    #    ratez[i]=vrg_rate
+  
+    #axi5.semilogy(fakez,ratez*0.5,linestyle='solid',color='black',linewidth=1.5)
+
+    vrg_z=[]
+    vrg_rate=[]
+
     imp_norm = 1.0/7.0
 
     if rflabel=='paramsmod':
@@ -360,6 +444,9 @@ def make_rf_evolution_plots(rflabel='paramsmod',labelfunc='label_merger1',rf_mas
     else:   
         assert(False)
 
+
+    #orig_snap_keys = snap_keys
+    #orig_fil_keys = fil_keys
 
     snap_keys.append('combined')
     fil_keys.append('subset')
@@ -424,7 +511,10 @@ def make_rf_evolution_plots(rflabel='paramsmod',labelfunc='label_merger1',rf_mas
         #rf_sgm20 = rf_data['dGM20'].values
         rf_cc = rf_data['cc'].values
         rf_mstar = rf_data['Mstar_Msun'].values
-        
+        rf_number = rf_data['mergerNumber'].values
+
+        mergers_per_true=np.sum(rf_number)/np.sum(rf_flag)
+
         asym_classifier = rf_asym > 0.25
         asym_com,asym_ppv = simple_classifier_stats(asym_classifier,rf_flag)
 
@@ -441,9 +531,17 @@ def make_rf_evolution_plots(rflabel='paramsmod',labelfunc='label_merger1',rf_mas
         probs = np.load(prob_file)
         iters = result['completeness'].values.shape[0]
 
+        rfprob=np.asarray( np.mean(probs[[0,1,2,3,4]],axis=1))
+
+        rf_class = rfprob > 0.4
+
+
         if sk !='combined':
-            print('redshift: {:3.1f}   filter: {:15s}   RF sample size: {:8d}   # True mergers: {} '.format(redshift,fk,rf_asym.shape[0],np.sum(rf_flag)))
-        
+            print('redshift: {:3.1f}   filter: {:15s}   RF sample size: {:8d}   # True mergers: {}   Avg Mstar: {}'.format(redshift,fk,rf_asym.shape[0],np.sum(rf_flag),np.median(rf_mstar)))
+            vrg_z.append(redshift)
+            vrg_rate_z,vrg_err_z=VRG_dndt(0.10,1.0,np.median(rf_mstar),redshift)
+
+            vrg_rate.append(vrg_rate_z)
 
             for ck,sym in zip(cols,syms):
                 imp = np.median(result[ck])/imp_norm
@@ -468,6 +566,18 @@ def make_rf_evolution_plots(rflabel='paramsmod',labelfunc='label_merger1',rf_mas
 
             axi.plot(redshift,asym_com,marker=symbol,markersize=symsiz/2,markerfacecolor=symcol,markeredgecolor='None')
             axi.plot(redshift,asym_ppv,marker=symbol,markersize=symsiz/2,markeredgecolor=symcol,markerfacecolor='None')
+
+
+            axi5.semilogy(redshift,np.sum(asym_classifier)/asym_classifier.shape[0],'^g',markersize=symsiz/2.0)
+
+            #multiply by average N mergers in a "true" classification
+            axi5.semilogy(redshift,mergers_per_true*np.sum(rf_class)/rf_class.shape[0],'sb',markersize=symsiz)
+            
+            axi5.semilogy(redshift,mergers_per_true*np.sum(rf_flag)/rf_flag.shape[0],'ok',markersize=symsiz)
+            
+
+            if sk=='snapshot_103':
+                axi5.legend(['A > 0.25', 'RF model (thresh=0.4)',r'$f_{merge}$'],loc='lower center',fontsize=10,numpoints=1)
 
         else:
             axi.plot([0,5],[completeness,completeness],linestyle='solid',marker='None')    
@@ -514,17 +624,25 @@ def make_rf_evolution_plots(rflabel='paramsmod',labelfunc='label_merger1',rf_mas
     f1.savefig(plot_filen,dpi=300)
     pyplot.close(f1)
 
-    axi2.legend(cols,fontsize=8,ncol=3,loc='upper center',numpoints=1)
+    axi2.legend(cols,fontsize=11,ncol=3,loc='upper center',numpoints=1)
     f2.savefig(imp_filen,dpi=300)
     pyplot.close(f2)
 
+    #500 Myr window implies predicted merger fraction is R*t_window
+    vrg,=axi5.semilogy(np.asarray(vrg_z),np.asarray(vrg_rate)*twin,linestyle='solid',color='black',linewidth=1.5)
+    #pyplot.legend((vrg,),['R-G15'],loc='upper left',fontsize=10,numpoints=1)
+
+    f5.savefig(fm_filen,dpi=300)
+    pyplot.close(f5)
     
-        
+    #snap_keys=orig_snap_keys
+    #fil_keys = orig_fil_keys
+
     return locals()
 
 
 
-def run_random_forest(msF,merF,rfiter=3,RUN_RF=True,rf_masscut=10.0**(10.5),labelfunc='label_merger1',balancetrain=True):
+def run_random_forest(msF,merF,snap_keys,fil_keys,rfiter=3,RUN_RF=True,rf_masscut=10.0**(10.5),labelfunc='label_merger1',balancetrain=True):
 
     full_df=pandas.DataFrame()
     
@@ -554,7 +672,7 @@ def run_random_forest(msF,merF,rfiter=3,RUN_RF=True,rf_masscut=10.0**(10.5),labe
         
         #latest_NumMajorMergersLastGyr = get_mergerinfo_val(merF,sk,'latest_NumMajorMergersLastGyr')
         #boolean_merger1 = latest_NumMajorMergersLastGyr >= 1.0
-        boolean_flag = eval(labelfunc+'(merF,sk)')
+        boolean_flag,number = eval(labelfunc+'(merF,sk)')
 
         
         #this_NumMajorMergersLastGyr = get_mergerinfo_val(merF,sk,'this_NumMajorMergersLastGyr')
@@ -564,6 +682,7 @@ def run_random_forest(msF,merF,rfiter=3,RUN_RF=True,rf_masscut=10.0**(10.5),labe
         mhalo = get_all_snap_val(msF,sk,'Mhalo_Msun')
         mstar = get_all_snap_val(msF,sk,'Mstar_Msun')
         log_mstar_mhalo = np.log10( mstar/mhalo )
+        sfr = get_all_snap_val(msF,sk,'SFR_Msunperyr')
 
         redshift = msF['nonparmorphs'][sk][fk]['CAMERA0']['REDSHIFT'].value[0]
         
@@ -595,8 +714,10 @@ def run_random_forest(msF,merF,rfiter=3,RUN_RF=True,rf_masscut=10.0**(10.5),labe
             label=labelfunc
             
         if PARAMS_ONLY is True:
+            gim=np.where(mstar >= rf_masscut)[0]
             gi = np.where(np.isfinite(gini)*np.isfinite(m20)*np.isfinite(asym)*np.isfinite(Mstat)*np.isfinite(Istat)*np.isfinite(Dstat)*np.isfinite(cc)*(mstar >= rf_masscut) != 0)[0]
-            print(gi.shape, pc1.shape)
+            print(gi.shape, gim.shape, pc1.shape)
+            print(np.sum(boolean_flag[gi]),np.sum(boolean_flag[gim]),np.sum(boolean_flag))
             rf_dict['gini']=gini[gi]
             rf_dict['m20']=m20[gi]
             rf_dict['asym']=asym[gi]
@@ -607,10 +728,15 @@ def run_random_forest(msF,merF,rfiter=3,RUN_RF=True,rf_masscut=10.0**(10.5),labe
             rf_dict['mergerFlag']=boolean_flag[gi]
             rf_dict['SubfindID']=sfid[gi]
             rf_dict['Mstar_Msun']=mstar[gi]
+            rf_dict['SFR_Msunperyr']=sfr[gi]
+            rf_dict['mergerNumber']=number[gi]
 
             cols=['gini','m20','asym','Mstat','Istat','Dstat','cc']
             rflabel='params'
             label=labelfunc
+
+            print('N mergers per True: ', np.sum(number[gi])/np.sum(boolean_flag[gi]), np.sum(number),np.sum(boolean_flag))
+            
 
             
         if PARAMS_MOD is True:
@@ -1646,14 +1772,24 @@ def make_morphology_evolution_plots(msF,merF):
 
 
 
-def plot_sfr_mass(msF,merF,sk,fk,AXI,xlim,ylim,Cval,gridf='median_grid',**bin_kwargs):
+def plot_sfr_mass(msF,merF,sk,fk,FIG,Cval,gridf='median_grid',sfr=None,mstar=None,nx=4,ny=2,ii=1,i=1,redshift=0.0,skipthis=False,**bin_kwargs):
 
-    sfr  = get_all_snap_val(msF,sk,'SFR_Msunperyr')
-    mstar  = get_all_snap_val(msF,sk,'Mstar_Msun')
+    if sfr is None:
+        sfr  = get_all_snap_val(msF,sk,'SFR_Msunperyr')
+    if mstar is None:
+        mstar  = get_all_snap_val(msF,sk,'Mstar_Msun')
     
-    labs=11
-    
-    redshift = msF['nonparmorphs'][sk][fk]['CAMERA0']['REDSHIFT'].value[0]
+    bins=18
+    labs=10
+
+    xlim=[9.7,11.9]
+    ylim=[-1.5,3.2]
+
+    axi=FIG.add_subplot(ny,nx,ii)
+    axi.set_xlim(xlim[0],xlim[1])
+    axi.set_ylim(ylim[0],ylim[1])
+        
+        
 
     #if given array, use it
     if type(Cval)==np.ndarray:
@@ -1665,37 +1801,117 @@ def plot_sfr_mass(msF,merF,sk,fk,AXI,xlim,ylim,Cval,gridf='median_grid',**bin_kw
         gi = np.arange(mstar.shape[0])
         data_dict = copy.copy(Cval)
 
-    
-    res,colorobj = gth.make_twod_grid(AXI,np.log10(mstar[gi]),np.log10(sfr[gi]),data_dict,gridf,**bin_kwargs)
-    AXI.annotate('$z = {:3.1f}$'.format(redshift) ,xy=(0.80,0.05),ha='center',va='center',xycoords='axes fraction',color='black',size=labs)
-    AXI.annotate(fk                             ,xy=(0.80,0.15),ha='center',va='center',xycoords='axes fraction',color='black',size=labs)
+    if skipthis is True:
+        pass
+        res=None
+        colorobj=None
+    else:
+        res,colorobj = gth.make_twod_grid(axi,np.log10(mstar[gi]),np.log10(sfr[gi]),data_dict,gridf,bins=bins,**bin_kwargs)
+
+
+    anny=0.92
+
+    axi.annotate('$z = {:3.1f}$'.format(redshift) ,xy=(0.80,anny),ha='center',va='center',xycoords='axes fraction',color='black',size=labs)
+    axi.annotate(fk                             ,xy=(0.30,anny),ha='center',va='center',xycoords='axes fraction',color='black',size=labs)
+
+
+    if i==2*nx:
+        axi.set_ylabel('$log_{10}\ SFR [M_{\odot}/yr]$',labelpad=1,size=labs)
+    if i==nx:
+        axi.set_xlabel('$log_{10}\ M_{*} [M_{\odot}]$',labelpad=1,size=labs)
+    if i > nx:
+        axi.set_xticklabels([])
+    if i != nx and i !=2*nx:
+        axi.set_yticklabels([])
+
 
     return colorobj
 
 
 
 
-#    kpc_per_arcsec = illcos.kpc_proper_per_arcmin(redshift).value/60.0
 
-#    size_pixels = get_all_morph_val(msF,sk,fk,'RP')
-#    pix_arcsec  = get_all_morph_val(msF,sk,fk,'PIX_ARCSEC')
+def plot_g_m20(msF,merF,sk,fk,FIG,Cval,gridf='median_grid',g=None,m20=None,nx=4,ny=2,ii=1,i=1,redshift=0.0,skipthis=False,**bin_kwargs):
 
-#    size_kpc = size_pixels*pix_arcsec*kpc_per_arcsec
-
+    if g is None:
+        g  = get_all_morph_val(msF,sk,fk,'GINI')
+    if m20 is None:
+        m20  = get_all_morph_val(msF,sk,fk,'M20')
     
-#    axi,colorobj = gth.make_twod_grid(axi,np.log10(mstar[gi]),np.log10(size_kpc[gi]),data_dict,gridf,**bin_kwargs)
+    bins=18
+    labs=10
+
+    xlim=[-0.4,-2.7]
+    ylim=[0.35,0.69]
+
+    axi=FIG.add_subplot(ny,nx,ii)
+    axi.set_xlim(xlim[0],xlim[1])
+    axi.set_ylim(ylim[0],ylim[1])
+        
+        
+
+    #if given array, use it
+    if type(Cval)==np.ndarray:
+        gi = np.where(np.isfinite(Cval)==True)[0]
+        data_dict = {'x':Cval[gi]}
+    else:
+        #otherwise, loop over dict keys and send to plotter
+        #this assumes that all values are finite!
+        gi = np.arange(m20.shape[0])
+        data_dict = copy.copy(Cval)
+
+    if skipthis is True:
+        pass
+        res=None
+        colorobj=None
+    else:
+        res,colorobj = gth.make_twod_grid(axi,m20[gi],g[gi],data_dict,gridf,bins=bins,flipx=True,**bin_kwargs)
 
 
-def make_structure_plots(msF,merF):
+    anny=0.92
+
+    axi.annotate('$z = {:3.1f}$'.format(redshift) ,xy=(0.80,anny),ha='center',va='center',xycoords='axes fraction',color='black',size=labs)
+    axi.annotate(fk                             ,xy=(0.30,anny),ha='center',va='center',xycoords='axes fraction',color='black',size=labs)
+
+
+    if i==2*nx:
+        axi.set_ylabel('$G$',labelpad=1,size=labs)
+    if i==nx:
+        axi.set_xlabel('$M_{20}$',labelpad=1,size=labs)
+    if i > nx:
+        axi.set_xticklabels([])
+    if i != nx and i !=2*nx:
+        axi.set_yticklabels([])
+
+
+    return colorobj
+
+
+
+
+
+
+def make_structure_plots(msF,merF,name='pc1',varname=None,bartitle='median PC1',vmin=-2,vmax=3,barticks=[-2,-1,0,1,2,3],
+                         rf_masscut=10.0**(10.5),labelfunc='label_merger_window500_both',rflabel='params',gridf='median_grid',log=False):
     
+    if varname is None:
+        varname=name
 
     #start with PC1 or M20
-    plot_filen = 'structure/sfr_mstar_m20_evolution.pdf'
+    plot_filen = 'structure/sfr_mstar_'+name+'_evolution.pdf'
     if not os.path.lexists('structure'):
         os.mkdir('structure')
-
     f1 = pyplot.figure(figsize=(6.5,4.0), dpi=300)
-    pyplot.subplots_adjust(left=0.15, right=0.98, bottom=0.15, top=0.98,wspace=0.0,hspace=0.0)
+    pyplot.subplots_adjust(left=0.10, right=0.98, bottom=0.12, top=0.98,wspace=0.0,hspace=0.0)
+
+
+    #G-M20
+    plot2_filen = 'structure/G_M20_'+name+'_evolution.pdf'
+    if not os.path.lexists('structure'):
+        os.mkdir('structure')
+    f2 = pyplot.figure(figsize=(6.5,4.0), dpi=300)
+    pyplot.subplots_adjust(left=0.10, right=0.98, bottom=0.12, top=0.98,wspace=0.0,hspace=0.0)
+
 
     nx=4
     ny=2
@@ -1736,40 +1952,82 @@ def make_structure_plots(msF,merF):
 
         redshift = msF['nonparmorphs'][sk][fk]['CAMERA0']['REDSHIFT'].value[0]
         
-        bins=18
 
-        xlim=[9.7,12.2]
-        ylim=[-2.0,3.0]
-        rlim=[0.1,1.7]
+        rfdata = 'rfoutput/'+labelfunc+'/'
         
+        data_file = rfdata+rflabel+'_traindata_{}_{}.pkl'.format(sk,fk)
+        result_file= rfdata+rflabel+'_result_{}_{}.pkl'.format(sk,fk)
+        labels_file = rfdata+rflabel+'_labels_{}_{}.pkl'.format(sk,fk)
+        prob_file = rfdata+rflabel+'_label_probability_{}_{}.pkl'.format(sk,fk)
+        pcs_file= rfdata+rflabel+'_pc_{}_{}.pkl'.format(sk,fk)
+        roc_file= rfdata+rflabel+'_roc_{}_{}.npy'.format(sk,fk)
 
+        rf_data = np.load(data_file,encoding='bytes')
+        rf_asym = rf_data['asym'].values
+        rf_flag = rf_data['mergerFlag'].values
+        #rf_sgm20 = rf_data['dGM20'].values
+        rf_cc = rf_data['cc'].values
+        rf_mstar = rf_data['Mstar_Msun'].values
+        rf_sfr = rf_data['SFR_Msunperyr'].values
+        rf_gini=rf_data['gini'].values
+        rf_m20=rf_data['m20'].values
 
-        if i <=4:
-            ii=2
+        result = np.load(result_file)
+        completeness = np.median(result['completeness'].values)
+        ppv = np.median(result['ppv'].values)
+        probs = np.load(prob_file)
+        iters = result['completeness'].values.shape[0]
+
+        rfprob=np.asarray( np.mean(probs[[0,1,2,3,4]],axis=1))
+
+        rf_class = rfprob > 0.4
+
+        roc = (np.load(roc_file)).all()
+        #axi3.plot(roc['fpr'],roc['tpr'])
+
+        if varname=='rfprob' or varname=='rf_flag' or varname=='rf_class':
+            sfr=rf_sfr
+            mstar=rf_mstar
+            g=rf_gini
+            m20=rf_m20
         else:
-            ii=1
-
-        jj= 5 - (i % 4)
+            sfr=None
+            mstar=None
+            g=gini
+            m20=m20
             
-        print(i,ii,jj)
-        
-        axi=f1.add_subplot(8,jj,ii)
-        
-        colorobj = plot_sfr_mass(msF,merF,sk,fk,axi,xlim=xlim,ylim=ylim,Cval=pc1,vmin=-2,vmax=3,bins=bins)
-        
-        axi.set_xlim(xlim[0],xlim[1])
-        axi.set_ylim(ylim[0],ylim[1])
+        if log is True:
+            Cval=np.log10( locals()[varname] )
+        else:            
+            Cval = locals()[varname]
+            
+        if redshift > 4.2 and (varname=='rfprob' or varname=='rf_flag' or varname=='rf_class'):
+            skipthis=True
+        else:
+            skipthis=False
 
-        #axi.set_ylabel('$log_{10}\ R_p$ [$kpc$]',labelpad=1,size=labs)
-        #axi.set_xlabel('$log_{10}\ M_{*} [M_{\odot}]$',labelpad=1,size=labs)
-        #axi.tick_params(axis='both',which='both',labelsize=labs)
-        #axi.locator_params(nbins=5,prune='both')
+        ii=9-i*1
+
+        colorobj=plot_sfr_mass(msF,merF,sk,fk,f1,Cval,vmin=vmin,vmax=vmax,sfr=sfr,mstar=mstar,gridf=gridf,ny=ny,nx=nx,ii=ii,i=i,redshift=redshift,skipthis=skipthis)
+
+        colorobj=plot_g_m20(msF,merF,sk,fk,f2,Cval,vmin=vmin,vmax=vmax,g=g,m20=m20,gridf=gridf,ny=ny,nx=nx,ii=ii,i=i,redshift=redshift,skipthis=skipthis)
+
+        if i==1:
+            the_colorobj=copy.copy(colorobj)
+
 
     
-    gth.make_colorbar(colorobj,title='median PC1',ticks=[-2,-1,0,1,2,3])
+    gth.make_colorbar(the_colorobj,f1,title=bartitle,ticks=barticks,loc=[0.12,0.65,0.17,0.03],format='%1d')
+
+    gth.make_colorbar(the_colorobj,f2,title=bartitle,ticks=barticks,loc=[0.12,0.65,0.17,0.03],format='%1d')
+
+
 
     f1.savefig(plot_filen,dpi=300)
     pyplot.close(f1)
+
+    f2.savefig(plot2_filen,dpi=300)
+    pyplot.close(f2)
 
 
         
@@ -1792,25 +2050,51 @@ if __name__=="__main__":
     #merger_file = '/astro/snyder_lab2/Illustris/MorphologyAnalysis/imagedata_mergerinfo.hdf5'
     #merger_file = '/astro/snyder_lab2/Illustris/MorphologyAnalysis/imagedata_mergerinfo_SB27.hdf5'
     #merger_file = '/astro/snyder_lab2/Illustris/MorphologyAnalysis/imagedata_mergerinfo_SB25.hdf5'
-    merger_file = os.path.expandvars('$HOME/Dropbox/Workspace/Papers_towrite/Illustris_ObservingMergers/CATALOGS/imagedata_mergerinfo_SB25_2017March3.hdf5')
+    merger_file = os.path.expandvars('$HOME/Dropbox/Workspace/Papers_towrite/Illustris_ObservingMergers/CATALOGS/imagedata_mergerinfo_SB25_2017May08.hdf5')
+    merger_file_500 = os.path.expandvars('$HOME/Dropbox/Workspace/Papers_towrite/Illustris_ObservingMergers/CATALOGS/imagedata_mergerinfo_SB25_2017March3.hdf5')
 
 
     with h5py.File(morph_stat_file,'r') as msF:
         with h5py.File(merger_file,'r') as merF:
-            #localvars = make_sfr_radius_mass_plots(msF,merF,rfiter=10)
-            
-            #localvars = make_morphology_plots(msF,merF)
-            #res = make_pc1_images(msF,merF,bd='/astro/snyder_lab/Illustris_CANDELS/Illustris-1_z1_images_bc03/')
-            
-            #localvars = run_random_forest(msF,merF,rfiter=5,rf_masscut=10.0**(10.5),labelfunc='label_merger_window500_both',balancetrain=False)
-            #localvars = make_rf_evolution_plots(rflabel='params',rf_masscut=10.0**(10.5),labelfunc='label_merger_window500_both')
+            with h5py.File(merger_file_500,'r') as merF500:
+                #localvars = make_sfr_radius_mass_plots(msF,merF,rfiter=10)
+                
+                #localvars = make_morphology_plots(msF,merF)
+                #res = make_pc1_images(msF,merF,bd='/astro/snyder_lab/Illustris_CANDELS/Illustris-1_z1_images_bc03/')
+                
+                localvars = run_random_forest(msF,merF,snap_keys,fil_keys,rfiter=5,rf_masscut=10.0**(10.5),labelfunc='label_merger_window500_both',balancetrain=False)
+                localvars = make_rf_evolution_plots(copy.copy(snap_keys),copy.copy(fil_keys),rflabel='params',rf_masscut=10.0**(10.5),labelfunc='label_merger_window500_both',twin=0.5)
+                
+                
+                localvars = run_random_forest(msF,merF,snap_keys,fil_keys,rfiter=5,rf_masscut=10.0**(10.5),labelfunc='label_merger_forward250_both',balancetrain=False)
+                localvars = make_rf_evolution_plots(copy.copy(snap_keys),copy.copy(fil_keys),rflabel='params',rf_masscut=10.0**(10.5),labelfunc='label_merger_forward250_both',twin=0.25)
+                
 
-            
-            #res = make_merger_images(msF,merF,rflabel='params',rf_masscut=10.0**(10.5),labelfunc='label_merger4')
+                #base forward-500 runs on old file merF500!
+                localvars = run_random_forest(msF,merF500,snap_keys,fil_keys,rfiter=5,rf_masscut=10.0**(10.5),labelfunc='label_merger_forward500_both',balancetrain=False)
+                localvars = make_rf_evolution_plots(copy.copy(snap_keys),copy.copy(fil_keys),rflabel='params',rf_masscut=10.0**(10.5),labelfunc='label_merger_forward500_both',twin=0.5)
+                
 
 
-            
-            #res = make_morphology_evolution_plots(msF,merF)
-
-
-            res = make_structure_plots(msF,merF)
+                #res = make_merger_images(msF,merF,rflabel='params',rf_masscut=10.0**(10.5),labelfunc='label_merger4')
+                
+                
+                
+                #res = make_morphology_evolution_plots(msF,merF)
+                
+                
+                res = make_structure_plots(msF,merF,name='pc1',bartitle='median PC1',vmin=-2,vmax=3,barticks=[-2,-1,0,1,2,3])
+                res = make_structure_plots(msF,merF,name='pc3',bartitle='median PC3',vmin=-1,vmax=2,barticks=[-1,0,1,2])
+                
+                res = make_structure_plots(msF,merF,name='rfprob',bartitle='$log_{10} <P_{RF}>$',vmin=-2,vmax=0,barticks=[-2,-1,0],
+                                           rf_masscut=10.0**(10.5),labelfunc='label_merger_window500_both',log=True)
+                
+                res = make_structure_plots(msF,merF,name='rf_flag',bartitle='$log_{10} f_{merger}$',gridf='log_fraction_grid',vmin=-2,vmax=0,barticks=[-2,-1,0],
+                                           rf_masscut=10.0**(10.5),labelfunc='label_merger_window500_both',log=False)
+                
+                res = make_structure_plots(msF,merF,name='rf_class',bartitle='$log_{10} f_{RF}(0.4)$',gridf='log_fraction_grid',vmin=-2,vmax=0,barticks=[-2,-1,0],
+                                           rf_masscut=10.0**(10.5),labelfunc='label_merger_window500_both',log=False)
+                
+                res = make_structure_plots(msF,merF,name='rf_prop',varname='rf_flag',bartitle='merger proportion',gridf='normed_proportion_grid',vmin=0,vmax=1,barticks=[0,1],
+                                           rf_masscut=10.0**(10.5),labelfunc='label_merger_window500_both',log=False)
+                

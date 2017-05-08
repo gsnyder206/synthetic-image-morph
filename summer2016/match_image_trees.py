@@ -142,7 +142,7 @@ def match_progdesc(snap, sfid, snapnums_int, latest_snap, latest_span=0.5,basepa
 
     sublink_id,tree_id,mstar,sfr = gsu.sublink_id_from_subhalo(basepath,this_snap_int,sfid)
     tree = gsu.load_full_tree(basepath,tree_id)
-    mmpb_sublink_id,snaps,mass,mstar,r1,r2,mmpb_sfid,sfr,times,mlpids = gsu.mmpb_from_tree(tree,sublink_id)
+    mmpb_sublink_id,snaps,mass,mstar,r1,r2,mmpb_sfid,sfr,times,mlpids,bhmdot,bhm = gsu.mmpb_from_tree(tree,sublink_id)
     time_now = gsu.age_at_snap(this_snap_int)
 
     #snap_latest,sfid_latest = get_merger_quantities(time_now,times,snaps,mmpb_sfid,mass,mstar,sfr,this_snap_int,sfid,time_span=latest_span)
@@ -187,7 +187,7 @@ if __name__=="__main__":
     #merger_history_dir = os.path.join(basepath,'MERGER_HISTORY')
     merger_history_dir = os.path.join(basepath,'merger_history_Feb2017')
     catalogfile = "/astro/snyder_lab2/Illustris/MorphologyAnalysis/nonparmorphs_SB25_12filters_all_FILES.hdf5"   #morphology catalog file
-    mergerdatafile = "/astro/snyder_lab2/Illustris/MorphologyAnalysis/imagedata_mergerinfo_SB25_2017March3.hdf5"
+    mergerdatafile = "/astro/snyder_lab2/Illustris/MorphologyAnalysis/imagedata_mergerinfo_SB25_2017May08.hdf5"
 
     mdf = h5py.File(mergerdatafile,'w')
     grp = mdf.create_group('mergerinfo')
@@ -201,7 +201,7 @@ if __name__=="__main__":
 
     last_sfid_grid = None
 
-    merger_span = 0.5 #gyr range to forward-search for mergers
+    merger_span = 0.25 #gyr range to forward-search for mergers
 
     snapnums_int = np.zeros(len(snapkeys),dtype=np.int32)
     for i,sk in enumerate(snapkeys):
