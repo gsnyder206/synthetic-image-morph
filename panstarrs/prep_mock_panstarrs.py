@@ -1,6 +1,7 @@
 #https://github.com/gsnyder206/mock-surveys
 import illustris_api_utils as iau
 import illustris_sunrise_utils as isu
+import asciitable as ascii
 ### system modules
 import os
 
@@ -10,8 +11,15 @@ def setup_sunrise_illustris_panstarrs():
 
 
 def prep_mock_panstarrs(input_catalog):
+    """
+    Parameters
+    ----------
+    input_catalog : File name or newline-separated string
+    
+    """
     sim='Illustris-1'
-    savepath=os.path.expandvars('$IllustrisData')  #want it at /oasis/projects/nsf/hsc102/vrg/IllustrisData/ maybe?  
+    #savepath=os.path.expandvars('$IllustrisData')
+    savepath='/oasis/projects/nsf/hsc102/vrg/IllustrisData/'
     use_z = 0.05
     
     #select snapshots and subhalos using web API locally or catalogs at STScI or harvard
@@ -34,9 +42,9 @@ def prep_mock_panstarrs(input_catalog):
         #examples in "isu" code:
         #isu.setup_sunrise_illustris_subhalo(f,s,redshift_override=use_z)
 
-        #this also needs to be edited to include the realism and morphology steps in the job scripts, and output job submission scripts a la the lightcone function in "isu" module.
-        script=setup_sunrise_illustris_panstarrs(f,s,redshift_override=use_z)        
-        #the result will be all necessary snapshot data plus ancillary Sunrise data and input files, plus submission scripts
+        #~ #this also needs to be edited to include the realism and morphology steps in the job scripts, and output job submission scripts a la the lightcone function in "isu" module.
+        #~ script=setup_sunrise_illustris_panstarrs(f,s,redshift_override=use_z)        
+        #~ #the result will be all necessary snapshot data plus ancillary Sunrise data and input files, plus submission scripts
 
         #save "sbatch <script>" in text files for later use
 
