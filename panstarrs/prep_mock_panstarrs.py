@@ -35,7 +35,7 @@ def prep_mock_panstarrs(input_catalog):
     for this_sn,this_sfid in zip(sn,sfid):
 
         #this checks if halo exists, downloads it if not, and converts into Sunrise-readable format
-        f,s,d=iau.get_subhalo(sim,this_sn,this_sfid,savepath=savepath,verbose=True,clobber=False,get_parent=True)
+        f,s,d=iau.get_subhalo(sim,this_sn,this_sfid,savepath=savepath,verbose=True,clobber=False,getparent=True)
         #get_parent means it downloads the FOF group but points to each individual subhalo (duplicates data, but OK)
 
         #may want to create new functions based around setup_sunrise_illustris_panstarrs(f,s,redshift_override=use_z,filters='$MOCK_SURVEYS/tng/filters_lsst_light.txt')  ?
