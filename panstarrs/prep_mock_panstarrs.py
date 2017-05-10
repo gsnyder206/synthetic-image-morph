@@ -14,6 +14,48 @@ import glob
 
     #~ return submitscript
 
+def generate_sbatch(run_dir, snap_dir, filename, galprops_data, run_type, ncpus='24', queue='compute',email='vrg@jhu.edu',walltime='04:00:00',isnap=0,account='hsc102',use_scratch=False):
+
+    bsubf = open(run_dir+'/'+filename, 'w+')
+    bsubf.write('#!/bin/bash\n')
+    bsubf.write('#SBATCH -A '+account+'\n')
+    bsubf.write('#SBATCH --partition='+queue+'\n')
+    bsubf.write('#SBATCH -t '+walltime+'\n')
+    bsubf.write('#SBATCH --nodes=1\n')
+    bsubf.write('#SBATCH --ntasks-per-node='+ncpus+'\n')
+    
+    bsubf.write('#SBATCH --export=ALL\n')
+    bsubf.write('#SBATCH --job-name=sunrise_'+run_type+'\n')
+    bsubf.write('#SBATCH --output='+run_dir+'/sunrise_slurm.out\n')
+    bsubf.write('\n')
+
+    bsubf.write('SYNIMAGE_CODE=$HOME/Python/PythonModules/synthetic-image-morph\n')
+    
+    bsubf.write('cd '+run_dir+' \n')   #go to directory where job should run
+    bsubf.write('/home/gsnyder/bin/sfrhist sfrhist.config > sfrhist.out 2> sfrhist.err\n')
+    bsubf.write('/home/gsnyder/bin/mcrx mcrx.config > mcrx.out 2> mcrx.err\n')
+    if run_type=='images':
+        #for these, may want to use:  https://github.com/gsnyder206/synthetic-image-morph/blob/master/tng/filters_lsst_light.txt
+        bsubf.write('/home/gsnyder/bin/broadband broadbandz.config > broadbandz.out 2> broadbandz.err\n')
+        bsubf.write('/home/gsnyder/bin/broadband broadband.config > broadband.out 2> broadband.err\n')
+ 
+        bsubf.write(os.path.expandvars('python $SYNIMAGE_CODE/mock_panstarrs.py\n'))
+    elif run_type=='ifu':
+        bsubf.write('rm -rf sfrhist.fits\n')   #enable this after testing
+        #bsubf.write('gzip -9 mcrx.fits\n')
+    elif run_type=='grism':
+        bsubf.write('/home/gsnyder/bin/broadband broadbandgrism.config > broadbandgrism.out 2> broadbandgrism.err\n')
+        #bsubf.write('rm -rf sfrhist.fits\n')   #enable this after testing
+        #bsubf.write('rm -rf mcrx.fits\n')   #enable this after testing
+
+    if use_scratch is True:
+        bsubf.write('cp /scratch/$USER/$SLURM_JOBID/broadband*.fits .')
+
+    
+    bsubf.write('\n')
+    bsubf.close()
+
+    return os.path.abspath(run_dir+'/'+filename)
 
 def setup_sunrise_illustris_subhalo(snap_cutout,subhalo_object,verbose=True,clobber=True,
                                     stub_dir='$HOME/Python/PythonModules/mock-surveys/stubs_illustris/',
@@ -102,7 +144,7 @@ def setup_sunrise_illustris_subhalo(snap_cutout,subhalo_object,verbose=True,clob
 
         print('\tGenerating sunrise.sbatch file for %s...'%run_type)
         sbatch_fn   = 'sunrise.sbatch'		
-        final_fn = isu.generate_sbatch(run_dir = run_dir, snap_dir = snap_dir, filename = sbatch_fn, 
+        final_fn = generate_sbatch(run_dir = run_dir, snap_dir = snap_dir, filename = sbatch_fn, 
                                  galprops_data = galprops_data, run_type = run_type,ncpus=nthreads,walltime=walltime_limit,use_scratch=use_scratch)
 
     
