@@ -141,7 +141,7 @@ def prep_mock_panstarrs(input_catalog):
         #examples in "isu" code:
         #isu.setup_sunrise_illustris_subhalo(f,s,redshift_override=use_z)
         
-        script = setup_sunrise_illustris_subhalo(snap_cutout,subhalo_object,redshift_override=use_z)
+        script = setup_sunrise_illustris_subhalo(f,s,redshift_override=use_z)
 
         #this also needs to be edited to include the realism and morphology steps in the job scripts, and output job submission scripts a la the lightcone function in "isu" module.
         #script=setup_sunrise_illustris_panstarrs(f,s,redshift_override=use_z)        
