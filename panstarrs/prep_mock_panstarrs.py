@@ -4,7 +4,9 @@ import illustris_sunrise_utils as isu
 import gfs_sublink_utils as gsu
 import asciitable as ascii
 ### system modules
+import numpy as np
 import os
+import glob
 
 #~ def setup_sunrise_illustris_panstarrs(f,s,redshift_override=0.05):
 
@@ -16,7 +18,7 @@ import os
 def setup_sunrise_illustris_subhalo(snap_cutout,subhalo_object,verbose=True,clobber=True,
                                     stub_dir='$HOME/Python/PythonModules/mock-surveys/stubs_illustris/',
                                     data_dir='$HOME/sunrise_data/',
-                                    nthreads=24,redshift_override=None,walltime_limit='02:00:00',use_scratch=True):
+                                    nthreads=24,redshift_override=None,walltime_limit='02:00:00',use_scratch=False):
 
     fits_file = os.path.abspath(snap_cutout)
     galprops_data = subhalo_object
