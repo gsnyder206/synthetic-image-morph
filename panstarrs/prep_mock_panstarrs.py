@@ -173,13 +173,13 @@ def prep_mock_panstarrs(snapnums, subfind_ids, simulation='Illustris-1', use_z=0
     sim='Illustris-1'
     use_z = 0.05
     
-    #select snapshots and subhalos using web API locally or catalogs at STScI or harvard
-    #e.g., based on input_catalog file, need snapshot number and SubfindID number
+    #~ #select snapshots and subhalos using web API locally or catalogs at STScI or harvard
+    #~ #e.g., based on input_catalog file, need snapshot number and SubfindID number
 
-    #e.g.
-    data=ascii.read(input_catalog)
-    sn=data['snap']
-    sfid=data['sfid']
+    #~ #e.g.
+    #~ data=ascii.read(input_catalog)
+    #~ sn=data['snap']
+    #~ sfid=data['sfid']
     
     
     # loop over selected objects:
