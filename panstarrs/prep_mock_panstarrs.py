@@ -113,7 +113,6 @@ def setup_sunrise_illustris_subhalo(snap_cutout, subhalo_object, verbose=True, c
                                 galprops_data = galprops_data, run_type = run_type,
                                 nthreads=nthreads, idx = idx,scale_convert=scale_convert,use_scratch=use_scratch)
 
-
         print('\tGenerating mcrx.config file for %s...'%run_type)
         mcrx_fn   = 'mcrx.config'
         mcrx_stub = os.path.join(stub_dir,'mcrx_base.stub')
@@ -146,6 +145,8 @@ def setup_sunrise_illustris_subhalo(snap_cutout, subhalo_object, verbose=True, c
         final_fn = generate_sbatch(run_dir, run_type=run_type, ncpus=nthreads, queue='compute',
                 email='vrg@jhu.edu', walltime='04:00:00', account='hsc102', use_scratch=use_scratch)
 
+        # SUNRISE asks for a ./simpar file, so we copy it from mock-surveys
+        os.popen('cp %s/simpar %s/' % (stub_dir, run_dir))
     
     return final_fn
 
