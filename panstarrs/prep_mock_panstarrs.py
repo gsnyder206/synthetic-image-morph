@@ -149,7 +149,7 @@ def setup_sunrise_illustris_subhalo(snap_cutout, subhalo_object, verbose=True, c
         os.popen('cp %s/simpar %s/' % (stub_dir, run_dir))
         
         # SUNRISE also asks for units.dat file
-        os.popen('cp /home/vrg/etc/units.dat %s/' % (stub_dir, run_dir))
+        os.popen('cp /home/vrg/etc/units.dat %s/' % (run_dir))
     
     return final_fn
 
