@@ -14,7 +14,7 @@ import glob
 
     #~ return submitscript
 
-def generate_sbatch(run_dir, run_type='images', ncpus=24, queue='compute',
+def generate_sbatch(run_dir, run_type='images', ncpus='24', queue='compute',
         email='vrg@jhu.edu', walltime='04:00:00', account='hsc102', use_scratch=False):
     filepath = run_dir + '/sunrise.sbatch'
     bsubf = open(filepath, 'w+')
@@ -28,7 +28,7 @@ def generate_sbatch(run_dir, run_type='images', ncpus=24, queue='compute',
     bsubf.write('#SBATCH -A %s \n' % (account))
     bsubf.write('#SBATCH --partition=%s\n' % (queue))
     bsubf.write('#SBATCH --nodes=1\n')
-    bsubf.write('#SBATCH --ntasks-per-node=%d\n' % (ncpus))
+    bsubf.write('#SBATCH --ntasks-per-node=%s\n' % (ncpus))
     bsubf.write('#SBATCH -t %s\n' % (walltime))
     bsubf.write('#SBATCH --export=ALL\n')
     bsubf.write('\n')
