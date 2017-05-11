@@ -40,24 +40,24 @@ def process_snapshot(subdirpath='.', clobber=False, galaxy=None,
 
     os.chdir(subdirpath)
 
-    bbfile_list = np.sort(np.asarray(glob.glob('broadbandz.fits*')))   #enable reading .fits.gz files
-    print(bbfile_list)
+    #~ bbfile_list = np.sort(np.asarray(glob.glob('broadbandz.fits*')))   #enable reading .fits.gz files
+    #~ print(bbfile_list)
 
-    if galaxy is not None:
-        thisbb = np.where(bbfile_list==galaxy)[0]
-        bbfile_list= bbfile_list[thisbb]
+    #~ if galaxy is not None:
+        #~ thisbb = np.where(bbfile_list==galaxy)[0]
+        #~ bbfile_list= bbfile_list[thisbb]
 
-    test_file = bbfile_list[0]
-    tf = pyfits.open(test_file)
-    print(tf.info())
-    print(tf['BROADBAND'].header.cards)
-    print(tf['SFRHIST'].header.get('star_adaptive_smoothing'))
-    print(tf['SFRHIST'].header.get('star_radius_factor'))
+    #~ test_file = bbfile_list[0]
+    #~ tf = pyfits.open(test_file)
+    #~ print(tf.info())
+    #~ print(tf['BROADBAND'].header.cards)
+    #~ print(tf['SFRHIST'].header.get('star_adaptive_smoothing'))
+    #~ print(tf['SFRHIST'].header.get('star_radius_factor'))
 
-    #this is critical for later
+    #~ #this is critical for later
     
-    fils = tf['FILTERS'].data.field('filter')
-    print(fils)
+    #~ fils = tf['FILTERS'].data.field('filter')
+    #~ print(fils)
 
     filters_to_analyze = [
             'panstarrs/panstarrs_ps1_g',
@@ -86,18 +86,18 @@ def process_snapshot(subdirpath='.', clobber=False, galaxy=None,
             'lsst_u',
             'lsst_y3']
 
-    filter_indices = []
+    #~ filter_indices = []
 
-    print(len(filters_to_analyze), len(skip_filter_boolean), len(filter_labels))
+    #~ print(len(filters_to_analyze), len(skip_filter_boolean), len(filter_labels))
     
-    for i,f in enumerate(filters_to_analyze):
-        fi = np.where(fils==f)
-        print(fi[0][0], f, fils[fi[0][0]], filter_labels[i]) #, filters_to_analyze[fi]
-        filter_indices.append(fi[0][0])
+    #~ for i,f in enumerate(filters_to_analyze):
+        #~ fi = np.where(fils==f)
+        #~ print(fi[0][0], f, fils[fi[0][0]], filter_labels[i]) #, filters_to_analyze[fi]
+        #~ filter_indices.append(fi[0][0])
 
-    filter_indices = np.asarray(filter_indices)
+    #~ filter_indices = np.asarray(filter_indices)
 
-    print(filter_indices)
+    #~ print(filter_indices)
 
     # order of filter_labels in wavelength space
     filter_lambda_order = [2, 0, 1, 3]
@@ -142,7 +142,7 @@ def process_snapshot(subdirpath='.', clobber=False, galaxy=None,
     ## wfc3 uv 0.04 arcsec
 
     mockimage_parameters = ssimp.analysis_parameters('mockimage_default')
-    mockimage_parameters.filter_indices = filter_indices
+    #mockimage_parameters.filter_indices = filter_indices
     mockimage_parameters.filter_labels = filter_labels
     mockimage_parameters.pixsize_arcsec = pixsize_arcsec
     #mockimage_parameters.morphcode_base = morphcode_dir
