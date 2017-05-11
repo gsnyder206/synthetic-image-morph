@@ -151,16 +151,26 @@ def setup_sunrise_illustris_subhalo(snap_cutout, subhalo_object, verbose=True, c
 
 
 
-def prep_mock_panstarrs(input_catalog):
+def prep_mock_panstarrs(snapnums, subfind_ids, simulation='Illustris-1', use_z=0.05,
+        savepath='/oasis/projects/nsf/hsc102/vrg/IllustrisData/'):
     """
     Parameters
     ----------
-    input_catalog : File name or newline-separated string
+    snapnums : array-like
+        List of snapshot numbers
+    subfind_ids : array-like
+        List of Subfind IDs
+    simulation : str
+        Name of the simulation
+    use_z : float
+        Assumed redshift
+    savepath : str
+        Where to store data
     
     """
+    assert(len(snapnums) == len(subfind_ids))
+    
     sim='Illustris-1'
-    #savepath=os.path.expandvars('$IllustrisData')
-    savepath='/oasis/projects/nsf/hsc102/vrg/IllustrisData/'
     use_z = 0.05
     
     #select snapshots and subhalos using web API locally or catalogs at STScI or harvard
@@ -172,14 +182,16 @@ def prep_mock_panstarrs(input_catalog):
     sfid=data['sfid']
     
     
-    #loop over selected objects:
-    for this_sn,this_sfid in zip(sn,sfid):
+    # loop over selected objects:
+    for i in xrange(snapnums):
+        # this checks if halo exists, downloads it if not, and converts
+        # into Sunrise-readable format
+        f,s,d = iau.get_subhalo(simulation, snapnums[i], subfind_ids[i],
+                savepath=savepath, verbose=True, clobber=False, getparent=False)
+        # getparent means it downloads the FOF group but points to each
+        # individual subhalo (duplicates data, but OK)
 
-        #this checks if halo exists, downloads it if not, and converts into Sunrise-readable format
-        f,s,d=iau.get_subhalo(sim,this_sn,this_sfid,savepath=savepath,verbose=True,clobber=False,getparent=False)
-        #get_parent means it downloads the FOF group but points to each individual subhalo (duplicates data, but OK)
-
-        #may want to create new functions based around setup_sunrise_illustris_panstarrs(f,s,redshift_override=use_z,filters='$MOCK_SURVEYS/tng/filters_lsst_light.txt')  ?
+        # may want to create new functions based around setup_sunrise_illustris_panstarrs(f,s,redshift_override=use_z,filters='$MOCK_SURVEYS/tng/filters_lsst_light.txt')  ?
         #examples in "isu" code:
         #isu.setup_sunrise_illustris_subhalo(f,s,redshift_override=use_z)
         
