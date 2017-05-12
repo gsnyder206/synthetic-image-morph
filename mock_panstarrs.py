@@ -199,11 +199,11 @@ def process_snapshot(subdirpath='.', clobber=False, galaxy=None,
 if __name__=="__main__":
     
     # Without dust
-    res = process_snapshot(subdirpath='.', seg_filter_label='panstarrs/panstarrs_ps1_g',
+    res = process_snapshot(subdirpath='.', seg_filter_label='panstarrs_ps1_g',
             magsb_limits=[20.0,22.0], camindices=[0,1,2,3],
             do_idl=False, analyze=True, use_nonscatter=True, Np=4)
     #~ # Include dust
-    #~ res = process_snapshot(subdirpath='.', seg_filter_label='panstarrs/panstarrs_ps1_g',
+    #~ res = process_snapshot(subdirpath='.', seg_filter_label='panstarrs_ps1_g',
             #~ magsb_limits=[20.0,22.0], camindices=[0,1,2,3],
             #~ do_idl=False, analyze=True, use_nonscatter=False, Np=4)
 
