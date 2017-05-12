@@ -33,7 +33,7 @@ import setup_synthetic_images_mp as ssimp
 # Based on candelize.py
 
 def process_snapshot(subdirpath='.', clobber=False, galaxy=None,
-        seg_filter_label='panstarrs/panstarrs_ps1_g', magsb_limits=[20.0,22.0],
+        seg_filter_label='panstarrs_ps1_g', magsb_limits=[20.0,22.0],
         camindices=[0,1,2,3], do_idl=False, analyze=False, use_nonscatter=True, Np=2):
 
     cwd = os.path.abspath(os.curdir)
