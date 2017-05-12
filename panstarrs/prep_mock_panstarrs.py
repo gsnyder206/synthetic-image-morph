@@ -60,6 +60,51 @@ def generate_sbatch(run_dir, run_type='images', ncpus='24', queue='compute',
 
     return os.path.abspath(filepath)
 
+
+def generate_broadband_config_panstarrs(run_dir, snap_dir, data_dir, filename,
+        stub_name, galprops_data, idx = None,redshift=0.0,use_scratch=False,isnap=None):
+
+    #copy sunrise filter folder to snap_dir+'/inputs/sunrise_filters/'
+
+    bf = open(run_dir+'/'+filename,'w+')
+    red0=0.0
+        
+
+    if use_scratch is True:
+        if isnap is not None:
+            int_dir='/scratch/$USER/$SLURM_JOBID/'+str(isnap)
+        else:
+            int_dir='/scratch/$USER/$SLURM_JOBID'
+    else:
+        int_dir=run_dir
+
+
+    bf.write('#Parameter File for Sunrise, broadband\n\n')
+    bf.write('include_file                      %s\n\n'%stub_name)
+    bf.write('redshift                          %.3f\n\n'%red0)
+    bf.write('input_file                        %s\n'%(int_dir+'/mcrx.fits'))
+    bf.write('output_file                       %s\n'%(int_dir+'/broadband.fits'))
+    bf.write('filter_list                       %s\n'%('/home/vrg/Python/PythonModules/synthetic-image-morph/tng/filters_lsst_light.txt'))
+    bf.write('filter_file_directory             %s\n'%(data_dir+'sunrise_filters/'))
+    bf.close()
+    
+    bfz = open(run_dir+'/'+filename.replace('broadband','broadbandz'),'w+')
+    
+    bfz.write('#Parameter File for Sunrise, broadband\n\n')
+    bfz.write('include_file                      %s\n\n'%stub_name)
+    bfz.write('redshift                          %.8f\n\n'%redshift)
+    bfz.write('input_file                        %s\n'%(int_dir+'/mcrx.fits'))
+    bfz.write('output_file                       %s\n'%(int_dir+'/broadbandz.fits'))
+    bfz.write('filter_list                       %s\n'%('/home/vrg/Python/PythonModules/synthetic-image-morph/tng/filters_lsst_light.txt'))
+    bfz.write('filter_file_directory             %s\n'%(data_dir+'sunrise_filters/'))
+    bfz.close()
+    
+
+    print('\t\tSuccessfully generated %s'%filename)
+
+    return
+
+
 def setup_sunrise_illustris_subhalo(snap_cutout, subhalo_object, verbose=True, clobber=True,
         stub_dir='$HOME/Python/PythonModules/mock-surveys/stubs_illustris/',
         data_dir='$HOME/sunrise_data/', nthreads=24, redshift_override=None,
@@ -120,26 +165,14 @@ def setup_sunrise_illustris_subhalo(snap_cutout, subhalo_object, verbose=True, c
         isu.generate_mcrx_config(run_dir = run_dir, snap_dir = snap_dir, filename = mcrx_fn, 
                              stub_name = mcrx_stub,
                              galprops_data = galprops_data, run_type = run_type, nthreads=nthreads, cam_file=None , idx = idx,use_scratch=use_scratch)
-
-
         
-        if run_type == 'images': 
-            print('\tGenerating broadband.config file for %s...'%run_type)
-            broadband_fn   = 'broadband.config'
-            broadband_stub = os.path.join(stub_dir,'broadband_base.stub')
+        print('\tGenerating broadband.config file for %s...'%run_type)
+        broadband_fn   = 'broadband.config'
+        broadband_stub = os.path.join(stub_dir,'broadband_base.stub')
 
-            isu.generate_broadband_config_images(run_dir = run_dir, snap_dir = snap_dir, data_dir=data_dir, filename = broadband_fn, 
-                                             stub_name = broadband_stub, 
-                                             galprops_data = galprops_data, idx = idx,redshift=redshift,use_scratch=use_scratch)
-        if run_type == 'grism': 
-            print('\tGenerating broadband.config file for %s...'%run_type)
-            broadband_fn   = 'broadband.config'
-            broadband_stub = os.path.join(stub_dir, 'broadband_base.stub')
-
-            isu.generate_broadband_config_grism(run_dir = run_dir, snap_dir = snap_dir, data_dir=data_dir, filename = broadband_fn, 
-                                            stub_name = broadband_stub, 
-                                            galprops_data = galprops_data, idx = idx,redshift=redshift,use_scratch=use_scratch)
-
+        generate_broadband_config_panstarrs(run_dir = run_dir, snap_dir = snap_dir, data_dir=data_dir, filename = broadband_fn, 
+                                         stub_name = broadband_stub, 
+                                         galprops_data = galprops_data, idx = idx,redshift=redshift,use_scratch=use_scratch)
 
         print('\tGenerating sunrise.sbatch file for %s...'%run_type)
         final_fn = generate_sbatch(run_dir, run_type=run_type, ncpus=nthreads, queue='compute',
