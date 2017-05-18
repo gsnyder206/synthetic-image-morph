@@ -43,7 +43,7 @@ def generate_sbatch(run_dir, run_type='images', ncpus='24', queue='compute',
         #for these, may want to use:  https://github.com/gsnyder206/synthetic-image-morph/blob/master/tng/filters_lsst_light.txt
         bsubf.write('/home/gsnyder/bin/broadband broadbandz.config 1> broadbandz.out 2> broadbandz.err\n')
         bsubf.write('/home/gsnyder/bin/broadband broadband.config 2> broadband.out 2> broadband.err\n')
-        bsubf.write(os.path.expandvars('python $SYNIMAGE_CODE/mock_panstarrs.py\n'))
+        bsubf.write(os.path.expandvars('python $SYNIMAGE_CODE/panstarrs/mock_panstarrs.py\n'))
     elif run_type=='ifu':
         bsubf.write('rm -rf sfrhist.fits\n')   #enable this after testing
         #bsubf.write('gzip -9 mcrx.fits\n')
