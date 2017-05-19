@@ -187,27 +187,41 @@ def setup_sunrise_illustris_subhalo(snap_cutout, subhalo_object, verbose=True, c
     return final_fn
 
 
-def prep_mock_panstarrs(suite, simulation, snapnums, subfind_ids, use_z=0.05,
-        savepath='/n/ghernquist/vrodrigu/SyntheticImages'):
-    """
-    Parameters
-    ----------
-    suite : str
-        Name of the simulation suite (e.g., Illustris or IllustrisTNG)
-    simulation : str
-        Name of the simulation
-    snapnums : array-like
-        List of snapshot numbers
-    subfind_ids : array-like
-        List of Subfind IDs
-    use_z : float
-        Assumed redshift
-    savepath : str
-        Where to store the images
-    """
-    assert(len(snapnums) == len(subfind_ids))
+#~ def prep_mock_panstarrs(suite, simulation, snapnums, subfind_ids, use_z=0.05,
+        #~ savepath='/n/ghernquist/vrodrigu/SyntheticImages'):
+    #~ """
+    #~ Parameters
+    #~ ----------
+    #~ suite : str
+        #~ Name of the simulation suite (e.g., Illustris or IllustrisTNG)
+    #~ simulation : str
+        #~ Name of the simulation
+    #~ snapnums : array-like
+        #~ List of snapshot numbers
+    #~ subfind_ids : array-like
+        #~ List of Subfind IDs
+    #~ use_z : float
+        #~ Assumed redshift
+    #~ savepath : str
+        #~ Where to store the images
+    #~ """
 
-    # Loop over selected objects
+
+
+# -------------------- FOR USE IN COMET ---------------------------
+
+def prep_mock_panstarrs(snapnums, subfind_ids, simulation='Illustris-1', use_z=0.05,
+        savepath='/oasis/projects/nsf/hsc102/vrg/IllustrisData'):
+
+    assert(len(snapnums) == len(subfind_ids))
+    
+    sim='Illustris-1'
+    use_z = 0.05
+    
+    # select snapshots and subhalos using web API locally or catalogs at STScI or harvard
+    # e.g., based on input_catalog file, need snapshot number and SubfindID number
+
+    # loop over selected objects:
     for i in xrange(len(snapnums)):
         # this checks if halo exists, downloads it if not, and converts
         # into Sunrise-readable format
