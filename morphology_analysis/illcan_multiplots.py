@@ -2326,7 +2326,11 @@ def make_filter_images(msF,merF,snapkey='snapshot_068',sfid=105747,alph=2.0,Q=2.
 
 
 
+<<<<<<< HEAD
 def do_rf_result_grid(snap_keys_par,fil_keys_par,rflabel='paramsmod',rf_labelfunc='label_merger_forward250_both'):
+=======
+def do_rf_result_grid(rflabel='paramsmod',rf_labelfunc='label_merger_forward250_both'):
+>>>>>>> 640c21f221b0b6f8240adb943d66e69cedf8a76a
     i=0
 
     if rflabel=='paramsmod':
@@ -2334,7 +2338,11 @@ def do_rf_result_grid(snap_keys_par,fil_keys_par,rflabel='paramsmod',rf_labelfun
     else:
         assert(False)
         
+<<<<<<< HEAD
     for sk_rfo,fk_rfo,dkz1,dkz2 in zip(snap_keys_par,fil_keys_par,data_z1_keys,data_z2_keys):
+=======
+    for sk_rfo,fk_rfo in zip(snap_keys,fil_keys):
+>>>>>>> 640c21f221b0b6f8240adb943d66e69cedf8a76a
         i=i+1
 
         rfdata = 'rfoutput/'+rf_labelfunc+'/'
@@ -2353,8 +2361,12 @@ def do_rf_result_grid(snap_keys_par,fil_keys_par,rflabel='paramsmod',rf_labelfun
         if rfo_z > 4.2:
             continue
 
+<<<<<<< HEAD
         rf_objs=np.load(obj_file) #load RF classifier for snap in top loop
 
+=======
+        
+>>>>>>> 640c21f221b0b6f8240adb943d66e69cedf8a76a
         for sk_app,fk_app in zip(snap_keys,fil_keys):
 
             app_snap_int=np.int32(sk_app[-3:])
@@ -2365,6 +2377,10 @@ def do_rf_result_grid(snap_keys_par,fil_keys_par,rflabel='paramsmod',rf_labelfun
             
             rf_tpr=[]
             rf_fpr=[]
+<<<<<<< HEAD
+=======
+            rf_objs=np.load(obj_file) #load RF classifier for snap in top loop
+>>>>>>> 640c21f221b0b6f8240adb943d66e69cedf8a76a
  
             data_file_app = rfdata+rflabel+'_data_{}_{}.pkl'.format(sk_app,fk_app)
             
@@ -2376,11 +2392,16 @@ def do_rf_result_grid(snap_keys_par,fil_keys_par,rflabel='paramsmod',rf_labelfun
             #apply these classifiers to the application snapshot data frame
             for rfo in rf_objs:
                 prob_i = rfo.clrf.predict_proba(df[cols].values)
+<<<<<<< HEAD
                 pred_i = prob_i[:,1] > 0.3  #??
+=======
+                pred_i = prob_i[:,1] > 0.4  #??
+>>>>>>> 640c21f221b0b6f8240adb943d66e69cedf8a76a
                  
                 rf_tpr.append(np.sum(rf_flag_app[pred_i])/np.sum(rf_flag_app))
                 rf_fpr.append( np.sum(np.logical_and(np.asarray(pred_i)==True,np.asarray(rf_flag_app)==False) )/np.sum( np.asarray(rf_flag_app)==False) )
                 
+<<<<<<< HEAD
             print('RF (z={:4.2f}) applied to simulation at z={:4.2f}.  '.format(rfo_z,app_z), np.mean(np.asarray(rf_tpr)), np.mean(np.asarray(rf_fpr)) )
 
         df1,df2,df3=load_candels_dfs(zrange=[dkz1,dkz2])
@@ -2401,6 +2422,11 @@ def do_rf_result_grid(snap_keys_par,fil_keys_par,rflabel='paramsmod',rf_labelfun
 
         
         
+=======
+            print('RF (z={:4.2f}) applied to data at z={:4.2f}.  '.format(rfo_z,app_z), np.mean(np.asarray(rf_tpr)), np.mean(np.asarray(rf_fpr)) )
+
+    
+>>>>>>> 640c21f221b0b6f8240adb943d66e69cedf8a76a
     return
 
 if __name__=="__main__":
@@ -2430,6 +2456,7 @@ if __name__=="__main__":
                 
                 
                 rflabel='paramsmod'
+<<<<<<< HEAD
                 localvars = run_random_forest(msF,merF,snap_keys,fil_keys_hst,rfiter=5,rf_masscut=10.0**(10.5),labelfunc='label_merger_window500_both',balancetrain=False)
                 localvars = make_rf_evolution_plots(copy.copy(snap_keys),copy.copy(fil_keys_hst),rflabel=rflabel,rf_masscut=10.0**(10.5),labelfunc='label_merger_window500_both',twin=0.5)
                 res = make_all_structures(msF,merF,rf_labelfunc='label_merger_window500_both',rflabel=rflabel)
@@ -2446,22 +2473,49 @@ if __name__=="__main__":
                 res = make_all_structures(msF,merF,rf_labelfunc='label_merger_past250_both',rflabel=rflabel)
                 '''
                 
+=======
+                localvars = run_random_forest(msF,merF,snap_keys,fil_keys,rfiter=5,rf_masscut=10.0**(10.5),labelfunc='label_merger_window500_both',balancetrain=False)
+                localvars = make_rf_evolution_plots(copy.copy(snap_keys),copy.copy(fil_keys),rflabel=rflabel,rf_masscut=10.0**(10.5),labelfunc='label_merger_window500_both',twin=0.5)
+                res = make_all_structures(msF,merF,rf_labelfunc='label_merger_window500_both',rflabel=rflabel)
+
+                
+                localvars = run_random_forest(msF,merF,snap_keys,fil_keys,rfiter=5,rf_masscut=10.0**(10.5),labelfunc='label_merger_forward250_both',balancetrain=False)
+                localvars = make_rf_evolution_plots(copy.copy(snap_keys),copy.copy(fil_keys),rflabel=rflabel,rf_masscut=10.0**(10.5),labelfunc='label_merger_forward250_both',twin=0.25)
+                res = make_all_structures(msF,merF,rf_labelfunc='label_merger_forward250_both',rflabel=rflabel)
+
+                localvars = run_random_forest(msF,merF,snap_keys,fil_keys,rfiter=5,rf_masscut=10.0**(10.5),labelfunc='label_merger_past250_both',balancetrain=False)
+                localvars = make_rf_evolution_plots(copy.copy(snap_keys),copy.copy(fil_keys),rflabel=rflabel,rf_masscut=10.0**(10.5),labelfunc='label_merger_past250_both',twin=0.25)
+                res = make_all_structures(msF,merF,rf_labelfunc='label_merger_past250_both',rflabel=rflabel)
+
+>>>>>>> 640c21f221b0b6f8240adb943d66e69cedf8a76a
                 #don't have merF125 that we need for this one
                 #localvars = run_random_forest(msF,merF,snap_keys,fil_keys,rfiter=5,rf_masscut=10.0**(10.5),labelfunc='label_merger_window250_both',balancetrain=False)
                 #localvars = make_rf_evolution_plots(copy.copy(snap_keys),copy.copy(fil_keys),rflabel=rflabel,rf_masscut=10.0**(10.5),labelfunc='label_merger_window250_both',twin=0.25)
                 #res = make_all_structures(msF,merF,rf_labelfunc='label_merger_window250_both',rflabel=rflabel)
+<<<<<<< HEAD
 
                 '''
                 localvars = run_random_forest(msF,merF,snap_keys,fil_keys,rfiter=5,rf_masscut=10.0**(10.5),labelfunc='label_merger_past500_both',balancetrain=False)
                 localvars = make_rf_evolution_plots(copy.copy(snap_keys),copy.copy(fil_keys),rflabel=rflabel,rf_masscut=10.0**(10.5),labelfunc='label_merger_past500_both',twin=0.5)
                 res = make_all_structures(msF,merF,rf_labelfunc='label_merger_past500_both',rflabel=rflabel)
 
+=======
+
+                localvars = run_random_forest(msF,merF,snap_keys,fil_keys,rfiter=5,rf_masscut=10.0**(10.5),labelfunc='label_merger_past500_both',balancetrain=False)
+                localvars = make_rf_evolution_plots(copy.copy(snap_keys),copy.copy(fil_keys),rflabel=rflabel,rf_masscut=10.0**(10.5),labelfunc='label_merger_past500_both',twin=0.5)
+                res = make_all_structures(msF,merF,rf_labelfunc='label_merger_past500_both',rflabel=rflabel)
+
+>>>>>>> 640c21f221b0b6f8240adb943d66e69cedf8a76a
                 
                 #base forward-500 runs on old file merF500!
                 localvars = run_random_forest(msF,merF500,snap_keys,fil_keys,rfiter=5,rf_masscut=10.0**(10.5),labelfunc='label_merger_forward500_both',balancetrain=False)
                 localvars = make_rf_evolution_plots(copy.copy(snap_keys),copy.copy(fil_keys),rflabel=rflabel,rf_masscut=10.0**(10.5),labelfunc='label_merger_forward500_both',twin=0.5)
                 res = make_all_structures(msF,merF500,rf_labelfunc='label_merger_forward500_both',rflabel=rflabel)
+<<<<<<< HEAD
                 '''
+=======
+                
+>>>>>>> 640c21f221b0b6f8240adb943d66e69cedf8a76a
                 
 
                 #res = make_merger_images(msF,merF,rflabel='params',rf_masscut=10.0**(10.5),labelfunc='label_merger4')
@@ -2519,4 +2573,8 @@ if __name__=="__main__":
 
                 
 
+<<<<<<< HEAD
                 res=do_rf_result_grid(copy.copy(snap_keys),copy.copy(fil_keys_hst),rflabel='paramsmod',rf_labelfunc='label_merger_window500_both')
+=======
+                #res=do_rf_result_grid(rflabel='paramsmod',rf_labelfunc='label_merger_window500_both')
+>>>>>>> 640c21f221b0b6f8240adb943d66e69cedf8a76a
