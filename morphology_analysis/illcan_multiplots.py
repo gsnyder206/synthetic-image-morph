@@ -67,10 +67,18 @@ im_rf_fil_keys = ['ACS-F606W','ACS-F814W','WFC3-F105W','NC-F150W',
 im_rf_fil_keys_hst= ['ACS-F814W','ACS-F814W','NC-F115W','NC-F115W',
                   'WFC3-F160W','WFC3-F160W','WFC3-F160W','WFC3-F160W']
 
+im_rf_fil_keys_hst2= ['ACS-F606W','ACS-F814W','WFC3-F105W','WFC3-F160W',
+                  'WFC3-F160W','WFC3-F160W','WFC3-F160W','WFC3-F160W']
+
+im_rf_fil_keys_hst3= ['WFC3-F160W','WFC3-F160W','WFC3-F160W','WFC3-F160W',
+                  'WFC3-F160W','WFC3-F160W','WFC3-F160W','WFC3-F160W']
+
 
 snap_keys = im_snap_keys
 fil_keys = im_rf_fil_keys
 fil_keys_hst=im_rf_fil_keys_hst
+fil_keys_hst2=im_rf_fil_keys_hst2
+fil_keys_hst3=im_rf_fil_keys_hst3
 
 
 data_z1_keys=[0.25,0.75,1.25,1.75,2.25,2.75,3.5,4.5]
@@ -2335,6 +2343,26 @@ def do_rf_result_grid(snap_keys_par,fil_keys_par,rflabel='paramsmod',rf_labelfun
     else:
         assert(False)
         
+
+
+    fm_filen = 'rf_plots/'+rf_labelfunc+'/'+rflabel+'_mergerdata_stats.pdf'
+    f5 = pyplot.figure(figsize=(3.5,3.0), dpi=300)
+    pyplot.subplots_adjust(left=0.22, right=0.98, bottom=0.15, top=0.98,wspace=0.0,hspace=0.0)
+
+
+    
+    labs=11
+
+    axi5 = f5.add_subplot(1,1,1)
+    axi5.set_xlim(0.2,4.5)
+    axi5.set_ylim(1.0e-3,2.0)
+    axi5.tick_params(axis='both',which='both',labelsize=labs)
+    axi5.locator_params(nbins=7,prune='both')
+
+    axi5.set_xlabel(r'$redshift$',size=labs)
+    axi5.set_ylabel(r'$fraction$',size=labs)
+
+
     for sk_rfo,fk_rfo,dkz1,dkz2 in zip(snap_keys_par,fil_keys_par,data_z1_keys,data_z2_keys):
 
         i=i+1
@@ -2358,7 +2386,7 @@ def do_rf_result_grid(snap_keys_par,fil_keys_par,rflabel='paramsmod',rf_labelfun
         rf_objs=np.load(obj_file) #load RF classifier for snap in top loop
 
 
-        for sk_app,fk_app in zip(snap_keys,fil_keys):
+        for sk_app,fk_app in zip(snap_keys_par,fil_keys_par):
 
             app_snap_int=np.int32(sk_app[-3:])
             app_z = gsu.redshift_from_snapshot(app_snap_int)
@@ -2392,19 +2420,23 @@ def do_rf_result_grid(snap_keys_par,fil_keys_par,rflabel='paramsmod',rf_labelfun
         datacols=['dGM20','fGM20','ASYM','MPRIME','I','D','CON']
         rf_data=[]
         if rfo_z <= 1.2:
-            df_use=df1
+            df_use=df1  #814
         elif rfo_z <=1.7:
-            df_use=df2
+            df_use=df2  #125
         else:
-            df_use=df3
+            df_use=df3  #160
             
         for rfo in rf_objs:
             prob=rfo.clrf.predict_proba(df_use[datacols].values)
             pred = prob[:,1] > 0.3
             rf_data.append(np.sum(pred))
-        print('RF (z={:4.2f}) applied to data at {:4.2f} < z < {:4.2f}.  '.format(rfo_z,dkz1,dkz2), np.mean(rf_data), df2.shape[0])
+        print('RF (z={:4.2f}) applied to data at {:4.2f} < z < {:4.2f}.  Median LogM={:5.2f} '.format(rfo_z,dkz1,dkz2,np.median(df_use['LMSTAR_BC03'])), np.mean(rf_data), df_use.shape[0])
 
-        
+        frac=np.mean(rf_data)/df_use.shape[0]
+        axi5.semilogy(rfo_z,frac,marker='o',color='Blue',markersize=8)
+
+    f5.savefig(fm_filen,dpi=300)
+    pyplot.close(f5)
         
 
     return
@@ -2434,17 +2466,17 @@ if __name__=="__main__":
                 #localvars = make_morphology_plots(msF,merF)
                 #res = make_pc1_images(msF,merF,bd='/astro/snyder_lab/Illustris_CANDELS/Illustris-1_z1_images_bc03/')
                 
-                
+                '''
                 rflabel='paramsmod'
-                localvars = run_random_forest(msF,merF,snap_keys,fil_keys_hst,rfiter=5,rf_masscut=10.0**(10.5),labelfunc='label_merger_window500_both',balancetrain=False)
-                localvars = make_rf_evolution_plots(copy.copy(snap_keys),copy.copy(fil_keys_hst),rflabel=rflabel,rf_masscut=10.0**(10.5),labelfunc='label_merger_window500_both',twin=0.5)
+                localvars = run_random_forest(msF,merF,snap_keys,fil_keys_hst3,rfiter=5,rf_masscut=10.0**(10.5),labelfunc='label_merger_window500_both',balancetrain=False)
+                localvars = make_rf_evolution_plots(copy.copy(snap_keys),copy.copy(fil_keys_hst3),rflabel=rflabel,rf_masscut=10.0**(10.5),labelfunc='label_merger_window500_both',twin=0.5)
                 res = make_all_structures(msF,merF,rf_labelfunc='label_merger_window500_both',rflabel=rflabel)
 
                 
-                localvars = run_random_forest(msF,merF,snap_keys,fil_keys_hst,rfiter=5,rf_masscut=10.0**(10.5),labelfunc='label_merger_forward250_both',balancetrain=False)
-                localvars = make_rf_evolution_plots(copy.copy(snap_keys),copy.copy(fil_keys_hst),rflabel=rflabel,rf_masscut=10.0**(10.5),labelfunc='label_merger_forward250_both',twin=0.25)
+                localvars = run_random_forest(msF,merF,snap_keys,fil_keys_hst3,rfiter=5,rf_masscut=10.0**(10.5),labelfunc='label_merger_forward250_both',balancetrain=False)
+                localvars = make_rf_evolution_plots(copy.copy(snap_keys),copy.copy(fil_keys_hst3),rflabel=rflabel,rf_masscut=10.0**(10.5),labelfunc='label_merger_forward250_both',twin=0.25)
                 res = make_all_structures(msF,merF,rf_labelfunc='label_merger_forward250_both',rflabel=rflabel)
-                
+                '''
                 
                 '''
                 localvars = run_random_forest(msF,merF,snap_keys,fil_keys,rfiter=5,rf_masscut=10.0**(10.5),labelfunc='label_merger_past250_both',balancetrain=False)
@@ -2528,5 +2560,5 @@ if __name__=="__main__":
 
                 
 
-                res=do_rf_result_grid(copy.copy(snap_keys),copy.copy(fil_keys_hst),rflabel='paramsmod',rf_labelfunc='label_merger_window500_both')
+                res=do_rf_result_grid(copy.copy(snap_keys),copy.copy(fil_keys_hst3),rflabel='paramsmod',rf_labelfunc='label_merger_window500_both')
 
