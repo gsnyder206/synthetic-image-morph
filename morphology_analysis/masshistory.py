@@ -3,6 +3,7 @@ import astropy.io.fits as pyfits
 import math
 import matplotlib
 import matplotlib.pyplot as pyplot
+import matplotlib.patches as patches
 import numpy as np
 import scipy.ndimage
 import scipy as sp
@@ -104,7 +105,18 @@ def mergerfileinfo(snapkey,subfindID,size=2,trange=[-2.0,2.0]):
     return gsu.age_at_snap(lsn), gsu.age_at_snap(last_merger[sfi]), gsu.age_at_snap(last_minmerger[sfi])
 
 
-def masshistory(snapkey,subfindID,camnum=0,basepath='/astro/snyder_lab2/Illustris/Illustris-1',size=2,trange=[-1.5,1.5],alph=0.2,Q=8.0,sb='SB25',gyrbox=True,filters=['NC-F115W','NC-F150W','NC-F200W'],use_rfkey=True,npix=None,radeff=0.2,dx=0,dy=0,savefile=None):
+def rftimehelper(axi,ts,te,ys,yw,s,fs=16):
+    
+    p = patches.Rectangle((ts,ys),te-ts,yw,ec='Black',lw=2,fc='White',zorder=98)
+    axi.add_patch(p)
+    tx=ts + (te-ts)/2.0
+    ty=ys + 0.5* yw
+    axi.text(tx, ty, s ,ha='center',va='center', fontsize=fs,zorder=99 )
+    
+    return
+
+
+def masshistory(snapkey,subfindID,camnum=0,basepath='/astro/snyder_lab2/Illustris/Illustris-1',size=2,trange=[-1.5,1.5],gyrbox=True,use_rfkey=True,radeff=0.2,savefile=None,do_bh=False,plot_rfs=False,**kwargs):
     snapnum = snapkey[-3:]
     this_snap_int = np.int64(snapnum)
 
@@ -115,45 +127,79 @@ def masshistory(snapkey,subfindID,camnum=0,basepath='/astro/snyder_lab2/Illustri
 
 
     time_latest,time_lastmajor,time_lastminor = mergerfileinfo(snapkey,subfindID)
-    print(time_latest,time_lastmajor,time_lastminor)
 
     bhlum = radeff*((u.Msun/u.year)*bhmdot*((1.0e10)/ilh)/(0.978*1.0e9/ilh))*(astropy.constants.c**2)
     bhlum_lsun = bhlum.to('solLum')
 
     bhm_msun = bhm*(1.0e10)/ilh
     
-    fig=pyplot.figure(figsize=(size*2,size)) 
-    pyplot.subplots_adjust(wspace=0.0,hspace=0.0,top=0.99,right=0.99)
+    fig=pyplot.figure(figsize=(size*2,size),dpi=500) 
+    pyplot.subplots_adjust(wspace=0.0,hspace=0.0,top=0.99,right=0.99,left=0.10,bottom=0.17)
     
     #mass history plot
     axi = fig.add_subplot(1,2,1)
 
-    axi.semilogy(times-time_now,mstar)
-    
-    axi.semilogy(times[bhm_msun > 0]-time_now,bhm_msun[bhm_msun > 0]*2.0e2)
+    ml,=axi.plot(times-time_now,np.log10(mstar))
 
-    axi.legend(['$M_* (t)$','$M_{bh} (t) x200$'],loc='upper left',fontsize=25)
+    if do_bh is True:
+        bh,=axi.plot(times[bhm_msun > 0]-time_now,np.log10(bhm_msun[bhm_msun > 0]*2.0e2))
+
     
-    axi.plot([0.0,0.0],[1.0e8,1.0e12],marker=None,linestyle='dashed',color='black',linewidth=2.0)
+    axi.plot([0.0,0.0],[8,12],marker=None,linestyle='dashed',color='black',linewidth=2.0)
 
     if gyrbox is True:
-        axi.plot([time_latest-time_now,time_latest-time_now],[1.0e8,1.0e13],marker=None,linestyle='solid',color='gray',linewidth=1.0)
-        axi.plot([time_latest-time_now-1.0,time_latest-time_now-1.0],[1.0e8,1.0e13],marker=None,linestyle='solid',color='gray',linewidth=1.0)
+        axi.plot([time_latest-time_now,time_latest-time_now],[8,13],marker=None,linestyle='solid',color='gray',linewidth=1.0)
+        axi.plot([time_latest-time_now-1.0,time_latest-time_now-1.0],[8,13],marker=None,linestyle='solid',color='gray',linewidth=1.0)
 
-    axi.plot([time_lastmajor-time_now,time_lastmajor-time_now],[1.0e8,1.0e13],marker=None,linestyle='solid',color='Red',linewidth=4.0)
-    axi.plot([time_lastminor-time_now,time_lastminor-time_now],[1.0e8,1.0e13],marker=None,linestyle='dotted',color='Red',linewidth=4.0)
+    majm,=axi.plot([time_lastmajor-time_now,time_lastmajor-time_now],[8,13],marker=None,linestyle='solid',color='Red',linewidth=4.0)
+    minm,=axi.plot([time_lastminor-time_now,time_lastminor-time_now],[8,13],marker=None,linestyle='dotted',color='Red',linewidth=4.0)
 
+    if do_bh is True:
+        axi.legend((ml,bh,majm,minm),['$log_{10} M_* (t)$','$log_{10} M_{bh} (t) x200$','last major','last minor'],loc='upper left',fontsize=18)
+    else:
+        axi.legend((ml,majm,minm),['$log_{10} M_* (t)$','last major','last minor'],loc='upper left',fontsize=18)
+        
     axi.set_xlim(trange[0],trange[1])
     inrange=np.where(np.logical_and(times-time_now > trange[0], times-time_now <= trange[1]))[0]
-    axi.set_ylim(np.min(mstar[inrange])/2.0,np.max(mstar[inrange])*2.0)
+
+    if plot_rfs is True:
+        ts_past500=-0.5
+        ts_for500 =0.0
+        ts_past250=-0.25
+        ts_for250=0.0
+        ts_win500=-0.25
+        te_past500=0.0
+        te_for500=0.5
+        te_past250=0.0
+        te_for250=0.25
+        te_win500=0.25
+
+        #past500 = patches.FancyBboxPatch((ts_past500,np.min(mstar[inrange])/1.9),te_past500-ts_past500,1.0e9,transform=axi.transData,boxstyle='round,pad=0.0,rounding_size=0.5')
+        #axi.add_patch(past500)
+
+        yb=np.log10( np.min(mstar[inrange])/1.9)
+        yd=0.1
+        
+        rftimehelper(axi,ts_past500,te_past500,yb,yd,'-500Myr')
+        rftimehelper(axi,ts_for500,te_for500,yb,yd,'+500Myr')
+        
+        rftimehelper(axi,ts_past250,te_past250,yb+yd,yd,'-250Myr',fs=14)
+        rftimehelper(axi,ts_for250,te_for250,yb+yd,yd,'+250Myr',fs=14)
+        
+        rftimehelper(axi,ts_win500,te_win500,yb+2*yd,yd,'+/-250Myr',fs=14)
+
+
+        
+    axi.set_ylim(np.log10(np.min(mstar[inrange])/2.0),np.log10(np.max(mstar[inrange])*2.0))
 
     ls = 25
     axi.set_xlabel('$t-t_{obs} (Gyr)$',size=ls)
     #axi.set_ylabel('$M_* (t)$,   $M_{bh} (t)/200$',size=ls)
     axi.tick_params(axis='both', which='major', labelsize=ls)
-    
+    axi.locator_params(nbins=5,prune='both')
+
     #image(s?)
-    axi = fig.add_subplot(1,2,2)
+    axi2 = fig.add_subplot(1,2,2)
 
     camstr='{:02d}'.format(camnum)
 
@@ -171,13 +217,13 @@ def masshistory(snapkey,subfindID,camnum=0,basepath='/astro/snyder_lab2/Illustri
         if npix is None:
             npix=400
     
-    axi = showgalaxy.showgalaxy(axi,snapkey,subfindID,camstr,rfkey=rfkey,Npix=npix,alph=alph,Q=Q,sb=sb,filters=filters,dx=dx,dy=dy)
+    axi2 = showgalaxy.showgalaxy(axi2,snapkey,subfindID,camstr,rfkey=rfkey,**kwargs)
 
-    if savefile is None:
-        pyplot.show()
-    else:
+    if savefile is not None:
         fig.savefig(savefile,dpi=500)
-
+    else:
+        pyplot.show()
+        
     pyplot.close(fig)
     
     
