@@ -1,100 +1,18 @@
 #https://github.com/gsnyder206/mock-surveys
-#~ import illustris_api_utils as iau
-#~ import illustris_sunrise_utils as isu
-#~ import gfs_sublink_utils as gsu
-#~ import asciitable as ascii
-#~ import glob
-
+import illustris_api_utils as iau
+import illustris_sunrise_utils as isu
+import gfs_sublink_utils as gsu
+import asciitable as ascii
+### system modules
 import numpy as np
-import h5py
 import os
+import glob
 
-import illustris_python as il
+#~ def setup_sunrise_illustris_panstarrs(f,s,redshift_override=0.05):
 
+    #~ submitscript=''
 
-# ---------------------- GLOBAL VARIABLES ------------------------
-
-parttype_list = [0, 1, 4, 5]  # gas, DM, stars, BHs
-
-
-# ------------------------- FUNCTIONS ----------------------------
-
-def _populate_group(group, npart_thisfile, basedir, snapnum, subfind_id, parttype):
-    sub = il.snapshot.loadSubhalo(basedir, snapnum, subfind_id, parttype)
-    for key in sub.keys():
-        if key == 'count':
-            npart_thisfile[parttype] = sub[key]
-        else:
-            group.create_dataset(key, data=sub[key])
-
-
-def get_subhalo(suite, simulation, snapnum, subfind_id, savepath='.'):
-    """Load all particles/cells for a given subhalo and store them
-    in an HDF5 file that is readable by SUNRISE.
-    
-    Parameters
-    ----------
-    suite : str
-        Name of the simulation suite (e.g., Illustris or IllustrisTNG).
-    simulation : str
-        Name of the simulation.
-    snapnum : int
-        Snapshot number.
-    subfind_id : array-like
-        Subfind ID.
-    savepath : str
-        Where to store the data/images.
-    
-    Returns
-    -------
-    sub_filename : str
-        Path to an HDF5 file containing the subhalo data.
-    
-    Notes
-    -----
-    - I should eventually implement a get_parent parameter, which loads
-      the entire parent FoF group while pointing to the subhalo of interest.
-    """
-    if suite == 'Illustris':
-        basedir = '/n/ghernquist/%s/Runs/%s/output' % (suite, simulation)
-    elif suite == 'IllustrisTNG':
-        basedir = '/n/hernquistfs3/%s/Runs/%s/output' % (suite, simulation)
-    else:
-        raise Exception('Simulation suite not recognized: %s' % (suite))
-
-    # Create directory to store subhalo data
-    sub_dir = '%s/data/%s/%s/snapnum_%03d/sub_%d' % (
-            savepath, suite, simulation, snapnum, subfind_id)
-    if not os.path.lexists(sub_dir):
-        os.makedirs(sub_dir)
-    
-    # Save subhalo data in HDF5 file
-    sub_filename = '%s/cutout.hdf5' % (sub_dir)
-    with h5py.File(sub_filename, 'w') as f_sub:
-        # Create header for subhalo file
-        sub_header = f_sub.create_group('Header')
-        
-        # We only need a handful of attributes, so we copy them by hand:
-        keys = ['Time', 'HubbleParam', 'Omega0', 'OmegaLambda', 'MassTable', 'Redshift']
-        snap_filename = '%s/snapdir_%03d/snap_%03d.0.hdf5' % (basedir, snapnum, snapnum)
-        with h5py.File(snap_filename, 'r') as f_snap:
-            snap_header = f_snap['Header']
-            for key in keys:
-                sub_header.attrs[key] = snap_header.attrs[key]
-        
-        # This attribute will be modified and added later:
-        npart_thisfile = np.zeros(len(sub_header.attrs['MassTable']), dtype=np.int64)
-        
-        # Copy particle data from snapshot file to subhalo file,
-        # one particle type at a time.
-        for parttype in parttype_list:
-            group = f_sub.create_group('PartType%d' % (parttype))
-            _populate_group(group, npart_thisfile, basedir, snapnum, subfind_id, parttype)
-
-        sub_header.attrs['NumPart_ThisFile'] = npart_thisfile
-
-    return sub_filename
-
+    #~ return submitscript
 
 def generate_sbatch(run_dir, run_type='images', ncpus='24', queue='compute',
         email='vrg@jhu.edu', walltime='04:00:00', account='hsc102', use_scratch=False):
@@ -269,38 +187,48 @@ def setup_sunrise_illustris_subhalo(snap_cutout, subhalo_object, verbose=True, c
     return final_fn
 
 
-def prep_mock_panstarrs(suite, simulation, snapnums, subfind_ids, use_z=0.05,
-        savepath='/n/ghernquist/vrodrigu/SyntheticImages'):
-    """
-    Parameters
-    ----------
-    suite : str
-        Name of the simulation suite (e.g., Illustris or IllustrisTNG)
-    simulation : str
-        Name of the simulation
-    snapnums : array-like
-        List of snapshot numbers
-    subfind_ids : array-like
-        List of Subfind IDs
-    use_z : float
-        Assumed redshift
-    savepath : str
-        Where to store the data/images
-    """
-    assert(len(snapnums) == len(subfind_ids))
+#~ def prep_mock_panstarrs(suite, simulation, snapnums, subfind_ids, use_z=0.05,
+        #~ savepath='/n/ghernquist/vrodrigu/SyntheticImages'):
+    #~ """
+    #~ Parameters
+    #~ ----------
+    #~ suite : str
+        #~ Name of the simulation suite (e.g., Illustris or IllustrisTNG)
+    #~ simulation : str
+        #~ Name of the simulation
+    #~ snapnums : array-like
+        #~ List of snapshot numbers
+    #~ subfind_ids : array-like
+        #~ List of Subfind IDs
+    #~ use_z : float
+        #~ Assumed redshift
+    #~ savepath : str
+        #~ Where to store the images
+    #~ """
 
-    # Loop over selected objects
+
+
+# -------------------- FOR USE IN COMET ---------------------------
+
+def prep_mock_panstarrs(snapnums, subfind_ids, simulation='Illustris-1', use_z=0.05,
+        savepath='/oasis/projects/nsf/hsc102/vrg/IllustrisData'):
+
+    assert(len(snapnums) == len(subfind_ids))
+    
+    sim='Illustris-1'
+    use_z = 0.05
+    
+    # select snapshots and subhalos using web API locally or catalogs at STScI or harvard
+    # e.g., based on input_catalog file, need snapshot number and SubfindID number
+
+    # loop over selected objects:
     for i in xrange(len(snapnums)):
-        # Get particle/cell data for current subhalo
-        sub_filename = get_subhalo(suite, simulation, snapnums[i], subfind_ids[i],
-                savepath=savepath)
-        
-        #~ # This checks if subhalo exists, downloads it if not, and converts
-        #~ # into SUNRISE-readable format.
-        #~ # get_parent means it downloads the FOF group but points to each
-        #~ # individual subhalo (duplicates data, but OK).
-        #~ f,s,d = iau.get_subhalo(simulation, snapnums[i], subfind_ids[i],
-                #~ savepath=savepath, verbose=True, clobber=False, get_parent=False)
+        # this checks if halo exists, downloads it if not, and converts
+        # into Sunrise-readable format
+        f,s,d = iau.get_subhalo(simulation, snapnums[i], subfind_ids[i],
+                savepath=savepath, verbose=True, clobber=False, getparent=False)
+        # getparent means it downloads the FOF group but points to each
+        # individual subhalo (duplicates data, but OK)
 
         # may want to create new functions based around setup_sunrise_illustris_panstarrs(f,s,redshift_override=use_z,filters='$MOCK_SURVEYS/tng/filters_lsst_light.txt')  ?
         #examples in "isu" code:
