@@ -132,7 +132,23 @@ im_fil_keys['snapshot_049']['r']=['NC-F200W']
 
 #            cols=['dGM20','fGM20','asym','Mstat','Istat','Dstat','cc']
 
-def load_candels_dfs(field='egs',zrange=[1.75,2.25],mrange=[10.50,13.5],col_labels=['dGM20','fGM20','ASYM','MPRIME','I','D','CON']):
+
+def load_all_candels(**kwargs):
+
+    df1=pandas.DataFrame()
+    df2=pandas.DataFrame()
+    df3=pandas.DataFrame()
+    
+    fields=['cos','egs','gds-n','gds-s','uds']
+    for f in fields:
+        df1_f,df2_f,df3_f=load_candels_dfs(field=f,**kwargs)
+        df1=df1.append(df1_f)
+        df2=df2.append(df2_f)
+        df3=df3.append(df3_f)
+        
+    return df1,df2,df3
+
+def load_candels_dfs(field='egs',zrange=[1.75,2.25],mrange=[10.50,13.5],col_labels=['dGM20','fGM20','ASYM','MPRIME','I','D','CON','M']):
     if field=='all':
         pass
 
@@ -160,27 +176,43 @@ def load_candels_dfs(field='egs',zrange=[1.75,2.25],mrange=[10.50,13.5],col_labe
 
     mfi_mstar=np.zeros_like(mfi_id,dtype=np.float64)
     mfi_z=np.zeros_like(mfi_id,dtype=np.float64)
+    mfi_mag=np.zeros_like(mfi_id,dtype=np.float64)
     
     mfj_mstar=np.zeros_like(mfj_id,dtype=np.float64)
     mfj_z=np.zeros_like(mfj_id,dtype=np.float64)
+    mfj_mag=np.zeros_like(mfj_id,dtype=np.float64)
 
     mfh_mstar=np.zeros_like(mfh_id,dtype=np.float64)
     mfh_z=np.zeros_like(mfh_id,dtype=np.float64)
+    mfh_mag=np.zeros_like(mfh_id,dtype=np.float64)
     
     
     for i,mfi_label in enumerate(mfi_id):
         ix= label==mfi_label
-        mfi_mstar[i]=logm[ix]
-        mfi_z[i]=z[ix]
+        if np.sum(ix)==1:
+            mfi_mstar[i]=logm[ix]
+            mfi_z[i]=z[ix]
+        else:
+            mfi_mstar[i]=0.0
+            mfi_z[i]=-1.0
+            
     for i,mfj_label in enumerate(mfj_id):
         ix= label==mfj_label
-        mfj_mstar[i]=logm[ix]
-        mfj_z[i]=z[ix]
+        if np.sum(ix)==1:
+            mfj_mstar[i]=logm[ix]
+            mfj_z[i]=z[ix]
+        else:
+            mfj_mstar[i]=0.0
+            mfj_z[i]=-1.0
     for i,mfh_label in enumerate(mfh_id):
         ix= label==mfh_label
-        mfh_mstar[i]=logm[ix]
-        mfh_z[i]=z[ix]
-
+        if np.sum(ix)==1:
+            mfh_mstar[i]=logm[ix]
+            mfh_z[i]=z[ix]
+        else:
+            mfh_mstar[i]=0.0
+            mfh_z[i]=-1.0
+            
     if col_labels[0]=='dGM20':
         mfi_g=mfitab['GINI_I']
         mfi_m=mfitab['M20_I']
@@ -220,10 +252,13 @@ def load_candels_dfs(field='egs',zrange=[1.75,2.25],mrange=[10.50,13.5],col_labe
         dict_814[col_labels[6]]=mfitab[col_labels[6]+'_I'][iix]
     except:
         dict_814[col_labels[6]]=mfitab['C_I'][iix]
-
+    dmi= dict_814['MPRIME']==-99.0
+    dict_814['MPRIME'][dmi]=mfitab['M_I'][iix][dmi]
+    
     dict_814['LMSTAR_BC03']=mfi_mstar[iix]
     dict_814['Z_BEST']=mfi_z[iix]
     dict_814['CANDELS_ID']=mfi_id[iix]
+    dict_814['MAG_F814W']=mfi_mag[iix]
     
         
     dict_125={}
@@ -234,10 +269,13 @@ def load_candels_dfs(field='egs',zrange=[1.75,2.25],mrange=[10.50,13.5],col_labe
     dict_125[col_labels[4]]=mfjtab[col_labels[4]+'_J'][jix]
     dict_125[col_labels[5]]=mfjtab[col_labels[5]+'_J'][jix]
     dict_125[col_labels[6]]=mfjtab[col_labels[6]+'_J'][jix]
-
+    dmi= dict_125['MPRIME']==-99.0
+    dict_125['MPRIME'][dmi]=mfjtab['M_J'][jix][dmi]
+    
     dict_125['LMSTAR_BC03']=mfj_mstar[jix]
     dict_125['Z_BEST']=mfj_z[jix]
     dict_125['CANDELS_ID']=mfj_id[jix]
+    dict_125['MAG_F125W']=mfj_mag[jix]
     
     dict_160={}
     dict_160[col_labels[0]]=mfh_1[hix]
@@ -247,15 +285,21 @@ def load_candels_dfs(field='egs',zrange=[1.75,2.25],mrange=[10.50,13.5],col_labe
     dict_160[col_labels[4]]=mfhtab[col_labels[4]+'_H'][hix]
     dict_160[col_labels[5]]=mfhtab[col_labels[5]+'_H'][hix]
     dict_160[col_labels[6]]=mfhtab[col_labels[6]+'_H'][hix]
-
+    dmi= dict_160['MPRIME']==-99.0
+    dict_160['MPRIME'][dmi]=mfhtab['M_H'][hix][dmi]
+    
     dict_160['LMSTAR_BC03']=mfh_mstar[hix]
     dict_160['Z_BEST']=mfh_z[hix]
     dict_160['CANDELS_ID']=mfh_id[hix]
+    dict_160['MAG_F160W']=mfh_mag[hix]
     
     df_814 = pandas.DataFrame(dict_814)
     df_125 = pandas.DataFrame(dict_125)
     df_160 = pandas.DataFrame(dict_160)
     
+    df_814['field']=field
+    df_125['field']=field
+    df_160['field']=field
     
     return df_814,df_125,df_160
 
@@ -2362,7 +2406,10 @@ def do_rf_result_grid(snap_keys_par,fil_keys_par,rflabel='paramsmod',rf_labelfun
     axi5.set_xlabel(r'$redshift$',size=labs)
     axi5.set_ylabel(r'$fraction$',size=labs)
 
-
+    alldf_1=pandas.DataFrame()
+    alldf_2=pandas.DataFrame()
+    alldf_3=pandas.DataFrame()
+    
     for sk_rfo,fk_rfo,dkz1,dkz2 in zip(snap_keys_par,fil_keys_par,data_z1_keys,data_z2_keys):
 
         i=i+1
@@ -2416,25 +2463,51 @@ def do_rf_result_grid(snap_keys_par,fil_keys_par,rflabel='paramsmod',rf_labelfun
                 
             print('RF (z={:4.2f}) applied to simulation at z={:4.2f}.  '.format(rfo_z,app_z), np.mean(np.asarray(rf_tpr)), np.mean(np.asarray(rf_fpr)) )
 
-        df1,df2,df3=load_candels_dfs(zrange=[dkz1,dkz2])
+        df1,df2,df3=load_all_candels(zrange=[dkz1,dkz2])
         datacols=['dGM20','fGM20','ASYM','MPRIME','I','D','CON']
         rf_data=[]
         if rfo_z <= 1.2:
             df_use=df1  #814
+            dfs='1'
         elif rfo_z <=1.7:
             df_use=df2  #125
+            dfs='2'
         else:
             df_use=df3  #160
-            
-        for rfo in rf_objs:
+            dfs='3'
+
+
+        probdata=np.zeros(shape=(df_use.shape[0],5),dtype=np.float32)
+        
+        for j,rfo in enumerate(rf_objs):
             prob=rfo.clrf.predict_proba(df_use[datacols].values)
             pred = prob[:,1] > 0.3
             rf_data.append(np.sum(pred))
-        print('RF (z={:4.2f}) applied to data at {:4.2f} < z < {:4.2f}.  Median LogM={:5.2f} '.format(rfo_z,dkz1,dkz2,np.median(df_use['LMSTAR_BC03'])), np.mean(rf_data), df_use.shape[0])
+            probdata[:,j]=prob[:,1]
+
+        print(df1.shape,df2.shape,df3.shape,probdata.shape)
+        #need to assign these probabilities to the dfs from which they actually derive!@!
+        if dfs=='1':
+            df1['rfprob']=np.mean(probdata,axis=1)
+        elif dfs=='2':
+            df2['rfprob']=np.mean(probdata,axis=1)
+        else:
+            df3['rfprob']=np.mean(probdata,axis=1)
+        
+        print('RF (z={:4.2f}) applied to data at {:4.2f} < z < {:4.2f}.  Median LogM={:5.2f} ; Median z={:5.2f} '.format(rfo_z,dkz1,dkz2,np.median(df_use['LMSTAR_BC03']),np.median(df_use['Z_BEST'])), np.mean(rf_data), df_use.shape[0])
 
         frac=np.mean(rf_data)/df_use.shape[0]
         axi5.semilogy(rfo_z,frac,marker='o',color='Blue',markersize=8)
 
+        alldf_1=alldf_1.append(df1)
+        alldf_2=alldf_2.append(df2)
+        alldf_3=alldf_3.append(df3)
+        
+
+    alldf_1.to_pickle('mergerprob_814.df')
+    alldf_2.to_pickle('mergerprob_125.df')
+    alldf_3.to_pickle('mergerprob_160.df')
+    
     f5.savefig(fm_filen,dpi=300)
     pyplot.close(f5)
         
@@ -2465,22 +2538,23 @@ if __name__=="__main__":
                 
                 #localvars = make_morphology_plots(msF,merF)
                 #res = make_pc1_images(msF,merF,bd='/astro/snyder_lab/Illustris_CANDELS/Illustris-1_z1_images_bc03/')
+
+                fil_keys_use=fil_keys_hst2
                 
-                '''
                 rflabel='paramsmod'
-                localvars = run_random_forest(msF,merF,snap_keys,fil_keys_hst3,rfiter=5,rf_masscut=10.0**(10.5),labelfunc='label_merger_window500_both',balancetrain=False)
-                localvars = make_rf_evolution_plots(copy.copy(snap_keys),copy.copy(fil_keys_hst3),rflabel=rflabel,rf_masscut=10.0**(10.5),labelfunc='label_merger_window500_both',twin=0.5)
+                #localvars = run_random_forest(msF,merF,snap_keys,fil_keys_use,rfiter=5,rf_masscut=10.0**(10.5),labelfunc='label_merger_window500_both',balancetrain=False)
+                localvars = make_rf_evolution_plots(copy.copy(snap_keys),copy.copy(fil_keys_use),rflabel=rflabel,rf_masscut=10.0**(10.5),labelfunc='label_merger_window500_both',twin=0.5)
                 res = make_all_structures(msF,merF,rf_labelfunc='label_merger_window500_both',rflabel=rflabel)
 
                 
-                localvars = run_random_forest(msF,merF,snap_keys,fil_keys_hst3,rfiter=5,rf_masscut=10.0**(10.5),labelfunc='label_merger_forward250_both',balancetrain=False)
-                localvars = make_rf_evolution_plots(copy.copy(snap_keys),copy.copy(fil_keys_hst3),rflabel=rflabel,rf_masscut=10.0**(10.5),labelfunc='label_merger_forward250_both',twin=0.25)
+                #localvars = run_random_forest(msF,merF,snap_keys,fil_keys_use,rfiter=5,rf_masscut=10.0**(10.5),labelfunc='label_merger_forward250_both',balancetrain=False)
+                localvars = make_rf_evolution_plots(copy.copy(snap_keys),copy.copy(fil_keys_use),rflabel=rflabel,rf_masscut=10.0**(10.5),labelfunc='label_merger_forward250_both',twin=0.25)
                 res = make_all_structures(msF,merF,rf_labelfunc='label_merger_forward250_both',rflabel=rflabel)
-                '''
+                
                 
                 '''
-                localvars = run_random_forest(msF,merF,snap_keys,fil_keys,rfiter=5,rf_masscut=10.0**(10.5),labelfunc='label_merger_past250_both',balancetrain=False)
-                localvars = make_rf_evolution_plots(copy.copy(snap_keys),copy.copy(fil_keys),rflabel=rflabel,rf_masscut=10.0**(10.5),labelfunc='label_merger_past250_both',twin=0.25)
+                localvars = run_random_forest(msF,merF,snap_keys,fil_keys_use,rfiter=5,rf_masscut=10.0**(10.5),labelfunc='label_merger_past250_both',balancetrain=False)
+                localvars = make_rf_evolution_plots(copy.copy(snap_keys),copy.copy(fil_keys_use),rflabel=rflabel,rf_masscut=10.0**(10.5),labelfunc='label_merger_past250_both',twin=0.25)
                 res = make_all_structures(msF,merF,rf_labelfunc='label_merger_past250_both',rflabel=rflabel)
                 '''
                 
@@ -2490,18 +2564,6 @@ if __name__=="__main__":
                 #localvars = make_rf_evolution_plots(copy.copy(snap_keys),copy.copy(fil_keys),rflabel=rflabel,rf_masscut=10.0**(10.5),labelfunc='label_merger_window250_both',twin=0.25)
                 #res = make_all_structures(msF,merF,rf_labelfunc='label_merger_window250_both',rflabel=rflabel)
 
-                '''
-                localvars = run_random_forest(msF,merF,snap_keys,fil_keys,rfiter=5,rf_masscut=10.0**(10.5),labelfunc='label_merger_past500_both',balancetrain=False)
-                localvars = make_rf_evolution_plots(copy.copy(snap_keys),copy.copy(fil_keys),rflabel=rflabel,rf_masscut=10.0**(10.5),labelfunc='label_merger_past500_both',twin=0.5)
-                res = make_all_structures(msF,merF,rf_labelfunc='label_merger_past500_both',rflabel=rflabel)
-
-
-                
-                #base forward-500 runs on old file merF500!
-                localvars = run_random_forest(msF,merF500,snap_keys,fil_keys,rfiter=5,rf_masscut=10.0**(10.5),labelfunc='label_merger_forward500_both',balancetrain=False)
-                localvars = make_rf_evolution_plots(copy.copy(snap_keys),copy.copy(fil_keys),rflabel=rflabel,rf_masscut=10.0**(10.5),labelfunc='label_merger_forward500_both',twin=0.5)
-                res = make_all_structures(msF,merF500,rf_labelfunc='label_merger_forward500_both',rflabel=rflabel)
-                '''
 
                 
 
@@ -2560,5 +2622,5 @@ if __name__=="__main__":
 
                 
 
-                res=do_rf_result_grid(copy.copy(snap_keys),copy.copy(fil_keys_hst3),rflabel='paramsmod',rf_labelfunc='label_merger_window500_both')
+                res=do_rf_result_grid(copy.copy(snap_keys),copy.copy(fil_keys_use),rflabel='paramsmod',rf_labelfunc='label_merger_window500_both')
 
