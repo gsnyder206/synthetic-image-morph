@@ -106,7 +106,7 @@ def generate_broadband_config_panstarrs(run_dir, snap_dir, data_dir, filename,
 
 
 def setup_sunrise_illustris_subhalo(snap_cutout, subhalo_object, verbose=True, clobber=True,
-        stub_dir='$HOME/Python/PythonModules/mock-surveys/stubs_illustris/',
+        stub_dir='$HOME/Python/PythonModules/synthetic-image-morph/stubs_illustris/',
         data_dir='$HOME/sunrise_data/', nthreads=24, redshift_override=None,
         walltime_limit='02:00:00', use_scratch=False):
 
