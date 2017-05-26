@@ -183,19 +183,23 @@ def process_snapshot(subdirpath='.', clobber=False, galaxy=None,
     
     for i,bbfile in enumerate(bbfile_list):
 
-        try:
-            bbdir = ssimp.process_single_broadband(bbfile, mockimage_parameters,
-                    clobber=clobber, do_idl=do_idl, analyze=analyze,
-                    bbase="broadbandz", Np=Np)
-            bbdirs.append(bbdir)
-        except (KeyboardInterrupt,NameError,AttributeError,KeyError,TypeError,IndexError) as e:
-            print(e)
-            raise
-        except:
-            print("Exception while processing broadband: ", bbfile)
-            print("Error:", sys.exc_info()[0])
-        else:
-            print("Successfully processed broadband: ", bbfile)
+        bbdir = ssimp.process_single_broadband(bbfile, mockimage_parameters,
+                clobber=clobber, do_idl=do_idl, analyze=analyze,
+                bbase="broadbandz", Np=Np)
+        bbdirs.append(bbdir)
+        #~ try:
+            #~ bbdir = ssimp.process_single_broadband(bbfile, mockimage_parameters,
+                    #~ clobber=clobber, do_idl=do_idl, analyze=analyze,
+                    #~ bbase="broadbandz", Np=Np)
+            #~ bbdirs.append(bbdir)
+        #~ except (KeyboardInterrupt,NameError,AttributeError,KeyError,TypeError,IndexError) as e:
+            #~ print(e)
+            #~ raise
+        #~ except:
+            #~ print("Exception while processing broadband: ", bbfile)
+            #~ print("Error:", sys.exc_info()[0])
+        #~ else:
+            #~ print("Successfully processed broadband: ", bbfile)
 
     os.chdir(cwd)
 

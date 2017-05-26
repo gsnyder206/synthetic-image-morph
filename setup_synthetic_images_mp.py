@@ -416,19 +416,24 @@ def analyze_image_morphology(custom_filename,filter_index,segmap_filename,
                         print '        -----------------------------------------------------------------------'
                         print '        Measuring Morphologies of: ', custom_filename
                         print '        Mag: {:5.2f}    Magerr:  {:5.2f}'.format(segment_mag,segment_magerr)
-                        try:
-                            mhdu, ap_seghdu = statmorph.morph_from_synthetic_image(image_hdu,saveseg_hdu,tbhdu,cmhdu,extname='LotzMorphMeasurements',idl_filename=idl_filename,python_outfile=python_outfile)
-                        except (KeyboardInterrupt,NameError,AttributeError,TypeError,IndexError) as e:
-                            print e
-                            raise
-                        except:
-                            print "Exception inside morphology analysis code! ", custom_filename
-                            mhdu = None
-                            ap_seghdu = None
-                        else:
-                            new_hdulist.append(mhdu)
-                            if ap_seghdu is not None:
-                                new_hdulist.append(ap_seghdu)
+
+                        mhdu, ap_seghdu = statmorph.morph_from_synthetic_image(image_hdu,saveseg_hdu,tbhdu,cmhdu,extname='LotzMorphMeasurements',idl_filename=idl_filename,python_outfile=python_outfile)
+                        new_hdulist.append(mhdu)
+                        if ap_seghdu is not None:
+                            new_hdulist.append(ap_seghdu)
+                        #~ try:
+                            #~ mhdu, ap_seghdu = statmorph.morph_from_synthetic_image(image_hdu,saveseg_hdu,tbhdu,cmhdu,extname='LotzMorphMeasurements',idl_filename=idl_filename,python_outfile=python_outfile)
+                        #~ except (KeyboardInterrupt,NameError,AttributeError,TypeError,IndexError) as e:
+                            #~ print e
+                            #~ raise
+                        #~ except:
+                            #~ print "Exception inside morphology analysis code! ", custom_filename
+                            #~ mhdu = None
+                            #~ ap_seghdu = None
+                        #~ else:
+                            #~ new_hdulist.append(mhdu)
+                            #~ if ap_seghdu is not None:
+                                #~ new_hdulist.append(ap_seghdu)
                             
                         print '        '
 
@@ -547,21 +552,25 @@ def morphology_loop(custom_filename,filter_index,segmap_filename,
                     idl_input_file,py_output_file):
     
     filename='empty'
-    
-    try:
-        filename = analyze_image_morphology(custom_filename,filter_index,segmap_filename,
-                                               seg_image,seg_header,seg_npix,seg_filter_label,clabel,cpos0,cpos1,
-                                               analyze=analyze_this,clobber=clobber,
-                                               idl_filename=idl_input_file,python_outfile=py_output_file)
 
-    except (KeyboardInterrupt, AttributeError, TypeError) as e:
-        print e
-        raise
-    except:
-        print "Exception while analyzing image morphology: ", custom_filename
-        print "Error:", sys.exc_info()[0]
-    else:
-        pass
+    filename = analyze_image_morphology(custom_filename,filter_index,segmap_filename,
+                                           seg_image,seg_header,seg_npix,seg_filter_label,clabel,cpos0,cpos1,
+                                           analyze=analyze_this,clobber=clobber,
+                                           idl_filename=idl_input_file,python_outfile=py_output_file)
+    #~ try:
+        #~ filename = analyze_image_morphology(custom_filename,filter_index,segmap_filename,
+                                               #~ seg_image,seg_header,seg_npix,seg_filter_label,clabel,cpos0,cpos1,
+                                               #~ analyze=analyze_this,clobber=clobber,
+                                               #~ idl_filename=idl_input_file,python_outfile=py_output_file)
+
+    #~ except (KeyboardInterrupt, AttributeError, TypeError) as e:
+        #~ print e
+        #~ raise
+    #~ except:
+        #~ print "Exception while analyzing image morphology: ", custom_filename
+        #~ print "Error:", sys.exc_info()[0]
+    #~ else:
+        #~ pass
 
         
     return custom_filename,filter_lambda_order
@@ -763,15 +772,15 @@ def process_single_broadband(bbfile,analysis_object,bbase='broadband_red_',clobb
             #SB00 noiseless
             custom_filename_sb00 = os.path.join(bb_dir,snap_prefix+'cam'+camstring+'_'+filter_label+'_SB00.fits')
 
-
-            try:
-                openlist = generate_filter_images(bbfile,snapnum,subdirnum,sh_id,ci,custom_filename_sb00, analysis_object, i, clobber=clobber,analyze=analyze,openlist=openlist,snprefix=snap_prefix)
-            except (KeyboardInterrupt,NameError,AttributeError,TypeError,IndexError,KeyError) as e:
-                print e
-                raise
-            except:
-                print "Exception while processing filter image creation: ", filter_label, custom_filename_sb00
-                print "Error:", sys.exc_info()[0]
+            openlist = generate_filter_images(bbfile,snapnum,subdirnum,sh_id,ci,custom_filename_sb00, analysis_object, i, clobber=clobber,analyze=analyze,openlist=openlist,snprefix=snap_prefix)
+            #~ try:
+                #~ openlist = generate_filter_images(bbfile,snapnum,subdirnum,sh_id,ci,custom_filename_sb00, analysis_object, i, clobber=clobber,analyze=analyze,openlist=openlist,snprefix=snap_prefix)
+            #~ except (KeyboardInterrupt,NameError,AttributeError,TypeError,IndexError,KeyError) as e:
+                #~ print e
+                #~ raise
+            #~ except:
+                #~ print "Exception while processing filter image creation: ", filter_label, custom_filename_sb00
+                #~ print "Error:", sys.exc_info()[0]
 
 
     if openlist is not None:
@@ -1222,16 +1231,17 @@ def process_subdir(subdirpath='.',mockimage_parameters=None,clobber=False, max=N
     
     for i,bbfile in enumerate(bbfile_list):
 
-        try:
-            process_single_broadband(bbfile,mockimage_parameters,clobber=clobber,do_idl=do_idl,analyze=analyze)
-        except (KeyboardInterrupt,NameError,AttributeError,KeyError,TypeError) as e:
-            print e
-            raise
-        except:
-            print "Exception while processing broadband: ", bbfile
-            print "Error:", sys.exc_info()[0]
-        else:
-            print "Successfully processed broadband: ", bbfile
+        process_single_broadband(bbfile,mockimage_parameters,clobber=clobber,do_idl=do_idl,analyze=analyze)
+        #~ try:
+            #~ process_single_broadband(bbfile,mockimage_parameters,clobber=clobber,do_idl=do_idl,analyze=analyze)
+        #~ except (KeyboardInterrupt,NameError,AttributeError,KeyError,TypeError) as e:
+            #~ print e
+            #~ raise
+        #~ except:
+            #~ print "Exception while processing broadband: ", bbfile
+            #~ print "Error:", sys.exc_info()[0]
+        #~ else:
+            #~ print "Successfully processed broadband: ", bbfile
 
     os.chdir(cwd)
 
@@ -1252,13 +1262,14 @@ def process_snapshot(snap_path='.',clobber=False,max=None,maxper=None,starti=0,s
             if i >= max:
                 continue
 
-        try:
-            result = process_subdir(sub,clobber=clobber,max=maxper,seg_filter_label=seg_filter_label,do_idl=do_idl,analyze=analyze,**kwargs)
-        except:
-            print "Exception while processing subdir: ", sub
-            print "Error:", sys.exc_info()[0]
-        else:
-            print "Successfully processed subdir: ", sub
+        result = process_subdir(sub,clobber=clobber,max=maxper,seg_filter_label=seg_filter_label,do_idl=do_idl,analyze=analyze,**kwargs)
+        #~ try:
+            #~ result = process_subdir(sub,clobber=clobber,max=maxper,seg_filter_label=seg_filter_label,do_idl=do_idl,analyze=analyze,**kwargs)
+        #~ except:
+            #~ print "Exception while processing subdir: ", sub
+            #~ print "Error:", sys.exc_info()[0]
+        #~ else:
+            #~ print "Successfully processed subdir: ", sub
     
 
     os.chdir(cwd)
