@@ -33,8 +33,8 @@ import setup_synthetic_images_mp as ssimp
 # Based on candelize.py
 
 def process_snapshot(subdirpath='.', clobber=False, galaxy=None,
-        seg_filter_label='panstarrs_ps1_g', magsb_limits=[20.0,22.0],
-        camindices=[0,1,2,3], do_idl=False, analyze=False, use_nonscatter=True, Np=2):
+        seg_filter_label='ps1_g', magsb_limits=[23.3, 23.2, 23.1, 22.3, 21.3],
+        camindices=[0,1,2,3], do_idl=False, analyze=True, use_nonscatter=True, Np=2):
 
     cwd = os.path.abspath(os.curdir)
 
@@ -62,11 +62,13 @@ def process_snapshot(subdirpath='.', clobber=False, galaxy=None,
 
     filters_to_analyze = [
             'panstarrs/panstarrs_ps1_g',
-            'panstarrs/panstarrs_ps1_open',
-            'lsst/lsst_u',
-            'lsst/lsst_y3']
+            'panstarrs/panstarrs_ps1_r',
+            'panstarrs/panstarrs_ps1_i',
+            'panstarrs/panstarrs_ps1_z',
+            'panstarrs/panstarrs_ps1_y']
 
     skip_filter_boolean = [
+            False,
             False,
             False,
             False,
@@ -79,13 +81,15 @@ def process_snapshot(subdirpath='.', clobber=False, galaxy=None,
             0.2,
             0.2,
             0.2,
+            0.2,
             0.2]
     
     filter_labels = [
-            'panstarrs_ps1_g',
-            'panstarrs_ps1_open',
-            'lsst_u',
-            'lsst_y3']
+            'ps1_g',
+            'ps1_r',
+            'ps1_i',
+            'ps1_z',
+            'ps1_y']
 
     filter_indices = []
 
@@ -101,16 +105,16 @@ def process_snapshot(subdirpath='.', clobber=False, galaxy=None,
     print(filter_indices)
 
     # order of filter_labels in wavelength space
-    filter_lambda_order = [2, 0, 1, 3]
+    filter_lambda_order = [0, 1, 2, 3, 4]
 
     #photfnu units Jy; flux in 1 ct/s (definitely incorrect values)
-    photfnu_Jy = [1e-7, 1e-7, 1e-7, 1e-7]
+    photfnu_Jy = [1e-7, 1e-7, 1e-7, 1e-7, 1e-7]
     
-    #morphcode_dir = "/Users/gsnyder/Documents/pro/morph_december2013/morph_pro/"
-    #morphcode_files = np.asarray(glob.glob(os.path.join(morphcode_dir,"*.*")))
+    morphcode_dir = "/Users/gsnyder/Documents/pro/morph_december2013/morph_pro/"
+    morphcode_files = np.asarray(glob.glob(os.path.join(morphcode_dir,"*.*")))
 
-    #se_dir = '/Users/gsnyder/Documents/Projects/Illustris_Morphology/Illustris-CANDELS/SE_scripts'
-    #se_files = np.asarray(glob.glob(os.path.join(se_dir,"*.*")))
+    se_dir = '/Users/gsnyder/Documents/Projects/Illustris_Morphology/Illustris-CANDELS/SE_scripts'
+    se_files = np.asarray(glob.glob(os.path.join(se_dir,"*.*")))
 
 
     psf_dir = '/home/vrg/filter_data/psf'
@@ -118,13 +122,14 @@ def process_snapshot(subdirpath='.', clobber=False, galaxy=None,
             'gauss_fwhm_5_pixels.fits',
             'gauss_fwhm_5_pixels.fits',
             'gauss_fwhm_5_pixels.fits',
+            'gauss_fwhm_5_pixels.fits',
             'gauss_fwhm_5_pixels.fits']
 
     # A bit of oversampling:
-    psf_pix_arcsec = [0.2, 0.2, 0.2, 0.2]
-    psf_truncate = [None,None,None,None]
-    psf_hdu_num = [0, 0, 0, 0]
-    psf_fwhm = [1.0, 1.0, 1.0, 1.0]
+    psf_pix_arcsec = [0.2, 0.2, 0.2, 0.2, 0.2]
+    psf_truncate = [None,None,None,None, None]
+    psf_hdu_num = [0, 0, 0, 0, 0]
+    psf_fwhm = [1.31, 1.19, 1.11, 1.07, 1.02]
 
     psf_files = []
     for pname in psf_names:
@@ -142,10 +147,10 @@ def process_snapshot(subdirpath='.', clobber=False, galaxy=None,
     mockimage_parameters.filter_indices = filter_indices
     mockimage_parameters.filter_labels = filter_labels
     mockimage_parameters.pixsize_arcsec = pixsize_arcsec
-    #mockimage_parameters.morphcode_base = morphcode_dir
-    #mockimage_parameters.morphcode_files = morphcode_files
-    #mockimage_parameters.se_base = se_dir
-    #mockimage_parameters.se_files = se_files
+    mockimage_parameters.morphcode_base = morphcode_dir
+    mockimage_parameters.morphcode_files = morphcode_files
+    mockimage_parameters.se_base = se_dir
+    mockimage_parameters.se_files = se_files
     mockimage_parameters.camera_indices = camindices #None #by default, do all
     mockimage_parameters.psf_files = psf_files
     mockimage_parameters.psf_pix_arcsec = psf_pix_arcsec
@@ -200,7 +205,7 @@ if __name__=="__main__":
     # Without dust
     res = process_snapshot(subdirpath='.', seg_filter_label='panstarrs_ps1_g',
             magsb_limits=[20.0,22.0], camindices=[0,1,2,3],
-            do_idl=False, analyze=False, use_nonscatter=True, Np=4)
+            do_idl=False, analyze=True, use_nonscatter=True, Np=4)
     #~ # Include dust
     #~ res = process_snapshot(subdirpath='.', seg_filter_label='panstarrs_ps1_g',
             #~ magsb_limits=[20.0,22.0], camindices=[0,1,2,3],
