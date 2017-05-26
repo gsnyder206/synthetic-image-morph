@@ -34,7 +34,7 @@ import setup_synthetic_images_mp as ssimp
 
 def process_snapshot(subdirpath='.', clobber=False, galaxy=None,
         seg_filter_label='ps1_g', magsb_limits=[23.3, 23.2, 23.1, 22.3, 21.3],
-        camindices=[0,1,2,3], do_idl=False, analyze=True, use_nonscatter=True, Np=2):
+        camindices=[0,1,2,3], do_idl=False, analyze=True, use_nonscatter=True, Np=4):
 
     cwd = os.path.abspath(os.curdir)
 
@@ -127,7 +127,7 @@ def process_snapshot(subdirpath='.', clobber=False, galaxy=None,
 
     # A bit of oversampling:
     psf_pix_arcsec = [0.2, 0.2, 0.2, 0.2, 0.2]
-    psf_truncate = [None,None,None,None, None]
+    psf_truncate = [None, None, None, None, None]
     psf_hdu_num = [0, 0, 0, 0, 0]
     psf_fwhm = [1.31, 1.19, 1.11, 1.07, 1.02]
 
@@ -167,6 +167,9 @@ def process_snapshot(subdirpath='.', clobber=False, galaxy=None,
     #enormous simplification
     #observationally, go w deepest filter.  here... ?
 
+    print(seg_filter_label)
+    print(mockimage_parameters.filter_labels)
+
     mockimage_parameters.segment_filter_label = seg_filter_label
     mockimage_parameters.segment_filter_index = np.where(np.asarray(mockimage_parameters.filter_labels) == seg_filter_label)[0][0]
 
@@ -203,12 +206,12 @@ def process_snapshot(subdirpath='.', clobber=False, galaxy=None,
 if __name__=="__main__":
     
     # Without dust
-    res = process_snapshot(subdirpath='.', seg_filter_label='panstarrs_ps1_g',
-            magsb_limits=[20.0,22.0], camindices=[0,1,2,3],
+    res = process_snapshot(subdirpath='.', seg_filter_label='ps1_g',
+            magsb_limits=[23.3, 23.2, 23.1, 22.3, 21.3], camindices=[0,1,2,3],
             do_idl=False, analyze=True, use_nonscatter=True, Np=4)
     #~ # Include dust
-    #~ res = process_snapshot(subdirpath='.', seg_filter_label='panstarrs_ps1_g',
-            #~ magsb_limits=[20.0,22.0], camindices=[0,1,2,3],
+    #~ res = process_snapshot(subdirpath='.', seg_filter_label='ps1_g',
+            #~ magsb_limits=[23.3, 23.2, 23.1, 22.3, 21.3], camindices=[0,1,2,3],
             #~ do_idl=False, analyze=True, use_nonscatter=False, Np=4)
 
     
