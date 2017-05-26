@@ -1,0 +1,5 @@
+panstarrs/panstarrs_ps1_g
+panstarrs/panstarrs_ps1_r
+panstarrs/panstarrs_ps1_i
+panstarrs/panstarrs_ps1_z
+panstarrs/panstarrs_ps1_y

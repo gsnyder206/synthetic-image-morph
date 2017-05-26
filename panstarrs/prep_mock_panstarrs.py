@@ -84,7 +84,7 @@ def generate_broadband_config_panstarrs(run_dir, snap_dir, data_dir, filename,
     bf.write('redshift                          %.3f\n\n'%red0)
     bf.write('input_file                        %s\n'%(int_dir+'/mcrx.fits'))
     bf.write('output_file                       %s\n'%(int_dir+'/broadband.fits'))
-    bf.write('filter_list                       %s\n'%('/home/vrg/Python/PythonModules/synthetic-image-morph/tng/filters_lsst_light.txt'))
+    bf.write('filter_list                       %s\n'%('/home/vrg/Python/PythonModules/synthetic-image-morph/tng/panstarrs_grizy.txt'))
     bf.write('filter_file_directory             %s\n'%(data_dir+'sunrise_filters/'))
     bf.close()
     
@@ -95,7 +95,7 @@ def generate_broadband_config_panstarrs(run_dir, snap_dir, data_dir, filename,
     bfz.write('redshift                          %.8f\n\n'%redshift)
     bfz.write('input_file                        %s\n'%(int_dir+'/mcrx.fits'))
     bfz.write('output_file                       %s\n'%(int_dir+'/broadbandz.fits'))
-    bfz.write('filter_list                       %s\n'%('/home/vrg/Python/PythonModules/synthetic-image-morph/tng/filters_lsst_light.txt'))
+    bfz.write('filter_list                       %s\n'%('/home/vrg/Python/PythonModules/synthetic-image-morph/tng/panstarrs_grizy.txt'))
     bfz.write('filter_file_directory             %s\n'%(data_dir+'sunrise_filters/'))
     bfz.close()
     
