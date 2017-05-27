@@ -9,7 +9,7 @@ import matplotlib.colors as pycolors
 import matplotlib.cm as cm
 import matplotlib.patches as patches
 import numpy as np
-import cPickle
+#import cPickle
 import scipy.ndimage
 import scipy.stats as ss
 import scipy.signal
@@ -77,7 +77,6 @@ def central_moments(image, i_list, j_list, xc=None, yc=None):
 
     x_offsets = pxpos - xc
     y_offsets = pypos - yc
-    #print xc, yc, mu_00, np.min(xi), np.max(xi)
 
     mu_ij = []
     eta_ij = []
@@ -131,8 +130,8 @@ class galdata:
 
             if self.snpix_init < 1.0:
                 self.lotz_morph_status = 'Error: too faint!'
-                print '        Exiting Morph calculation with status: '+self.lotz_morph_status
-                print '                        Average S/N per pixel: {:7.3f}'.format(self.snpix_init)
+                print('        Exiting Morph calculation with status: '+self.lotz_morph_status)
+                print('                        Average S/N per pixel: {:7.3f}'.format(self.snpix_init))
 
                 return
             else:
@@ -141,11 +140,11 @@ class galdata:
 
             #initial radius calculation, result in pixels
             self.rp_circ_1,self.rp_circ_status_1,self.rp_circ_err_1 = self.rpetro_circ(xcenter=self.xcentroid, ycenter=self.ycentroid)
-            print '        Found circular Petrosian Radius (1):  {:8.4f}  {:8.4f}  {:25s}      {:8.4f}  {:8.4f} '.format(self.rp_circ_1, self.rp_circ_err_1, self.rp_circ_status_1, self.xcentroid, self.ycentroid)
+            print('        Found circular Petrosian Radius (1):  {:8.4f}  {:8.4f}  {:25s}      {:8.4f}  {:8.4f} '.format(self.rp_circ_1, self.rp_circ_err_1, self.rp_circ_status_1, self.xcentroid, self.ycentroid))
 
             if self.rp_circ_status_1 != 'Positive R_pet':
                 self.lotz_morph_status = 'Error: Poor Measurement of circular r_p (1)'
-                print '        Exiting Morph calculation with status: '+self.lotz_morph_status
+                print('        Exiting Morph calculation with status: '+self.lotz_morph_status)
                 return
             else:
                 self.lotz_morph_status = 'Computed circular r_p (1)'
@@ -160,10 +159,10 @@ class galdata:
 
             #initial asymmetry minimization using rpc1
             self.asym1,self.xcen_a1,self.ycen_a1,self.asym1_message = self.compute_asym(xcenter=self.xcentroid,ycenter=self.ycentroid,extent=self.rp_circ_1*self.extent_rpetro,a_bkg=self.a_bkg)
-            print '        Found Asymmetry & Center (1)       :  {:8.4f}  {:8.4f}  {:8.4f}    {:45s}'.format(self.asym1,self.xcen_a1,self.ycen_a1, self.asym1_message)
+            print('        Found Asymmetry & Center (1)       :  {:8.4f}  {:8.4f}  {:8.4f}    {:45s}'.format(self.asym1,self.xcen_a1,self.ycen_a1, self.asym1_message))
             if self.asym1==99.0:
                 self.lotz_morph_status = 'Error: Poor Measurement of Asymmetry & Center (1)'
-                print '        Exiting Morph calculation with status: '+self.lotz_morph_status+', message: '+self.asym1_message
+                print('        Exiting Morph calculation with status: '+self.lotz_morph_status+', message: '+self.asym1_message)
                 return
             else:
                 self.lotz_morph_status = 'Computed Asymmetry & Center (1)'
@@ -171,10 +170,10 @@ class galdata:
 
             #recompute rpc2
             self.rp_circ_2,self.rp_circ_status_2,self.rp_circ_err_2 = self.rpetro_circ(xcenter=self.xcen_a1, ycenter=self.ycen_a1)
-            print '        Found circular Petrosian Radius (2):  {:8.4f}  {:8.4f}  {:25s}  '.format(self.rp_circ_2, self.rp_circ_err_2, self.rp_circ_status_2)
+            print('        Found circular Petrosian Radius (2):  {:8.4f}  {:8.4f}  {:25s}  '.format(self.rp_circ_2, self.rp_circ_err_2, self.rp_circ_status_2))
             if self.rp_circ_status_2 != 'Positive R_pet':
                 self.lotz_morph_status = 'Error: Poor Measurement of circular r_p (2)'
-                print '        Exiting Morph calculation with status: '+self.lotz_morph_status
+                print('        Exiting Morph calculation with status: '+self.lotz_morph_status)
                 return
             else:
                 self.lotz_morph_status = 'Computed circular r_p (2)'
@@ -184,20 +183,20 @@ class galdata:
             
             asym2,self.ga2,self.ba2 = self.galaxy_asymmetry(np.asarray([self.xcen_a1,self.ycen_a1]),radius=self.rp_circ_2*self.extent_rpetro,a_bkg=self.a_bkg)
 
-            print '        Found Asymmetry & Center (2)       :  {:8.4f}  {:8.4f}  {:8.4f}  {:8.4f}  {:8.4f}  {:8.4f}  {:8.4f} '.format(self.asym2,self.xcen_a2,self.ycen_a2, self.a_bkg, self.ga2, self.ba2, asym2)
+            print('        Found Asymmetry & Center (2)       :  {:8.4f}  {:8.4f}  {:8.4f}  {:8.4f}  {:8.4f}  {:8.4f}  {:8.4f} '.format(self.asym2,self.xcen_a2,self.ycen_a2, self.a_bkg, self.ga2, self.ba2, asym2))
             if self.asym2==99.0:
                 self.lotz_morph_status = 'Error: Poor Measurement of Asymmetry & Center (2)'
-                print '        Exiting Morph calculation with status: '+self.lotz_morph_status+', message: '+self.asym2_message
+                print('        Exiting Morph calculation with status: '+self.lotz_morph_status+', message: '+self.asym2_message)
                 return
             else:
                 self.lotz_morph_status = 'Computed Asymmetry & Center (2)'
 
             #compute rpe, once and only once
             self.rp_ellip,self.rp_ellip_status,self.rp_ellip_err = self.rpetro_ellip(xcenter=self.xcen_a2, ycenter=self.ycen_a2)
-            print '        Found elliptical Petrosian Radius  :  {:8.4f}  {:8.4f}  {:25s}  '.format(self.rp_ellip, self.rp_ellip_err, self.rp_ellip_status)
+            print('        Found elliptical Petrosian Radius  :  {:8.4f}  {:8.4f}  {:25s}  '.format(self.rp_ellip, self.rp_ellip_err, self.rp_ellip_status))
             if self.rp_ellip_status != 'Positive R_pet':
                 self.lotz_morph_status = 'Error: Poor Measurement of elliptical r_p'
-                print '        Exiting Morph calculation with status: '+self.lotz_morph_status
+                print('        Exiting Morph calculation with status: '+self.lotz_morph_status)
                 return
             else:
                 self.lotz_morph_status = 'Computed elliptical r_p'
@@ -226,7 +225,7 @@ class galdata:
             self.petro_segmap_init = self.petro_sma_segmap(self.xcen_a2,self.ycen_a2,self.rp_ellip)
             if self.petro_segmap_init is None:
                 self.lotz_morph_status = 'Error: Poor RPA segmap (1) (probably negative avg flux)'
-                print '        Exiting Morph calculation with status: '+self.lotz_morph_status
+                print('        Exiting Morph calculation with status: '+self.lotz_morph_status)
                 return
             else:
                 self.lotz_morph_status = 'Computed RPA segmap (1)'
@@ -247,7 +246,7 @@ class galdata:
             self.rpaseg_galaxy_image = np.where(self.petro_segmap==10.0, self.galaxy_image, np.zeros_like(self.galaxy_image))
             if self.petro_segmap is None:
                 self.lotz_morph_status = 'Error: Poor RPA segmap (2) (probably negative avg flux)'
-                print '        Exiting Morph calculation with status: '+self.lotz_morph_status
+                print('        Exiting Morph calculation with status: '+self.lotz_morph_status)
                 return
             else:
                 self.lotz_morph_status = 'Computed RPA segmap (2)'
@@ -267,8 +266,8 @@ class galdata:
 
             if self.snpix < 2.0:
                 self.lotz_morph_status = 'Error: too faint!'
-                print '        Exiting Morph calculation with status: '+self.lotz_morph_status
-                print '                        Average S/N per pixel: {:7.3f}'.format(self.snpix)
+                print('        Exiting Morph calculation with status: '+self.lotz_morph_status)
+                print('                        Average S/N per pixel: {:7.3f}'.format(self.snpix))
 
                 return
             else:
@@ -281,7 +280,7 @@ class galdata:
                 self.lotz_morph_status = 'Warning: Bad Measurement of C'
                 self.morph_hdu.header['CFLAG']=(1,'Bad C measurement')
                 self.cflag = 1
-                print '        Found bad concentration            : '+self.lotz_morph_status + '  '+self.cc_status, self.cc, self.cc_err, self.r20,self.r20_err,self.r80,self.r80_err
+                print('        Found bad concentration            : '+self.lotz_morph_status + '  '+self.cc_status, self.cc, self.cc_err, self.r20,self.r20_err,self.r80,self.r80_err)
             else:
                 self.lotz_morph_status = 'Computed C'
                 self.morph_hdu.header['CFLAG']=(0,'OK C measurement')
@@ -292,7 +291,7 @@ class galdata:
                 self.morph_hdu.header['CC_R80']=(round(self.r80,8),'R80 value (pixels)')
                 self.morph_hdu.header['CC_R80E']=(round(self.r80_err,8),'R80 error (pixels)')
                 self.cflag = 0
-                print '        Found concentration                :  {:8.4f}  {:8.4f}  {:8.4f}  {:8.4f}  {:8.4f}  {:8.4f}  {:25s}  '.format(self.cc, self.cc_err,self.r20,self.r20_err,self.r80,self.r80_err, self.cc_status)
+                print('        Found concentration                :  {:8.4f}  {:8.4f}  {:8.4f}  {:8.4f}  {:8.4f}  {:8.4f}  {:25s}  '.format(self.cc, self.cc_err,self.r20,self.r20_err,self.r80,self.r80_err, self.cc_status))
 
             #use region from internal segmentation map algorithm
             analyze_image = self.rpaseg_galaxy_image
@@ -300,23 +299,23 @@ class galdata:
             #gini
             self.gini = self.compute_gini(self.galaxy_image,self.petro_segmap)
             if True:
-                print '        Found Gini                         :  {:8.4f}   '.format(self.gini)
+                print('        Found Gini                         :  {:8.4f}   '.format(self.gini))
                 self.lotz_morph_status = 'Computed G'
                 self.morph_hdu.header['GINI']=(round(self.gini,8),'Gini (as defined by Lotz et al. 2004)')
 
             #m20
             self.m20 = self.compute_m20(analyze_image)
             if self.m20 is not None:
-                print '        Found M20                          :  {:8.4f}   '.format(self.m20)
+                print('        Found M20                          :  {:8.4f}   '.format(self.m20))
                 self.lotz_morph_status = 'Computed M20'
                 self.morph_hdu.header['M20']=(round(self.m20,8),'M20 (as defined by Lotz et al. 2004)')
             else:
-                print '        Bad M20 (too faint or small?)      : ', np.sum(analyze_image)
+                print('        Bad M20 (too faint or small?)      : ', np.sum(analyze_image))
                 self.lotz_morph_status = 'Computed M20'                
 
             label,num=scipy.ndimage.measurements.label(self.petro_segmap)
             if num != 1:
-                print '        Non-contiguous or non-existent segmap! {:4d}  '.format(num)
+                print('        Non-contiguous or non-existent segmap! {:4d}  '.format(num))
                 self.lotz_morph_status = 'Error: bad segmap'
 
 
@@ -326,8 +325,8 @@ class galdata:
             self.rhalf_ellip,self.rhalf_ellip_err,self.rhalf_ellip_status = self.fluxrad_ellip(0.5,self.xcen_a2,self.ycen_a2,1.5*self.rp_ellip)
 
             if self.rhalf_circ is not None and self.rhalf_ellip is not None:
-                print '        Found R_half                       :  {:8.4f}   {:8.4f}  '.format(self.rhalf_circ,self.rhalf_circ_err)
-                print '        Found R_half_e                     :  {:8.4f}   {:8.4f}  '.format(self.rhalf_ellip,self.rhalf_ellip_err)
+                print('        Found R_half                       :  {:8.4f}   {:8.4f}  '.format(self.rhalf_circ,self.rhalf_circ_err))
+                print('        Found R_half_e                     :  {:8.4f}   {:8.4f}  '.format(self.rhalf_ellip,self.rhalf_ellip_err))
                 self.morph_hdu.header['R5C']=(round(self.rhalf_circ,8),'Circular half-light radius (pix)')
                 self.morph_hdu.header['R5E']=(round(self.rhalf_ellip,8),'Elliptical half-light radius (pix)')
                 self.morph_hdu.header['ER5C']=(round(self.rhalf_circ_err,8),'Error on circular half-light radius')
@@ -341,11 +340,11 @@ class galdata:
             #this alleviates some issues if segmaps are wildly different (can happen in mergers/clusters)
             self.midmap,self.sn_mid_center,self.midseg_area = self.mid_segmap(self.galaxy_image,int(float(self.npix)/2.0),int(float(self.npix)/2.0))
             if np.sum(self.midmap)==0.0:
-                print '        Empty MID segmap!                             '
+                print('        Empty MID segmap!                             ')
                 self.lotz_morph_status = 'Error: Empty MID Segmap'
                 return
             else:
-                print '        Found MID segmap                              '
+                print('        Found MID segmap                              ')
 
             #multiply by 1-valued MID segmap to get image for MID
             self.mid_image = self.galaxy_image*self.midmap
@@ -355,26 +354,26 @@ class galdata:
 
             self.m_prime, self.m_stat_a1, self.m_stat_a2, self.m_stat_level = self.compute_m_statistic(self.mid_image)
             if self.m_prime is not None:
-                print '        Found M statistic(1)               :  {:8.4f}     {:8.4f}    {:8.4f}    {:8.4f} '.format(self.m_prime,self.m_stat_a1,self.m_stat_a2,self.m_stat_level)
+                print('        Found M statistic(1)               :  {:8.4f}     {:8.4f}    {:8.4f}    {:8.4f} '.format(self.m_prime,self.m_stat_a1,self.m_stat_a2,self.m_stat_level))
             else:
-                print '        Bad M statistic (check mid segmap) :  '
+                print('        Bad M statistic (check mid segmap) :  ')
                 self.lotz_morph_status = 'Error: Bad M Statistic'
                 return
 
             self.i_stat, self.i_stat_xpeak, self.i_stat_ypeak, self.i_stat_clump = self.compute_i_statistic(self.mid_image)
-            #print self.i_stat, self.i_stat_xpeak, self.i_stat_ypeak, self.i_stat_clump.shape
+            #print(self.i_stat, self.i_stat_xpeak, self.i_stat_ypeak, self.i_stat_clump.shape
             if self.i_stat is not None:
-                print '        Found I statistic(1)               :  {:8.4f}     {:8.4f}    {:8.4f} '.format(self.i_stat, self.i_stat_xpeak, self.i_stat_ypeak)
+                print('        Found I statistic(1)               :  {:8.4f}     {:8.4f}    {:8.4f} '.format(self.i_stat, self.i_stat_xpeak, self.i_stat_ypeak))
             else:
-                print '        Bad I statistic                    :  '
+                print('        Bad I statistic                    :  ')
                 self.lotz_morph_status = 'Error: Bad I Statistic'
                 return
 
             self.d_stat, self.d_stat_area, self.d_stat_xcen, self.d_stat_ycen = self.compute_d_statistic(self.mid_image,self.i_stat_xpeak,self.i_stat_ypeak)
             if self.d_stat is not None:
-                print '        Found D statistic(1)               :  {:8.4f}     {:8.4f}    {:8.4f}   {:8.4f}'.format(self.d_stat, self.d_stat_area, self.d_stat_xcen, self.d_stat_ycen)
+                print('        Found D statistic(1)               :  {:8.4f}     {:8.4f}    {:8.4f}   {:8.4f}'.format(self.d_stat, self.d_stat_area, self.d_stat_xcen, self.d_stat_ycen))
             else:
-                print '        Bad D statistic                    :  '
+                print('        Bad D statistic                    :  ')
                 self.lotz_morph_status = 'Error: Bad D Statistic'
                 return
 
@@ -402,18 +401,18 @@ class galdata:
             #gini
             self.mid1_gini = self.compute_gini(self.galaxy_image,self.midmap*10.0)
             if True:
-                print '        Found Gini(MID1)                   :  {:8.4f}   '.format(self.mid1_gini)
+                print('        Found Gini(MID1)                   :  {:8.4f}   '.format(self.mid1_gini))
                 self.lotz_morph_status = 'Computed G(2)'
                 self.morph_hdu.header['MID_GINI']=(round(self.mid1_gini,8),'Gini in Freeman segmap')
 
             #m20
             self.mid1_m20 = self.compute_m20(self.galaxy_image*self.midmap)
             if self.mid1_m20 is not None:
-                print '        Found M20(MID1)                    :  {:8.4f}   '.format(self.mid1_m20)
+                print('        Found M20(MID1)                    :  {:8.4f}   '.format(self.mid1_m20))
                 self.lotz_morph_status = 'Computed M20(2)'
                 self.morph_hdu.header['MID_M20']=(round(self.mid1_m20,8),'M20 in Freeman segmap')
             else:
-                print '        Bad M20 (too faint or small?)      : ', np.sum(self.galaxy_image*self.midmap)
+                print('        Bad M20 (too faint or small?)      : ', np.sum(self.galaxy_image*self.midmap))
                 self.lotz_morph_status = 'Computed M20(2)'    
 
 
@@ -428,25 +427,25 @@ class galdata:
 
             self.mid2_m_prime, self.mid2_m_stat_a1, self.mid2_m_stat_a2, self.mid2_m_stat_level = self.compute_m_statistic(self.mid2_image)
             if self.mid2_m_prime is not None:
-                print '        Found M statistic(2)               :  {:8.4f}     {:8.4f}    {:8.4f}    {:8.4f} '.format(self.mid2_m_prime,self.mid2_m_stat_a1,self.mid2_m_stat_a2,self.mid2_m_stat_level)
+                print('        Found M statistic(2)               :  {:8.4f}     {:8.4f}    {:8.4f}    {:8.4f} '.format(self.mid2_m_prime,self.mid2_m_stat_a1,self.mid2_m_stat_a2,self.mid2_m_stat_level))
             else:
-                print '        Bad M statistic(2)(check segmap)   :  '
+                print('        Bad M statistic(2)(check segmap)   :  ')
                 self.lotz_morph_status = 'Error: Bad M Statistic'
                 return
 
             self.mid2_i_stat, self.mid2_i_stat_xpeak, self.mid2_i_stat_ypeak, self.mid2_i_clump = self.compute_i_statistic(self.mid2_image)
             if self.mid2_i_stat is not None:
-                print '        Found I statistic(2)               :  {:8.4f}     {:8.4f}    {:8.4f} '.format(self.mid2_i_stat, self.mid2_i_stat_xpeak, self.mid2_i_stat_ypeak)
+                print('        Found I statistic(2)               :  {:8.4f}     {:8.4f}    {:8.4f} '.format(self.mid2_i_stat, self.mid2_i_stat_xpeak, self.mid2_i_stat_ypeak))
             else:
-                print '        Bad I statistic(2)                 :  '
+                print('        Bad I statistic(2)                 :  ')
                 self.lotz_morph_status = 'Error: Bad I Statistic'
                 return
 
             self.mid2_d_stat, self.mid2_d_stat_area, self.mid2_d_stat_xcen, self.mid2_d_stat_ycen = self.compute_d_statistic(self.mid2_image,self.mid2_i_stat_xpeak,self.mid2_i_stat_ypeak)
             if self.mid2_d_stat is not None:
-                print '        Found D statistic(2)               :  {:8.4f}     {:8.4f}    {:8.4f}   {:8.4f}'.format(self.mid2_d_stat, self.mid2_d_stat_area, self.mid2_d_stat_xcen, self.mid2_d_stat_ycen)
+                print('        Found D statistic(2)               :  {:8.4f}     {:8.4f}    {:8.4f}   {:8.4f}'.format(self.mid2_d_stat, self.mid2_d_stat_area, self.mid2_d_stat_xcen, self.mid2_d_stat_ycen))
             else:
-                print '        Bad D statistic(2)                 :  '
+                print('        Bad D statistic(2)                 :  ')
                 self.lotz_morph_status = 'Error: Bad D Statistic'
                 return
 
@@ -471,7 +470,7 @@ class galdata:
             #raise error
             self.lotz_morph_status = 'Error: Uninitialized'
 
-        print '        Exiting Morph calculation with status: '+self.lotz_morph_status
+        print('        Exiting Morph calculation with status: '+self.lotz_morph_status)
         return
 
 
@@ -664,7 +663,7 @@ class galdata:
                     continue
                 dmu = (np.sum(img[w])-mu*nw)/float(dnw)
                 #nw = w[0].shape[0]
-                #print i,lev,r.shape, xcen, ycen, clump[xcen,ycen], thr, self.skysig,nw, dnw
+                #print(i,lev,r.shape, xcen, ycen, clump[xcen,ycen], thr, self.skysig,nw, dnw)
                 if (dnw > 1.1*npix/2000.0) and (i > t-1):
                     nthr = np.asarray([sort_img[int(level[i-1]*npix)], np.max(img)])
                     r,num,clump = region_grow.region_grow(img,si,THRESHOLD=nthr)
@@ -680,12 +679,12 @@ class galdata:
                     #mid_segmap = scipy.ndimage.filters.uniform_filter(mid_segmap,size=5)
                     mid_segmap = scipy.ndimage.filters.gaussian_filter(mid_segmap,self.psf_fwhm_pixels/2.355)
                     mid_segmap = np.where(mid_segmap > 1.0e-1,np.ones_like(mid_segmap),np.zeros_like(mid_segmap))
-                    #print '{:8d}  {:5.4f}  {:10.4f}  {:10.4f}  {:8d}'.format(i, lev, mu, dmu, dnw)
+                    #print('{:8d}  {:5.4f}  {:10.4f}  {:10.4f}  {:8d}'.format(i, lev, mu, dmu, dnw))
                     return mid_segmap,sn_mid_center,np.sum(mid_segmap)
                     
             mu = np.mean(img[w])
             nw = w[0].shape[0]
-            #print '{:8d}  {:5.4f}  {:10.4f}  {:10.4f}  {:8d}'.format(i, lev, mu, dmu, dnw)
+            #print('{:8d}  {:5.4f}  {:10.4f}  {:10.4f}  {:8d}'.format(i, lev, mu, dmu, dnw))
 
         return mid_segmap,sn_mid_center,np.sum(mid_segmap)
 
@@ -697,7 +696,6 @@ class galdata:
         seg = segmap.flatten()
         ap = np.where(seg > 0.0)[0]
         n = np.sum(np.ones_like(ap))
-        #print n, self.skysig
         s2n = np.sum( im[ap]/((self.skysig**2)**0.5))/n
 
         return s2n
@@ -808,15 +806,9 @@ class galdata:
                 #avg_flux_in_r is negative
                 ffrac_err[i] = -1.0
 
-
-            #print ffrac[i], r, ffrac_err[i], total_flux
-
         #evaluate curve of growth for 0.2, 0.8
         r20,r20_err,r20_status = self.evaluate_cog(0.2,radius_grid,this_flux,ffrac,ffrac_err,total_flux)
         r80,r80_err,r80_status = self.evaluate_cog(0.8,radius_grid,this_flux,ffrac,ffrac_err,total_flux)
-
-        #print r20, r20_err, r20_status
-        #print r80, r80_err, r80_status
 
         if (r20_status == 'Positive R_val') and (r80_status == 'Positive R_val'):
             #compute concentration, return all
@@ -869,9 +861,6 @@ class galdata:
                         sigma_eta = value*fsigma_eta
                         r_pixels_err = (((delta_r/delta_eta)**2)*(sigma_eta**2))**0.5  #conservative estimate of error on r
 
-                        #print eta_ind
-                        #print value, ei, frac_r[ei-1:ei+1], r_array[ei-1:ei+1]
-                        #print this_r_pixels, delta_eta, delta_r, fsigma_eta, sigma_eta, r_pixels_err
                         break
                     else:
                         continue
@@ -1088,7 +1077,6 @@ class galdata:
             asym=99.0
             a_gal = 99.0
             noise_offset = 99.0
-            #print asym, xc, yc
         else:
             #following Lotz code from December 2013
             #must confirm
@@ -1120,7 +1108,6 @@ class galdata:
             noise_offset = norm*a_bkg/total_gal_ap
 
             asym = a_gal - noise_offset
-            #print asym, a_gal, noise_offset, norm, total_gal_ap, a_bkg, xc, yc
 
         return asym, a_gal, noise_offset
 
@@ -1148,8 +1135,6 @@ class galdata:
             frac_overlap_125r = photutils.geometry.circular_overlap_grid(xmin,xmax,ymin,ymax,self.npix,self.npix,r+1.0,1,3)
             
             area_in_r = np.sum(frac_overlap_r)
-            #print frac_overlap_r.shape, np.max(frac_overlap_r), area_in_r, i, r, xcenter
-            
             
             avg_flux_in_r = np.sum(analyze_image*frac_overlap_r)/area_in_r
             err_in_r = ((1.0/area_in_r)*self.skysig**2)**0.5  #error on average flux
@@ -1205,7 +1190,6 @@ class galdata:
                         sigma_eta = self.rpetro_eta*fsigma_eta
                         petro_r_pixels_err = (((delta_r/delta_eta)**2)*(sigma_eta**2))**0.5  #conservative estimate of error on rpetro estimate
 
-                        #print petro_r_pixels, delta_eta, delta_r, fsigma_eta, sigma_eta, petro_r_pixels_err, petro_ratio[ei]
                         break
                     else:
                         continue
@@ -1305,7 +1289,6 @@ class galdata:
                         sigma_eta = self.rpetro_eta*fsigma_eta
                         petro_r_pixels_err = (((delta_r/delta_eta)**2)*(sigma_eta**2))**0.5  #conservative estimate of error on rpetro estimate
 
-                        #print petro_r_pixels, delta_eta, delta_r, fsigma_eta, sigma_eta, petro_r_pixels_err, petro_ratio[ei]
                         break
                     else:
                         continue
@@ -1466,12 +1449,6 @@ class galdata:
 
         
         self.clabel = se_catalog['NUMBER'] #label corresponding to targeted object
-        #print self.segmap.shape, new_xmin, new_xmax, new_ymin, new_ymax, self.imagefile, self.clabel
-        
-        #print np.max( self.segmap), new_xmin, new_xmax, new_ymin, new_ymax, self.imagefile, self.clabel
-
-        
-        #print self.image.shape, self.segmap.shape, self.clabel
         
         #setting for doing sigma clip on internal segmap.  Not very efficient in SciPy versus IDL (why?)
         #avoid if simulated images -- not necessary if we don't expect awful pixels
@@ -1496,7 +1473,6 @@ class galdata:
         #x and y positions. MUST CONFIRM PYTHON ORDERING/locations, 0,1 as x,y seem ok for now
         self.xcentroid = se_catalog['Y_IMAGE']-new_ymin #segmap_hdu.header['POS0']
         self.ycentroid = se_catalog['X_IMAGE']-new_xmin #segmap_hdu.header['POS1']
-        #print self.xcentroid, self.ycentroid
         
         self.thisband_xcentroid = self.ycentroid*1.0-new_ymin #photutils_hdu.header['XCENTR']
         self.thisband_ycentroid = self.xcentroid*1.0-new_xmin #photutils_hdu.header['YCENTR']
