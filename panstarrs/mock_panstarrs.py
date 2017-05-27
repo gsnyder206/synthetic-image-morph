@@ -5,6 +5,7 @@ import string
 import sys
 import struct
 import matplotlib
+matplotlib.use('Agg')
 import numpy as np
 import scipy.ndimage
 import scipy.stats as ss
@@ -26,7 +27,7 @@ from astropy.convolution import Gaussian2DKernel
 from astropy.visualization.mpl_normalize import ImageNormalize
 from astropy.visualization import *
 import astropy.io.fits as pyfits
-import statmorph
+#import statmorph
 import datetime
 import setup_synthetic_images_mp as ssimp
 
@@ -185,7 +186,7 @@ def process_snapshot(subdirpath='.', clobber=False, galaxy=None,
 
         bbdir = ssimp.process_single_broadband(bbfile, mockimage_parameters,
                 clobber=clobber, do_idl=do_idl, analyze=analyze,
-                bbase="broadbandz", Np=Np)
+                bbase="broadbandz", Np=Np, zip_after=False)
         bbdirs.append(bbdir)
         #~ try:
             #~ bbdir = ssimp.process_single_broadband(bbfile, mockimage_parameters,

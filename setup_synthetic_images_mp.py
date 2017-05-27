@@ -2,7 +2,6 @@ import cProfile
 import pstats
 import math
 import string
-import sys
 import struct
 import matplotlib
 matplotlib.use('Agg')
@@ -11,7 +10,7 @@ import matplotlib.colors as pycolors
 import matplotlib.cm as cm
 import matplotlib.patches as patches
 import numpy as np
-import cPickle
+#import cPickle
 import scipy.ndimage
 import scipy.stats as ss
 import scipy.signal
@@ -24,7 +23,7 @@ import make_color_image
 import gzip
 import tarfile
 import shutil
-import cosmocalc
+#import cosmocalc
 import congrid
 import astropy.io.ascii as ascii
 import sunpy__load
@@ -156,30 +155,28 @@ def test_image_mags(image_fits,ci,filtable,filter_index,redshift):
     #10/2/2015:  Note, this will only work redward of the Ly limit, bc the integrated magnitudes in the FILTERS hdu **do not** include Lyman absorption, while images do so.
     rest_lambda_microns = lambda_eff_microns/(1.0 + redshift)
 
-    #print rest_lambda_boundary, lambda_eff_microns, rest_lambda_microns
     if rest_lambda_microns > 0.0912 + 0.1:
         assert (np.abs(image_ab_absolute_mag - sunrise_ab_absolute_mag) < 0.2 )
         assert (np.abs(image_header_ab_absolute_mag - sunrise_ab_absolute_mag) < 0.2 )
         assert (np.abs(sunrise_ab_absolute_mag - sunrise_independent_ab_absolute_mag) < 0.01 )
-        #print '   magnitudes confirmed: ', sunrise_ab_absolute_mag, image_ab_absolute_mag
 
-    print image_ab_apparent_mag, sunrise_image_apparent_mag
+    print(image_ab_apparent_mag, sunrise_image_apparent_mag)
     assert (np.abs(sunrise_image_apparent_mag - image_ab_apparent_mag) < 0.2 )
     assert (np.abs(sunrise_image_absolute_mag - image_ab_absolute_mag) < 0.2 )
-    print '   image mags confirmed:  ', sunrise_image_apparent_mag, image_ab_apparent_mag
+    print('   image mags confirmed:  ', sunrise_image_apparent_mag, image_ab_apparent_mag)
 
     #confirm lack of NANs:
     isnan = np.isnan(np.sum(image_data))
     assert (isnan==False)
 
-    #print ababszp, total_flux, total_mag, total_mag + ababszp, dist_modulus, total_mag + ababszp - dist_modulus, sunrise_ab_absolute_mag
+    #print(ababszp, total_flux, total_mag, total_mag + ababszp, dist_modulus, total_mag + ababszp - dist_modulus, sunrise_ab_absolute_mag)
 
     return 1
 
 
 def initialize_test_figure():
     fig = pyplot.figure(figsize=(7.0,4.0), dpi=imdpi)
-    pyplot.subplots_adjust(left=0.0, right=1.0, bottom=0.0, top=1.0,wspace=0.0,hspace=0.0)
+    fig.subplots_adjust(left=0.0, right=1.0, bottom=0.0, top=1.0,wspace=0.0,hspace=0.0)
     nx = 7.0
     ny = 4.0
 
@@ -198,12 +195,12 @@ def generate_filter_images(bbfile, snapnum,subdirnum,sh_id,ci,custom_filename_sb
     
     common_args['pixelsize_arcsec'] = analysis_object.pixsize_arcsec[i]
 
-    #print filter_index, filter_label, i, type(filter_index), type(int(filter_index))
+    #print(filter_index, filter_label, i, type(filter_index), type(int(filter_index)))
     #filter_index must be a true int for some reason
 
     if not os.path.lexists(custom_filename_sb00) or clobber==True:
         #do sunpy calcs
-        print custom_filename_sb00, filter_index, filter_label, psf_file, psf_pix_arcsec, psf_hdu, psf_truncate
+        print(custom_filename_sb00, filter_index, filter_label, psf_file, psf_pix_arcsec, psf_hdu, psf_truncate)
         cam_0_raw, rp, the_used_seed,this_fail_flag,fitsfn,openlist   = sunpy__synthetic_image.build_synthetic_image(bbfile, int(filter_index),
                                                                                                             seed=0,
                                                                                                             r_petro_kpc=None, 
@@ -243,7 +240,7 @@ def generate_filter_images(bbfile, snapnum,subdirnum,sh_id,ci,custom_filename_sb
             hdulist.writeto(custom_filename_sb00,clobber=True)
 
     else:
-        print 'SB00 file exists, skipping: ', custom_filename_sb00
+        print('SB00 file exists, skipping: ', custom_filename_sb00)
 
         #after if statement, file must exist
         assert (os.path.lexists(custom_filename_sb00))
@@ -257,7 +254,7 @@ def generate_filter_images(bbfile, snapnum,subdirnum,sh_id,ci,custom_filename_sb
         custom_filename = custom_filename_sb00.rstrip('SB00.fits')+'SB{:2.0f}.fits'.format(maglim)
         if not os.path.lexists(custom_filename) or clobber==True:
             ### is this the best one???
-            #print maglim
+            #print(maglim)
             sigma_nJy = (2.0**(-0.5))*((1.0e9)*(3631.0/5.0)*10.0**(-0.4*maglim))*analysis_object.pixsize_arcsec[i]*(3.0*analysis_object.psf_fwhm_arcsec[i])
             sigma_muJyAs = (sigma_nJy*1.0e-3)/(analysis_object.pixsize_arcsec[i]**2)
             noiseless_hdu = pyfits.open(custom_filename_sb00)[0]
@@ -279,7 +276,6 @@ def generate_filter_images(bbfile, snapnum,subdirnum,sh_id,ci,custom_filename_sb
             if newflux > 0.0:
                 newmag = -2.5*np.log10(newflux) + noiseless_header.get('ABZP')
                         
-            #print newmag, noiseless_header.get('ABZP'), np.sum(noiseless_image+noise_image), np.sum(noiseless_image), sigma_nJy, sigma_muJyAs
                         
             primhdu.header['NEWMAG']=(round(newmag,6),'includes noise, -1 bad')
                         
@@ -293,7 +289,7 @@ def generate_filter_images(bbfile, snapnum,subdirnum,sh_id,ci,custom_filename_sb
                 #save container to file, overwriting as needed
                 hdulist.writeto(custom_filename,clobber=clobber)
         else:
-            print 'SB?? file exists, skipping: ', custom_filename
+            print('SB?? file exists, skipping: ', custom_filename)
 
         #do segmentation and initial photometry
         #always do this-- it's fast enough
@@ -302,7 +298,7 @@ def generate_filter_images(bbfile, snapnum,subdirnum,sh_id,ci,custom_filename_sb
             #switch to one-per-redshift for great simplicity
             if filter_label==analysis_object.segment_filter_label:
 
-                print '   segmenting '+filter_label, maglim, custom_filename
+                print('   segmenting '+filter_label, maglim, custom_filename)
 
                 res = segment_image(custom_filename,filter_label = filter_label)
                 #do initial plotting/saving inside this routine?
@@ -344,7 +340,6 @@ def analyze_image_morphology(custom_filename,filter_index,segmap_filename,
         #polish segmap
         if seg_npix != npix:
             rebinned_segmap = np.int16( congrid.congrid(seg_image, (npix,npix), method='neighbour', centre=True, minusone=False) )
-            #print rebinned_segmap.shape, np.min(rebinned_segmap), np.max(rebinned_segmap)
             saveseg_hdu = pyfits.ImageHDU(rebinned_segmap,header=seg_header)
             #also must update position data
             position_ratio = float(npix)/float(seg_npix)
@@ -372,7 +367,6 @@ def analyze_image_morphology(custom_filename,filter_index,segmap_filename,
                 if prop.id==clabel:
                     nc = nc+1
                     center_prop = prop
-                    #print center_proptab
                     position = (center_prop.xcentroid.value, center_prop.ycentroid.value)
                     position_fixed = (saveseg_hdu.header['POS0'],saveseg_hdu.header['POS1'])
                     r=3
@@ -412,10 +406,10 @@ def analyze_image_morphology(custom_filename,filter_index,segmap_filename,
 
                     if segment_magerr >= 0.0 and segment_magerr < 0.4:
 
-                        print '        '
-                        print '        -----------------------------------------------------------------------'
-                        print '        Measuring Morphologies of: ', custom_filename
-                        print '        Mag: {:5.2f}    Magerr:  {:5.2f}'.format(segment_mag,segment_magerr)
+                        print('        ')
+                        print('        -----------------------------------------------------------------------')
+                        print('        Measuring Morphologies of: ', custom_filename)
+                        print('        Mag: {:5.2f}    Magerr:  {:5.2f}'.format(segment_mag,segment_magerr))
 
                         mhdu, ap_seghdu = statmorph.morph_from_synthetic_image(image_hdu,saveseg_hdu,tbhdu,cmhdu,extname='LotzMorphMeasurements',idl_filename=idl_filename,python_outfile=python_outfile)
                         new_hdulist.append(mhdu)
@@ -424,10 +418,10 @@ def analyze_image_morphology(custom_filename,filter_index,segmap_filename,
                         #~ try:
                             #~ mhdu, ap_seghdu = statmorph.morph_from_synthetic_image(image_hdu,saveseg_hdu,tbhdu,cmhdu,extname='LotzMorphMeasurements',idl_filename=idl_filename,python_outfile=python_outfile)
                         #~ except (KeyboardInterrupt,NameError,AttributeError,TypeError,IndexError) as e:
-                            #~ print e
+                            #~ print(e)
                             #~ raise
                         #~ except:
-                            #~ print "Exception inside morphology analysis code! ", custom_filename
+                            #~ print("Exception inside morphology analysis code! ", custom_filename)
                             #~ mhdu = None
                             #~ ap_seghdu = None
                         #~ else:
@@ -435,14 +429,14 @@ def analyze_image_morphology(custom_filename,filter_index,segmap_filename,
                             #~ if ap_seghdu is not None:
                                 #~ new_hdulist.append(ap_seghdu)
                             
-                        print '        '
+                        print('        ')
 
                     else:
-                        print '       '
-                        print '        -----------------------------------------------------------------------'
-                        print '        Skipping Morphologies of: ', custom_filename
-                        print '        Mag: {:5.2f}    Magerr:  {:5.2f}'.format(segment_mag,segment_magerr)
-                        print '       '
+                        print('       ')
+                        print('        -----------------------------------------------------------------------')
+                        print('        Skipping Morphologies of: ', custom_filename)
+                        print('        Mag: {:5.2f}    Magerr:  {:5.2f}'.format(segment_mag,segment_magerr))
+                        print('       ')
                         mhdu = None
                         ap_seghdu = None
 
@@ -564,11 +558,11 @@ def morphology_loop(custom_filename,filter_index,segmap_filename,
                                                #~ idl_filename=idl_input_file,python_outfile=py_output_file)
 
     #~ except (KeyboardInterrupt, AttributeError, TypeError) as e:
-        #~ print e
+        #~ print(e)
         #~ raise
     #~ except:
-        #~ print "Exception while analyzing image morphology: ", custom_filename
-        #~ print "Error:", sys.exc_info()[0]
+        #~ print("Exception while analyzing image morphology: ", custom_filename)
+        #~ print("Error:", sys.exc_info()[0])
     #~ else:
         #~ pass
 
@@ -617,8 +611,8 @@ def process_mag(analysis_object,bb_dir,snap_prefix,camstring,maglim,analyze,
 
 
 
-    print 'maxq ', maxq
-    print 'np   ', Np
+    print('maxq ', maxq)
+    print('np   ', Np)
     
     for i,filter_label in enumerate(analysis_object.filter_labels):
         sys.stdout.flush()
@@ -640,7 +634,7 @@ def process_mag(analysis_object,bb_dir,snap_prefix,camstring,maglim,analyze,
                   idl_input_file,py_output_file)
         
         if not os.path.lexists(custom_filename):
-            print "Missing a file, skipping... ", custom_filename
+            print("Missing a file, skipping... ", custom_filename)
         else:
 
             number_queued = number_queued + 1
@@ -677,10 +671,10 @@ def process_mag(analysis_object,bb_dir,snap_prefix,camstring,maglim,analyze,
         task_queue.put(newtask)
 
     for i in range(min(maxq,number_queued)):
-        print "appending done object: ", i
+        print("appending done object: ", i)
         finished_objs.append(done_queue.get())
 
-    print finished_objs[0]
+    print(finished_objs[0])
 
     for p in range(NUMBER_OF_PROCESSES):
         task_queue.put('STOP')
@@ -722,7 +716,7 @@ def process_single_broadband(bbfile,analysis_object,bbase='broadband_red_',clobb
             snap_prefix = os.path.basename(os.path.dirname(os.path.dirname(os.path.abspath(bbfile))))+'_'
         bb_dir = 'images_'+snap_prefix.rstrip('_')
 
-    print bb_dir
+    print(bb_dir)
     if not os.path.lexists(bb_dir):
         os.mkdir(bb_dir)
 
@@ -748,7 +742,7 @@ def process_single_broadband(bbfile,analysis_object,bbase='broadband_red_',clobb
             if not os.path.lexists(custom_filename_sb00):
                 all_files_exist=False
     
-    print "All files exist? ", all_files_exist
+    print("All files exist? ", all_files_exist)
 
     if (not is_unzipped and not all_files_exist) or (not is_unzipped and clobber is True):
         subprocess.call(['gunzip', bbfile])
@@ -776,11 +770,11 @@ def process_single_broadband(bbfile,analysis_object,bbase='broadband_red_',clobb
             #~ try:
                 #~ openlist = generate_filter_images(bbfile,snapnum,subdirnum,sh_id,ci,custom_filename_sb00, analysis_object, i, clobber=clobber,analyze=analyze,openlist=openlist,snprefix=snap_prefix)
             #~ except (KeyboardInterrupt,NameError,AttributeError,TypeError,IndexError,KeyError) as e:
-                #~ print e
+                #~ print(e)
                 #~ raise
             #~ except:
-                #~ print "Exception while processing filter image creation: ", filter_label, custom_filename_sb00
-                #~ print "Error:", sys.exc_info()[0]
+                #~ print("Exception while processing filter image creation: ", filter_label, custom_filename_sb00)
+                #~ print("Error:", sys.exc_info()[0])
 
 
     if openlist is not None:
@@ -828,7 +822,7 @@ def process_single_broadband(bbfile,analysis_object,bbase='broadband_red_',clobb
             clabel = segmap_hdu.header['CLABEL']
             cpos0 = segmap_hdu.header['POS0']
             cpos1 = segmap_hdu.header['POS1']
-            print '   loaded segmentation map with properties ', segmap_filename, seg_npix, clabel, cpos0, cpos1
+            print('   loaded segmentation map with properties ', segmap_filename, seg_npix, clabel, cpos0, cpos1)
             
             #one figure per depth and viewing angle -- all filters
             outfigname = os.path.join(bb_dir,snap_prefix+'cam'+camstring+'_'+'SB{:2.0f}'.format(maglim)+'_test.pdf')
@@ -842,7 +836,7 @@ def process_single_broadband(bbfile,analysis_object,bbase='broadband_red_',clobb
 
 
             for i,seq in enumerate(finished_objs):
-                print seq
+                print(seq)
                 res = plot_test_stamp(seq[0],figure,nx,ny,seq[1])
                 
 
@@ -870,8 +864,8 @@ def process_single_broadband(bbfile,analysis_object,bbase='broadband_red_',clobb
     if do_idl:
         if os.path.lexists(idl_output_file):
             os.remove(idl_output_file)
-        print '        -----------------------------------------------------------------------'
-        print '        Measuring Morphologies with IDL Code... '
+        print('        -----------------------------------------------------------------------')
+        print('        Measuring Morphologies with IDL Code... ')
         subprocess.call(['bash', runscript])
 
 
@@ -917,7 +911,6 @@ def segment_image(filename,filter_label='None'):
     kernel_kpc_fwhm = 2.0
     kernel_arcsec_fwhm = kernel_kpc_fwhm/typical_kpc_per_arcsec
     kernel_pixel_fwhm = kernel_arcsec_fwhm/pix_arcsec
-    #print '   segmentation kernel fwhm kpc, arcsec, pix ',kernel_kpc_fwhm,kernel_arcsec_fwhm,kernel_pixel_fwhm
 
     sigma = kernel_pixel_fwhm * gaussian_fwhm_to_sigma
     nsize = int(5*kernel_pixel_fwhm)
@@ -947,21 +940,16 @@ def segment_image(filename,filter_label='None'):
     values = np.unique(checki)
     values_nonzero = np.where(values > 0)[0]
 
-    #print N, Nc, N/2, N/2-Nc, N/2 + Nc
-    #print checki
-    #print values
-    #print values_nonzero, values_nonzero.shape
-
     if values_nonzero.shape[0] ==1:
         center_label = values[values_nonzero[0]]
-        print '   found center label unanimously', center_label, filename
+        print('   found center label unanimously', center_label, filename)
     elif values_nonzero.shape[0] > 1:
         sums = props[values[values_nonzero[0]]-1].source_sum
         center_label = np.argmax(sums) + 1
-        print '   found center label by combat', center_label, filename, sums, values_nonzero, values[values_nonzero]
+        print('   found center label by combat', center_label, filename, sums, values_nonzero, values[values_nonzero])
     else:
         center_label = 0
-        print '   unable to locate central source', values, filename
+        print('   unable to locate central source', values, filename)
 
     max_label = np.max(segmap)
 
@@ -1059,7 +1047,7 @@ def process_subdir(subdirpath='.',mockimage_parameters=None,clobber=False, max=N
     os.chdir(subdirpath)
 
     bbfile_list = np.sort(np.asarray(glob.glob('broadband_red_*.fits*')))   #enable reading .fits.gz files
-    print bbfile_list
+    print(bbfile_list)
 
     if galaxy is not None:
         thisbb = np.where(bbfile_list==galaxy)[0]
@@ -1067,19 +1055,18 @@ def process_subdir(subdirpath='.',mockimage_parameters=None,clobber=False, max=N
 
     test_file = bbfile_list[0]
     tf = pyfits.open(test_file)
-    print tf.info()
-    print tf['BROADBAND'].header.cards
-    print tf['SFRHIST'].header.get('star_adaptive_smoothing')
-    print tf['SFRHIST'].header.get('star_radius_factor')
+    print(tf.info())
+    print(tf['BROADBAND'].header.cards)
+    print(tf['SFRHIST'].header.get('star_adaptive_smoothing'))
+    print(tf['SFRHIST'].header.get('star_radius_factor'))
 
     #this is critical for later
     
     fils = tf['FILTERS'].data.field('filter')
-    print fils
+    print(fils)
 
 
     #morph_input_file = 'morph_input_gSDSS_starsizetests_cam'+str(common_args['camera'])+'.txt'
-    #print morph_input_file
     #morph_input_obj = open(morph_input_file,'w')
     #morph_input_obj.write('# IMAGE  NPIX   PSF   SCALE   SKY  XC YC A/B PA SKYBOX   MAG   MAGER   DM   RPROJ[arcsec]   ZEROPT[mag?] \n')
 
@@ -1125,7 +1112,7 @@ def process_subdir(subdirpath='.',mockimage_parameters=None,clobber=False, max=N
                            False]
 
 
-    print filters_to_analyze
+    print(filters_to_analyze)
     
     pixsize_arcsec = [0.03,0.03,0.03,0.03,0.06,0.06,0.06,0.032,0.032,0.032,0.032,0.032,0.065,0.065,0.065,0.06,0.03,0.03,0.03]
 
@@ -1137,13 +1124,13 @@ def process_subdir(subdirpath='.',mockimage_parameters=None,clobber=False, max=N
 
     for i,f in enumerate(filters_to_analyze):
         fi = np.where(fils==f)
-        print fi[0][0], f, fils[fi[0][0]], filter_labels[i] #, filters_to_analyze[fi]
+        print(fi[0][0], f, fils[fi[0][0]], filter_labels[i])
         filter_indices.append(fi[0][0])
 
 
     filter_indices = np.asarray(filter_indices)
 
-    print filter_indices
+    print(filter_indices)
 
     filter_lambda_order = [2,3,4,6,7,8,10,
                            11,12,13,14,15,16,17,18,
@@ -1188,7 +1175,7 @@ def process_subdir(subdirpath='.',mockimage_parameters=None,clobber=False, max=N
     for pname in psf_names:
         psf_file = os.path.join(psf_dir,pname)
         psf_files.append(psf_file)
-        print psf_file, os.path.lexists(psf_file)
+        print(psf_file, os.path.lexists(psf_file))
 
     ###  PSFSTD; WFC3 = 0.06 arcsec, ACS = 0.03 arcsec... I think
     ### NIRCAM in header with keyword 'PIXELSCL';  short 0.07925 long 0.0162
@@ -1222,8 +1209,8 @@ def process_subdir(subdirpath='.',mockimage_parameters=None,clobber=False, max=N
     mockimage_parameters.segment_filter_label = seg_filter_label
     mockimage_parameters.segment_filter_index = np.where(np.asarray(mockimage_parameters.filter_labels) == seg_filter_label)[0][0]
 
-    print mockimage_parameters.segment_filter_label
-    print mockimage_parameters.segment_filter_index
+    print(mockimage_parameters.segment_filter_label)
+    print(mockimage_parameters.segment_filter_index)
     
     assert(len(psf_pix_arcsec)==len(pixsize_arcsec))
     assert(len(filter_labels)==len(mockimage_parameters.psf_files))
@@ -1235,13 +1222,13 @@ def process_subdir(subdirpath='.',mockimage_parameters=None,clobber=False, max=N
         #~ try:
             #~ process_single_broadband(bbfile,mockimage_parameters,clobber=clobber,do_idl=do_idl,analyze=analyze)
         #~ except (KeyboardInterrupt,NameError,AttributeError,KeyError,TypeError) as e:
-            #~ print e
+            #~ print(e)
             #~ raise
         #~ except:
-            #~ print "Exception while processing broadband: ", bbfile
-            #~ print "Error:", sys.exc_info()[0]
+            #~ print("Exception while processing broadband: ", bbfile)
+            #~ print("Error:", sys.exc_info()[0])
         #~ else:
-            #~ print "Successfully processed broadband: ", bbfile
+            #~ print("Successfully processed broadband: ", bbfile)
 
     os.chdir(cwd)
 
@@ -1255,7 +1242,7 @@ def process_snapshot(snap_path='.',clobber=False,max=None,maxper=None,starti=0,s
     os.chdir(snap_path)
 
     subdir_list = np.sort(np.asarray(glob.glob('subdir_???')))
-    print subdir_list
+    print(subdir_list)
 
     for i,sub in enumerate(subdir_list[starti:]):
         if max != None:
@@ -1266,10 +1253,10 @@ def process_snapshot(snap_path='.',clobber=False,max=None,maxper=None,starti=0,s
         #~ try:
             #~ result = process_subdir(sub,clobber=clobber,max=maxper,seg_filter_label=seg_filter_label,do_idl=do_idl,analyze=analyze,**kwargs)
         #~ except:
-            #~ print "Exception while processing subdir: ", sub
-            #~ print "Error:", sys.exc_info()[0]
+            #~ print("Exception while processing subdir: ", sub)
+            #~ print("Error:", sys.exc_info()[0])
         #~ else:
-            #~ print "Successfully processed subdir: ", sub
+            #~ print("Successfully processed subdir: ", sub)
     
 
     os.chdir(cwd)
@@ -1344,13 +1331,13 @@ def run_103(starti=0,max=None):
 
 if __name__=="__main__":
 
-    print sys.argv
+    print(sys.argv)
 
     if len(sys.argv) == 2:
         method = sys.argv[1]
         statsf = 'profiler_stats_'+method
-        print "Running "+method+'()'
-        print "Profiling "+statsf
+        print("Running "+method+'()')
+        print("Profiling "+statsf)
         cProfile.run(method+'()',statsf)
         p = pstats.Stats(statsf)
         p.strip_dirs().sort_stats('time').print_stats(45)
@@ -1359,11 +1346,11 @@ if __name__=="__main__":
         start = sys.argv[2]
         maxa = sys.argv[3]
         runstr = method+'(starti='+start+',max='+maxa+')'
-        print runstr
-        exec runstr
+        print(runstr)
+        exec(runstr)
     else:
-        print "Usage:  setup_illustris_morphs.py 'methodstring' OR "
-        print "        setup_illustris_morphs.py 'methodstring' starti max"
+        print("Usage:  setup_illustris_morphs.py 'methodstring' OR ")
+        print("        setup_illustris_morphs.py 'methodstring' starti max")
 
 
     #cProfile.run('run_060_000()','profiler_stats_060_000')
