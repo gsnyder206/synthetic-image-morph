@@ -1015,7 +1015,7 @@ def do_aperture_photometry(data,radii_pixels,radii_kpc,radii_arcsec,position,rms
     mag_err = []
 
     for radius in radii_pixels:
-        phot_table = photutils.aperture_photometry(data, photutils.CircularAperture(position, radius), error=rms, pixelwise_error=False, effective_gain = None)
+        phot_table = photutils.aperture_photometry(data, photutils.CircularAperture(position, radius), error=rms, pixelwise_error=False)
         flux.append(phot_table['aperture_sum'])
         flux_err.append(phot_table['aperture_sum_err'])
         if phot_table['aperture_sum'] > 0.0:
