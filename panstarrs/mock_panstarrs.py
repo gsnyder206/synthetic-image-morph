@@ -34,7 +34,7 @@ import setup_synthetic_images_mp as ssimp
 # Based on candelize.py
 
 def process_snapshot(subdirpath='.', clobber=False, galaxy=None,
-        seg_filter_label='ps1_i', magsb_limits=[21, 22, 23, 24],
+        seg_filter_label='ps1_i', magsb_limits=[21, 22, 23, 24, 25],
         camindices=[0,1,2,3], do_idl=False, analyze=True, use_nonscatter=True, Np=4):
 
     cwd = os.path.abspath(os.curdir)
@@ -62,6 +62,8 @@ def process_snapshot(subdirpath='.', clobber=False, galaxy=None,
     print(fils)
 
     filters_to_analyze = [
+            'galex/galex_fuv',
+            'galex/galex_nuv',
             'panstarrs/panstarrs_ps1_g',
             'panstarrs/panstarrs_ps1_r',
             'panstarrs/panstarrs_ps1_i',
@@ -73,12 +75,18 @@ def process_snapshot(subdirpath='.', clobber=False, galaxy=None,
             False,
             False,
             False,
+            False,
+            False,
             False]
 
     print(filters_to_analyze)
-    
-    # A bit of oversampling:
+
+    # Pixel size in arcsec.
+    # GALEX reference:
+    # http://www.galex.caltech.edu/researcher/techdoc-ch5.html
     pixsize_arcsec = [
+            1.5,
+            1.5,
             0.262,
             0.262,
             0.262,
@@ -86,6 +94,8 @@ def process_snapshot(subdirpath='.', clobber=False, galaxy=None,
             0.262]
     
     filter_labels = [
+            'galex_fuv',
+            'galex_nuv',
             'ps1_g',
             'ps1_r',
             'ps1_i',
@@ -106,10 +116,12 @@ def process_snapshot(subdirpath='.', clobber=False, galaxy=None,
     print(filter_indices)
 
     # order of filter_labels in wavelength space
-    filter_lambda_order = [0, 1, 2, 3, 4]
+    filter_lambda_order = [0, 1, 2, 3, 4, 5, 6]
 
     #photfnu units Jy; flux in 1 ct/s
     photfnu_Jy = [
+            5.5215e-06,
+            1.73673e-06,
             2.1647e-07,
             1.7871e-07,
             1.81924e-07,
@@ -127,10 +139,12 @@ def process_snapshot(subdirpath='.', clobber=False, galaxy=None,
     psf_names = ['%s.fits' % (f) for f in filters_to_analyze]
 
     # A bit of oversampling:
-    psf_pix_arcsec = [0.262, 0.262, 0.262, 0.262, 0.262]
-    psf_truncate = [None, None, None, None, None]
-    psf_hdu_num = [0, 0, 0, 0, 0]
-    psf_fwhm = [1.31, 1.19, 1.11, 1.07, 1.02]
+    psf_pix_arcsec = [1.5, 1.5, 0.262, 0.262, 0.262, 0.262, 0.262]
+    psf_truncate = [None, None, None, None, None, None, None]
+    psf_hdu_num = [0, 0, 0, 0, 0, 0, 0]
+    psf_fwhm = [4.0, 5.6, 1.31, 1.19, 1.11, 1.07, 1.02]  # in arcsec
+
+    # https://asd.gsfc.nasa.gov/archive/galex/Documents/MissionOverview.html#_Toc57357397
 
     psf_files = []
     for pname in psf_names:
@@ -213,10 +227,11 @@ if __name__=="__main__":
     # The 5 sigma depths in ABmags are 23.3, 23.2, 23.1, 22.3, 21.3 (grizy filters).
     # For consistency with the rest of the code, we round these numbers.
     # We also include a value of 24, for comparison purposes.
+    # For GALEX, the limiting magnitude is ~25 (http://www.galex.caltech.edu/researcher/faq.html)
     
     # Without dust
     res = process_snapshot(subdirpath='.', seg_filter_label='ps1_i',
-            magsb_limits=[21, 22, 23, 24], camindices=[0,1,2,3],
+            magsb_limits=[21, 22, 23, 24, 25], camindices=[0,1,2,3],
             do_idl=False, analyze=True, use_nonscatter=True, Np=4)
     #~ # Include dust
     #~ res = process_snapshot(subdirpath='.', seg_filter_label='ps1_g',
