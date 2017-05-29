@@ -84,7 +84,7 @@ def generate_broadband_config_panstarrs(run_dir, snap_dir, data_dir, filename,
     bf.write('redshift                          %.3f\n\n'%red0)
     bf.write('input_file                        %s\n'%(int_dir+'/mcrx.fits'))
     bf.write('output_file                       %s\n'%(int_dir+'/broadband.fits'))
-    bf.write('filter_list                       %s\n'%('/home/vrg/Python/PythonModules/synthetic-image-morph/tng/panstarrs_grizy.txt'))
+    bf.write('filter_list                       %s\n'%('/home/vrg/Python/PythonModules/synthetic-image-morph/tng/panstarrs_galex.txt'))
     bf.write('filter_file_directory             %s\n'%(data_dir+'sunrise_filters/'))
     bf.close()
     
