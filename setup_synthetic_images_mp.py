@@ -936,7 +936,7 @@ def segment_image(filename,filter_label='None'):
     #ID target galaxy and mask rest?
     N = data.shape[0]
     Nc = 1
-    checki = segmap[N/2-Nc:N/2+Nc,N/2-Nc:N/2+Nc]  #center 4 or 9 pixels
+    checki = segmap[int(N/2)-Nc:int(N/2)+Nc,int(N/2)-Nc:int(N/2)+Nc]  #center 4 or 9 pixels
     values = np.unique(checki)
     values_nonzero = np.where(values > 0)[0]
 

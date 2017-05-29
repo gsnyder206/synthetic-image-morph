@@ -603,7 +603,7 @@ class galdata:
         ai = np.argsort(norm_img)
 
         for i,lev in enumerate(levels):
-            thr = long(round(npix*lev)-1)
+            thr = int(round(npix*lev)-1)
             w = np.where(norm_img >= snorm_img[thr])
             if w[0].shape[0] > 0:
                 thr_arr = np.asarray([snorm_img[thr],1.0])

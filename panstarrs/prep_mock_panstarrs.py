@@ -209,7 +209,7 @@ def prep_mock_panstarrs(snapnums, subfind_ids, simulation='Illustris-1', use_z=0
     use_z = 0.05
     
     # Loop over selected objects
-    for i in xrange(len(snapnums)):
+    for i in range(len(snapnums)):
         # this checks if halo exists, downloads it if not, and converts
         # into Sunrise-readable format
         f,s,d = iau.get_subhalo(simulation, snapnums[i], subfind_ids[i],
@@ -228,7 +228,7 @@ def prep_mock_panstarrs(snapnums, subfind_ids, simulation='Illustris-1', use_z=0
         #the result will be all necessary snapshot data plus ancillary Sunrise data and input files, plus submission scripts
 
         #save "sbatch <script>" in text files for later use
-        print script
+        print(script)
 
 
     return

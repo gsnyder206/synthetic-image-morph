@@ -34,7 +34,7 @@ import setup_synthetic_images_mp as ssimp
 # Based on candelize.py
 
 def process_snapshot(subdirpath='.', clobber=False, galaxy=None,
-        seg_filter_label='ps1_g', magsb_limits=[23.3, 23.2, 23.1, 22.3, 21.3],
+        seg_filter_label='ps1_i', magsb_limits=[21, 22, 23, 24],
         camindices=[0,1,2,3], do_idl=False, analyze=True, use_nonscatter=True, Np=4):
 
     cwd = os.path.abspath(os.curdir)
@@ -79,11 +79,11 @@ def process_snapshot(subdirpath='.', clobber=False, galaxy=None,
     
     # A bit of oversampling:
     pixsize_arcsec = [
-            0.2,
-            0.2,
-            0.2,
-            0.2,
-            0.2]
+            0.262,
+            0.262,
+            0.262,
+            0.262,
+            0.262]
     
     filter_labels = [
             'ps1_g',
@@ -108,8 +108,13 @@ def process_snapshot(subdirpath='.', clobber=False, galaxy=None,
     # order of filter_labels in wavelength space
     filter_lambda_order = [0, 1, 2, 3, 4]
 
-    #photfnu units Jy; flux in 1 ct/s (definitely incorrect values)
-    photfnu_Jy = [1e-7, 1e-7, 1e-7, 1e-7, 1e-7]
+    #photfnu units Jy; flux in 1 ct/s
+    photfnu_Jy = [
+            2.1647e-07,
+            1.7871e-07,
+            1.81924e-07,
+            2.65925e-07,
+            6.63224e-07]
     
     morphcode_dir = "/Users/gsnyder/Documents/pro/morph_december2013/morph_pro/"
     morphcode_files = np.asarray(glob.glob(os.path.join(morphcode_dir,"*.*")))
@@ -117,17 +122,12 @@ def process_snapshot(subdirpath='.', clobber=False, galaxy=None,
     se_dir = '/Users/gsnyder/Documents/Projects/Illustris_Morphology/Illustris-CANDELS/SE_scripts'
     se_files = np.asarray(glob.glob(os.path.join(se_dir,"*.*")))
 
-
+    # Use custom-made gaussian PSF (cannot find the actual PSF)
     psf_dir = '/home/vrg/filter_data/psf'
-    psf_names = [
-            'gauss_fwhm_5_pixels.fits',
-            'gauss_fwhm_5_pixels.fits',
-            'gauss_fwhm_5_pixels.fits',
-            'gauss_fwhm_5_pixels.fits',
-            'gauss_fwhm_5_pixels.fits']
+    psf_names = ['%s.fits' % (f) for f in filters_to_analyze]
 
     # A bit of oversampling:
-    psf_pix_arcsec = [0.2, 0.2, 0.2, 0.2, 0.2]
+    psf_pix_arcsec = [0.262, 0.262, 0.262, 0.262, 0.262]
     psf_truncate = [None, None, None, None, None]
     psf_hdu_num = [0, 0, 0, 0, 0]
     psf_fwhm = [1.31, 1.19, 1.11, 1.07, 1.02]
@@ -210,9 +210,13 @@ def process_snapshot(subdirpath='.', clobber=False, galaxy=None,
 
 if __name__=="__main__":
     
+    # The 5 sigma depths in ABmags are 23.3, 23.2, 23.1, 22.3, 21.3 (grizy filters).
+    # For consistency with the rest of the code, we round these numbers.
+    # We also include a value of 24, for comparison purposes.
+    
     # Without dust
-    res = process_snapshot(subdirpath='.', seg_filter_label='ps1_g',
-            magsb_limits=[23.3, 23.2, 23.1, 22.3, 21.3], camindices=[0,1,2,3],
+    res = process_snapshot(subdirpath='.', seg_filter_label='ps1_i',
+            magsb_limits=[21, 22, 23, 24], camindices=[0,1,2,3],
             do_idl=False, analyze=True, use_nonscatter=True, Np=4)
     #~ # Include dust
     #~ res = process_snapshot(subdirpath='.', seg_filter_label='ps1_g',
