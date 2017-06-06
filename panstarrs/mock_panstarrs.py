@@ -34,7 +34,7 @@ import setup_synthetic_images_mp as ssimp
 # Based on candelize.py
 
 def process_snapshot(subdirpath='.', clobber=False, galaxy=None,
-        seg_filter_label='ps1_i', magsb_limits=[21, 22, 23, 24],
+        seg_filter_label='ps1_i', magsb_limits=[21, 22, 23, 24, 25],
         camindices=[0,1,2,3], do_idl=False, analyze=True, use_nonscatter=True, Np=4):
 
     cwd = os.path.abspath(os.curdir)
@@ -232,7 +232,7 @@ if __name__=="__main__":
     
     # Without dust
     res = process_snapshot(subdirpath='.', seg_filter_label='ps1_i',
-            magsb_limits=[21, 22, 23, 24], camindices=[0,1,2,3],
+            magsb_limits=[21, 22, 23, 24, 25], camindices=[0,1,2,3],
             do_idl=False, analyze=True, use_nonscatter=True, Np=4)
     #~ # Include dust
     #~ res = process_snapshot(subdirpath='.', seg_filter_label='ps1_g',
