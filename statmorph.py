@@ -938,7 +938,6 @@ class galdata:
         total_flux = np.sum(analyze_image*frac_overlap_extent)
 
         if total_flux <= 0.0:
-            #~ return None,None,None,None,None,None,'Error: Probably too faint/weird to measure C'
             return None,None,'Error: Probably too faint/weird to measure C'
 
         err_on_total = ((total_area)*self.skysig**2)**0.5
