@@ -15,7 +15,7 @@ def generate_sbatch(run_dir, run_type='images', ncpus='24', queue='compute',
     bsubf.write('#!/bin/bash\n')
     bsubf.write('\n')
     bsubf.write('#SBATCH --mail-user=%s\n' % (email))
-    #bsubf.write('#SBATCH --mail-type=ALL\n')
+    bsubf.write('#SBATCH --mail-type=FAIL\n')
     bsubf.write('#SBATCH -J sunrise_%s\n' % (run_type))
     bsubf.write('#SBATCH -o sunrise_%s.out\n' % (run_type))
     bsubf.write('#SBATCH -e sunrise_%s.err\n' % (run_type))
@@ -315,13 +315,15 @@ def prep_mock_panstarrs(snapnums, subfind_ids, simulation='Illustris-1', use_z=0
     for i in range(len(snapnums)):
         # this checks if halo exists, downloads it if not, and converts
         # into Sunrise-readable format
-        f,s,d = iau.get_subhalo(simulation, snapnums[i], subfind_ids[i],
-                savepath=savepath, verbose=True, clobber=False, getparent=False)
+        snap_cutout, subhalo_object, d = iau.get_subhalo(simulation,
+                snapnums[i], subfind_ids[i], savepath=savepath, verbose=True,
+                clobber=False, getparent=False)
         # getparent means it downloads the FOF group but points to each
         # individual subhalo (duplicates data, but OK)
 
         # Prepare SLURM batch scripts, one per subhalo
-        script = setup_sunrise_illustris_subhalo(f,s,redshift_override=use_z)
+        script = setup_sunrise_illustris_subhalo(snap_cutout, subhalo_object,
+                redshift_override=use_z)
         # this also needs to be edited to include the realism and morphology
         # steps in the job scripts, and output job submission scripts a la
         # the lightcone function in "isu" module.
@@ -330,6 +332,5 @@ def prep_mock_panstarrs(snapnums, subfind_ids, simulation='Illustris-1', use_z=0
         # Sunrise data and input files, plus submission scripts
 
         #save "sbatch <script>" in text files for later use
-        print(script)
 
     return
