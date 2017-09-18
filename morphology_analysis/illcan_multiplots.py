@@ -160,8 +160,17 @@ def simple_random_forest(msF,merF,snap_key,fil_key,fil2_key=None,paramsetting='m
     Mstat = get_all_morph_val(msF,sk,fk,'MID1_MPRIME')
     Istat = get_all_morph_val(msF,sk,fk,'MID1_ISTAT')
     Dstat = get_all_morph_val(msF,sk,fk,'MID1_DSTAT')
-    size = get_all_morph_val(msF,sk,fk,'RP')
+    rpet=get_all_morph_val(msF,sk,fk,'RP')
+    pix_arcsec=get_all_morph_val(msF,sk,fk,'PIX_ARCSEC')
 
+    redshift = msF['nonparmorphs'][sk][fk]['CAMERA0']['REDSHIFT'].value[0]
+    assert redshift > 0.0
+    scale=illcos.kpc_proper_per_arcmin(redshift).value/60.0
+    
+    size = np.log10(rpet*pix_arcsec*scale)
+
+
+    
     snpix= get_all_morph_val(msF,sk,fk,'SNPIX')
     if fil2_key is not None:
         fk2=fil2_key
@@ -172,7 +181,11 @@ def simple_random_forest(msF,merF,snap_key,fil_key,fil2_key=None,paramsetting='m
         Mstat_2 = get_all_morph_val(msF,sk,fk2,'MID1_MPRIME')
         Istat_2 = get_all_morph_val(msF,sk,fk2,'MID1_ISTAT')
         Dstat_2 = get_all_morph_val(msF,sk,fk2,'MID1_DSTAT')
-        size_2 = get_all_morph_val(msF,sk,fk2,'RP')
+        rpet_2 = get_all_morph_val(msF,sk,fk2,'RP')
+        pix_arcsec2=get_all_morph_val(msF,sk,fk2,'PIX_ARCSEC')
+
+        size_2 = np.log10(rpet_2*pix_arcsec2*scale)
+        
         snpix_2 = get_all_morph_val(msF,sk,fk2,'SNPIX')
         max_features=3
         
@@ -216,7 +229,7 @@ def simple_random_forest(msF,merF,snap_key,fil_key,fil2_key=None,paramsetting='m
         max_features=3
 
     elif paramsetting=='max':
-        cols=['dGM20','fGM20','asym','Dstat','cc','logssfr','size','log_mstar_mhalo','bhmdot','elong','flag','m_a','m_i2','rp','mid1_gini','mid1_m20']        
+        cols=['dGM20','fGM20','asym','Dstat','cc','logssfr','size','log_mstar_mhalo','bhmdot','elong','flag','m_a','m_i2','mid1_gini','mid1_m20']        
         rflabel='maxtest'
         max_features=4
     elif paramsetting=='shapeonly':
@@ -256,7 +269,6 @@ def simple_random_forest(msF,merF,snap_key,fil_key,fil2_key=None,paramsetting='m
     sfr = get_all_snap_val(msF,sk,'SFR_Msunperyr')
     bhmdot = get_all_snap_val(msF,sk,'BHMdot_Msunperyr')
     
-    redshift = msF['nonparmorphs'][sk][fk]['CAMERA0']['REDSHIFT'].value[0]
 
 
     fk_imfile = np.asarray(get_all_morph_val(msF,sk,fk,'IMFILES'),dtype='str')
@@ -277,7 +289,7 @@ def simple_random_forest(msF,merF,snap_key,fil_key,fil2_key=None,paramsetting='m
         rf_dict['asym']=asym[gi]
         rf_dict['Mstat']=Mstat[gi]
         rf_dict['Istat']=Istat[gi]
-        rf_dict['size']=np.log10(size[gi])
+        rf_dict['size']=size[gi] #already log kpc
         rf_dict['Dstat']=np.log10(Dstat[gi])   #NOTE log quantity in paramsmod2
         rf_dict['cc']=cc[gi]
 
@@ -289,7 +301,7 @@ def simple_random_forest(msF,merF,snap_key,fil_key,fil2_key=None,paramsetting='m
         rf_dict['asym_2']=asym_2[gi]
         rf_dict['Mstat_2']=Mstat_2[gi]
         rf_dict['Istat_2']=Istat_2[gi]
-        rf_dict['size_2']=np.log10(size_2[gi])
+        rf_dict['size_2']=size_2[gi] #already log kpc
         rf_dict['Dstat_2']=np.log10(Dstat_2[gi])   #NOTE log quantity in paramsmod2
         rf_dict['cc_2']=cc_2[gi]
         rf_dict['snp_2']=snpix_2[gi]
@@ -307,7 +319,7 @@ def simple_random_forest(msF,merF,snap_key,fil_key,fil2_key=None,paramsetting='m
         rf_dict['asym']=asym[gi]
         rf_dict['Mstat']=Mstat[gi]
         rf_dict['Istat']=Istat[gi]
-        rf_dict['size']=np.log10(size[gi])
+        rf_dict['size']=size[gi] #already log kpc
         rf_dict['Dstat']=np.log10(Dstat[gi])   #NOTE log quantity in paramsmod2
         rf_dict['cc']=cc[gi]
 
@@ -319,7 +331,7 @@ def simple_random_forest(msF,merF,snap_key,fil_key,fil2_key=None,paramsetting='m
     rf_dict['flag']= get_all_morph_val(msF,sk,fk,'FLAG')[gi]
     rf_dict['m_a']= get_all_morph_val(msF,sk,fk,'M_A')[gi]
     rf_dict['m_i2']= get_all_morph_val(msF,sk,fk,'M_I2')[gi]
-    rf_dict['rp']= get_all_morph_val(msF,sk,fk,'RP')[gi]
+    #rf_dict['rp']= get_all_morph_val(msF,sk,fk,'RP')[gi]
     rf_dict['mid1_gini']= get_all_morph_val(msF,sk,fk,'MID1_GINI')[gi]
     rf_dict['mid1_m20']= get_all_morph_val(msF,sk,fk,'MID1_M20')[gi]
     
@@ -450,19 +462,27 @@ def simple_random_forest(msF,merF,snap_key,fil_key,fil2_key=None,paramsetting='m
     pyplot.subplots_adjust(left=0.18, right=0.98, bottom=0.15, top=0.98,wspace=0.0,hspace=0.0)
     axi3=f3.add_subplot(1,1,1)
         
-    axi3.semilogx(ROCstats['thresh'],ROCstats['tpr'],lw=2,linestyle='solid',color='Blue')
-    axi3.semilogx(ROCstats['thresh'],ROCstats['fpr'],lw=2,linestyle='dashed',color='Blue')
+    axi3.semilogx(ROCstats['thresh'],ROCstats['tpr'],lw=1,linestyle='solid',color='Blue')
+    axi3.semilogx(ROCstats['thresh'],ROCstats['fpr'],lw=1,linestyle='dashed',color='Blue')
+
+    axi3.semilogx(ROCtests['thresh'],ROCtests['tpr'],lw=2,linestyle='solid',color='Black')
+    axi3.semilogx(ROCtests['thresh'],ROCtests['fpr'],lw=2,linestyle='dashed',color='Black')
+
+    axi3.semilogx(ROCtrain['thresh'],ROCtrain['tpr'],lw=1,linestyle='solid',color='Red')
+    axi3.semilogx(ROCtrain['thresh'],ROCtrain['fpr'],lw=1,linestyle='dashed',color='Red')
 
 
     at_normed=(athreshes-athreshes.min(0))/athreshes.ptp(0)
     dt_normed=(dthreshes-dthreshes.min(0))/dthreshes.ptp(0)
+
+    #these really are a different beast, I think
+    #axi3.semilogx(at_normed,atpr,lw=0.25,linestyle='dotted',color='Gray')
+    #axi3.semilogx(at_normed,afpr,lw=0.25,linestyle='dashdot',color='Gray')
+    #axi3.semilogx(dt_normed,dtpr,lw=0.25,linestyle='dotted',color='Green')
+    #axi3.semilogx(dt_normed,dfpr,lw=0.25,linestyle='dashdot',color='Green')
     
-    axi3.semilogx(at_normed,atpr,lw=0.25,linestyle='dotted',color='Gray')
-    axi3.semilogx(at_normed,afpr,lw=0.25,linestyle='dashdot',color='Gray')
-    axi3.semilogx(dt_normed,dtpr,lw=0.25,linestyle='dotted',color='Green')
-    axi3.semilogx(dt_normed,dfpr,lw=0.25,linestyle='dashdot',color='Green')
-    
-    axi3.legend(['TPR','FPR','TPR(Asym)','FPR(Asym)','TPR(GMS)','FPR(GMS)'],loc='lower left',fontsize=10)
+    #axi3.legend(['TPR','FPR','TPR(Asym)','FPR(Asym)','TPR(GMS)','FPR(GMS)'],loc='lower left',fontsize=10)
+    axi3.legend(['TPR(all)','FPR(all)','TPR(cross-val)','FPR(cross-val)','TPR(train)','FPR(train)'],loc='lower left',fontsize=8)
     
     axi3.set_ylim(-0.05,1.05)
     axi3.set_xlabel('Threshold')
@@ -2662,8 +2682,6 @@ def plot_rpet_mass(msF,merF,sk,fk,FIG,Cval,gridf='median_grid',rpet=None,mstar=N
     axi.set_xlim(xlim[0],xlim[1])
     axi.set_ylim(ylim[0],ylim[1])
         
-    assert redshift > 0.0
-    scale=illcos.kpc_proper_per_arcmin(redshift).value/60.0
 
     #if given array, use it
     if type(Cval)==np.ndarray:
@@ -2680,7 +2698,7 @@ def plot_rpet_mass(msF,merF,sk,fk,FIG,Cval,gridf='median_grid',rpet=None,mstar=N
         res=None
         colorobj=None
     else:
-        res,colorobj = gth.make_twod_grid(axi,np.log10(mstar[gi]),np.log10(rpet[gi]*scale),data_dict,gridf,bins=bins,**bin_kwargs)
+        res,colorobj = gth.make_twod_grid(axi,np.log10(mstar[gi]),rpet[gi],data_dict,gridf,bins=bins,**bin_kwargs)
 
 
     anny=0.92
@@ -2946,7 +2964,7 @@ def make_structure_plots(msF,merF,snap_keys_use,fil_keys_use,name='pc1',varname=
         Dstat = get_all_morph_val(msF,sk,fk,'MID1_DSTAT')
 
         rpet = get_all_morph_val(msF,sk,fk,'RP')
-
+        pix_arcsec= get_all_morph_val(msF,sk,fk,'PIX_ARCSEC')
         
         sfid = get_all_snap_val(msF,sk,'SubfindID')
         
@@ -2961,7 +2979,10 @@ def make_structure_plots(msF,merF,snap_keys_use,fil_keys_use,name='pc1',varname=
         log_mstar_mhalo = np.log10( mstar/mhalo )
 
         redshift = msF['nonparmorphs'][sk][fk]['CAMERA0']['REDSHIFT'].value[0]
-        
+        assert redshift > 0.0
+        scale=illcos.kpc_proper_per_arcmin(redshift).value/60.0
+
+        logsize_kpc=np.log10(rpet*pix_arcsec*scale)
 
         rfdata = 'rfoutput/'+labelfunc+'/'
         
@@ -2974,7 +2995,7 @@ def make_structure_plots(msF,merF,snap_keys_use,fil_keys_use,name='pc1',varname=
                 skipthis=True
                 sfr=None
                 mstar=None
-                rpet=rpet
+                rpet=logsize_kpc
                 g=gini
                 m20=m20
                 cc=cc
@@ -2991,7 +3012,7 @@ def make_structure_plots(msF,merF,snap_keys_use,fil_keys_use,name='pc1',varname=
                 rf_gini=rf_data['gini'].values
                 rf_m20=rf_data['m20'].values
 
-                rf_rpet=rf_data['size'].values
+                rf_logrpet_kpc=rf_data['size'].values
                 
 
                 probs = np.load(prob_file)
@@ -3004,7 +3025,7 @@ def make_structure_plots(msF,merF,snap_keys_use,fil_keys_use,name='pc1',varname=
 
                 sfr=rf_sfr
                 mstar=rf_mstar
-                rpet=rf_rpet
+                rpet=rf_logrpet_kpc
                 g=rf_gini
                 m20=rf_m20
                 cc=rf_cc
@@ -3013,7 +3034,7 @@ def make_structure_plots(msF,merF,snap_keys_use,fil_keys_use,name='pc1',varname=
             skipthis=False
             sfr=None
             mstar=None
-            rpet=rpet
+            rpet=logsize_kpc
             g=gini
             m20=m20
             cc=cc
@@ -3047,6 +3068,9 @@ def make_structure_plots(msF,merF,snap_keys_use,fil_keys_use,name='pc1',varname=
 
     gth.make_colorbar(the_colorobj,f2,title=bartitle,ticks=barticks,loc=[0.12,0.65,0.17,0.03],format='%1d')
 
+    gth.make_colorbar(the_colorobj,f3,title=bartitle,ticks=barticks,loc=[0.12,0.65,0.17,0.03],format='%1d')
+
+    gth.make_colorbar(the_colorobj,f4,title=bartitle,ticks=barticks,loc=[0.12,0.65,0.17,0.03],format='%1d')
 
 
     f1.savefig(plot_filen,dpi=300)
@@ -3079,7 +3103,7 @@ def make_all_structures(msF,merF,sku,fku,rf_labelfunc,rflabel,rfthresh=0.4):
     res = make_structure_plots(msF,merF,sku,fku,name='rf_flag',bartitle='$log_{10} f_{merger}$',gridf='log_fraction_grid',vmin=-2,vmax=0,barticks=[-2,-1,0],
                                rf_masscut=10.0**(10.5),labelfunc=rf_labelfunc,log=False,rflabel=rflabel,rfthresh=rfthresh)
                 
-    res = make_structure_plots(msF,merF,sku,fku,name='rf_class',bartitle='$log_{10} f_{RF}(0.4)$',gridf='log_fraction_grid',vmin=-2,vmax=0,barticks=[-2,-1,0],
+    res = make_structure_plots(msF,merF,sku,fku,name='rf_class',bartitle='$log_{10} f(P_{RF}\geq $'+'{:4.2f}'.format(rfthresh)+')$',gridf='log_fraction_grid',vmin=-2,vmax=0,barticks=[-2,-1,0],
                                rf_masscut=10.0**(10.5),labelfunc=rf_labelfunc,log=False,rflabel=rflabel,rfthresh=rfthresh)
                 
     res = make_structure_plots(msF,merF,sku,fku,name='rf_prop',varname='rf_flag',bartitle='merger proportion',gridf='normed_proportion_grid',vmin=0,vmax=1,barticks=[0,1],
@@ -3499,7 +3523,9 @@ def do_snapshot_evolution(msF,merF,
         
         apply_sim_rf_to_data(msF,merF,sk,fk,cols,fil2_key=fk2,rflabel=rflabel,rf_masscut=10.0**(10.5),labelfunc=labelfunc,dkz1=1.25,dkz2=1.75,rfthresh=rfthresh)
 
-        res = make_all_structures(msF,merF,sku,fku,rf_labelfunc=labelfunc,rflabel=rflabel,rfthresh=rfthresh)
+
+        
+    res = make_all_structures(msF,merF,sku,fku,rf_labelfunc=labelfunc,rflabel=rflabel,rfthresh=rfthresh)
 
         #res = make_merger_images(msF,merF,sk,fk,rflabel=rflabel,rf_masscut=10.0**(10.5),labelfunc=labelfunc)
         #res = make_merger_images(msF,merF,sk,fk,fil2_key=fk2,rflabel=rflabel,rf_masscut=10.0**(10.5),labelfunc=labelfunc)
@@ -3582,17 +3608,18 @@ if __name__=="__main__":
                 #something like this:
                 '''
                 do_snapshot_evolution(msF,merF,
-                                      sku =['snapshot_103','snapshot_085','snapshot_075','snapshot_068','snapshot_064','snapshot_060','snapshot_054','snapshot_049'],
-                                      fku =['ACS-F814W'   ,'ACS-F814W'   ,'ACS-F814W'   ,'ACS-F814W'   ,'ACS-F814W'   ,'ACS-F814W'   ,'ACS-F814W'   ,'ACS-F814W'   ],
-                                      f2ku=['WFC3-F160W'  ,'WFC3-F160W'  ,'WFC3-F160W'  ,'WFC3-F160W'  ,'WFC3-F160W'  ,'WFC3-F160W'  ,'WFC3-F160W'  ,'WFC3-F160W'  ],
-                                      labelfunc='label_merger_window500_both',skipcalc=False)
-                '''
-                do_snapshot_evolution(msF,merF,
                                       sku =['snapshot_075'],
                                       fku =['ACS-F814W'],
                                       f2ku=['WFC3-F160W'],
                                       labelfunc='label_merger_window500_both',skipcalc=False)
+                '''
                 
+                do_snapshot_evolution(msF,merF,
+                                      sku =['snapshot_103','snapshot_085','snapshot_075','snapshot_068','snapshot_064','snapshot_060','snapshot_054','snapshot_049'],
+                                      fku =['ACS-F814W'   ,'ACS-F814W'   ,'ACS-F814W'   ,'ACS-F814W'   ,'ACS-F814W'   ,'ACS-F814W'   ,'ACS-F814W'   ,'ACS-F814W'   ],
+                                      f2ku=['WFC3-F160W'  ,'WFC3-F160W'  ,'WFC3-F160W'  ,'WFC3-F160W'  ,'WFC3-F160W'  ,'WFC3-F160W'  ,'WFC3-F160W'  ,'WFC3-F160W'  ],
+                                      labelfunc='label_merger_window500_both',skipcalc=False)
+                                
                 #do_snapshot_evolution(msF,merF,
                 #                      sku =['snapshot_075'],
                 #                      fku =['WFC3-F160W'],
