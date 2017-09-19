@@ -116,7 +116,7 @@ def rftimehelper(axi,ts,te,ys,yw,s,fs=16):
     return
 
 
-def masshistory(snapkey,subfindID,camnum=0,basepath='/astro/snyder_lab2/Illustris/Illustris-1',size=2,trange=[-1.5,1.5],gyrbox=True,use_rfkey=True,radeff=0.2,savefile=None,do_bh=False,plot_rfs=False,**kwargs):
+def masshistory(snapkey,subfindID,camnum=0,basepath='/astro/snyder_lab2/Illustris/Illustris-1',size=2,trange=[-1.5,1.5],gyrbox=True,radeff=0.2,savefile=None,do_bh=False,plot_rfs=False,**kwargs):
     snapnum = snapkey[-3:]
     this_snap_int = np.int64(snapnum)
 
@@ -180,10 +180,10 @@ def masshistory(snapkey,subfindID,camnum=0,basepath='/astro/snyder_lab2/Illustri
         yb=np.log10( np.min(mstar[inrange])/1.9)
         yd=0.1
         
-        rftimehelper(axi,ts_past500,te_past500,yb,yd,'-500Myr')
-        rftimehelper(axi,ts_for500,te_for500,yb,yd,'+500Myr')
+        #rftimehelper(axi,ts_past500,te_past500,yb,yd,'-500Myr')
+        #rftimehelper(axi,ts_for500,te_for500,yb,yd,'+500Myr')
         
-        rftimehelper(axi,ts_past250,te_past250,yb+yd,yd,'-250Myr',fs=14)
+        #rftimehelper(axi,ts_past250,te_past250,yb+yd,yd,'-250Myr',fs=14)
         rftimehelper(axi,ts_for250,te_for250,yb+yd,yd,'+250Myr',fs=14)
         
         rftimehelper(axi,ts_win500,te_win500,yb+2*yd,yd,'+/-250Myr',fs=14)
@@ -203,6 +203,7 @@ def masshistory(snapkey,subfindID,camnum=0,basepath='/astro/snyder_lab2/Illustri
 
     camstr='{:02d}'.format(camnum)
 
+    '''
     im_snap_keys, im_rf_fil_keys, im_npix = icmp.return_rf_variables()
 
     if use_rfkey is True:
@@ -216,8 +217,9 @@ def masshistory(snapkey,subfindID,camnum=0,basepath='/astro/snyder_lab2/Illustri
         rfkey=None
         if npix is None:
             npix=400
+    '''
     
-    axi2 = showgalaxy.showgalaxy(axi2,snapkey,subfindID,camstr,rfkey=rfkey,**kwargs)
+    axi2 = showgalaxy.showgalaxy(axi2,snapkey,subfindID,camstr,**kwargs)
 
     if savefile is not None:
         fig.savefig(savefile,dpi=500)
