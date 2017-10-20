@@ -4,18 +4,18 @@ import astropy.io.fits as fits
 from astropy.table import Table
 import os
 import numpy as np
+import illcan_multiplots as icmp
 
-
-def select_data(i_all,j_all,h_all,zrange=None,mrange=None,snpix_limit=None):
+def select_data(i_all,j_all,h_all,zrange=None,mrange=None,snpix_limit=[1.0,3.0,3.0]):
 
     i_i=np.ones_like(i_all['CANDELS_ID'])==True
     j_i=np.ones_like(j_all['CANDELS_ID'])==True
     h_i=np.ones_like(h_all['CANDELS_ID'])==True
     
     if snpix_limit is not None:
-        i_i=i_i*(i_all['SN_PIX_I'].values >= snpix_limit)
-        j_i=j_i*(j_all['SN_PIX_J'].values >= snpix_limit)
-        h_i=h_i*(h_all['SN_PIX_H'].values >= snpix_limit)
+        i_i=i_i*(i_all['SN_PIX_I'].values >= snpix_limit[0])
+        j_i=j_i*(j_all['SN_PIX_J'].values >= snpix_limit[1])
+        h_i=h_i*(h_all['SN_PIX_H'].values >= snpix_limit[2])
 
     if zrange is not None:
         i_i=i_i*(i_all['zbest'].values>=zrange[0])*(i_all['zbest'].values<zrange[1])
@@ -63,8 +63,17 @@ def merge_field(folder='/Users/gsnyder/Dropbox/Projects/PythonCode/candels',fiel
     i_df=itab.to_pandas()
     j_df=jtab.to_pandas()
     h_df=htab.to_pandas()
-    
+    #        datacols=['dGM20_x','fGM20_x','ASYM_x','D_x','CON_x','SNPIX_F814W','dGM20_y','fGM20_y','ASYM_y','D_y','CON_y','SNPIX_F160W']
 
+    
+    i_df['GMS_I']=icmp.SGM20(i_df['GINI_I'].values, i_df['M20_I'].values)
+    j_df['GMS_J']=icmp.SGM20(j_df['GINI_J'].values, j_df['M20_J'].values)
+    h_df['GMS_H']=icmp.SGM20(h_df['GINI_H'].values, h_df['M20_H'].values)
+
+    i_df['GMF_I']=icmp.FGM20(i_df['GINI_I'].values, i_df['M20_I'].values)
+    j_df['GMF_J']=icmp.FGM20(j_df['GINI_J'].values, j_df['M20_J'].values)
+    h_df['GMF_H']=icmp.FGM20(h_df['GINI_H'].values, h_df['M20_H'].values)
+    
     
     #merge mass into morph catalog
     df_i2 = pd.merge(df_f[['id','lmass']],i_df,left_on='id',right_on='CANDELS_ID')
@@ -107,13 +116,23 @@ def load_all_candels():
         df3=df3.append(df3_f)
 
 
-    df1=df1.dropna(axis='rows',subset=['lmass'])
-    df2=df2.dropna(axis='rows',subset=['lmass'])
-    df3=df3.dropna(axis='rows',subset=['lmass'])
 
-    print(df1.shape,df2.shape,df3.shape)
+    #D=0 should never happen?
+    df1=df1.drop( df1[ df1['D_I']==0.0 ].index) 
+    df2=df2.drop( df2[ df2['D_J']==0.0 ].index) 
+    df3=df3.drop( df3[ df3['D_H']==0.0 ].index) 
     
-    return df1,df2,df3
+    df1['logD_I']=np.log10(df1['D_I'].values)
+    df2['logD_J']=np.log10(df2['D_J'].values)
+    df3['logD_H']=np.log10(df3['D_H'].values)
+    
+    df1a=df1.dropna(axis='index',subset=['lmass','logD_I'])
+    df2a=df2.dropna(axis='index',subset=['lmass','logD_J'])
+    df3a=df3.dropna(axis='index',subset=['lmass','logD_H'])
+
+    df1a = df1a.rename(columns={'C_I':'CON_I'})
+
+    return df1a,df2a,df3a
 
 
 

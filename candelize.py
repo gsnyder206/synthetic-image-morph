@@ -31,7 +31,7 @@ import datetime
 import setup_synthetic_images_mp as ssimp
 
 
-def process_snapshot(subdirpath='.',mockimage_parameters=None,clobber=False, max=None, galaxy=None,seg_filter_label='NC-F200W',magsb_limits=[23.0,25.0,27.0,29.0],camindices=[0,1,2,3],do_idl=False,analyze=True,use_nonscatter=True,Np=2):
+def process_snapshot(subdirpath='.',mockimage_parameters=None,clobber=False, max=None, galaxy=None,seg_filter_label='NC-F200W',magsb_limits=[23.0,25.0,27.0,29.0],camindices='All',do_idl=False,analyze=True,use_nonscatter=True,Np=2):
 
     cwd = os.path.abspath(os.curdir)
 
@@ -51,6 +51,11 @@ def process_snapshot(subdirpath='.',mockimage_parameters=None,clobber=False, max
     print(tf['SFRHIST'].header.get('star_adaptive_smoothing'))
     print(tf['SFRHIST'].header.get('star_radius_factor'))
 
+
+    if camindices=='All':
+        N_cam=int(tf['MCRX'].header['N_CAMERA'])
+        camindices=range(N_cam)
+    
     #this is critical for later
     
     fils = tf['FILTERS'].data.field('filter')
@@ -241,7 +246,7 @@ if __name__=="__main__":
 
 
 
-    res = process_snapshot(subdirpath='.',clobber=False,seg_filter_label='NC-F200W',magsb_limits=[25.0,27.0],camindices=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18],do_idl=False,analyze=True,use_nonscatter=False,Np=4)
-    res = process_snapshot(subdirpath='.',clobber=False,seg_filter_label='NC-F200W',magsb_limits=[25.0,27.0],camindices=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18],do_idl=False,analyze=True,use_nonscatter=True,Np=4)
+    res = process_snapshot(subdirpath='.',clobber=False,seg_filter_label='NC-F200W',magsb_limits=[25.0,27.0],do_idl=False,analyze=True,use_nonscatter=False,Np=4)
+    res = process_snapshot(subdirpath='.',clobber=False,seg_filter_label='NC-F200W',magsb_limits=[25.0,27.0],do_idl=False,analyze=True,use_nonscatter=True,Np=4)
 
     

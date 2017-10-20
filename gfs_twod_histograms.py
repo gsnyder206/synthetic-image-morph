@@ -86,6 +86,25 @@ def normed_proportion_grid(indices,other_dict,hist_2d=None,**kwargs):
     return val,val
 
 
+def logged_proportion_grid(indices,other_dict,hist_2d=None,**kwargs):
+
+    N = np.sum(np.ones_like(hist_2d))
+    
+    #x must be a boolean array
+    x = other_dict['x']
+    denominator = x.shape[0] #x[indices].shape[0]
+    
+    xw = np.where(x[indices])[0]
+    numerator = xw.shape[0]
+
+    
+    #val = N*float(numerator)/float(denominator)
+    val = np.where(numerator > 0, np.log10( N*float(numerator)/float(denominator)),-99.0 )
+    
+    return val,val
+
+
+
 
 def summed_logssfr(indices,other_dict,**kwargs):
 

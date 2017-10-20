@@ -82,18 +82,20 @@ illcos.ages = np.asarray( illcos.age(illcos.redshifts) )
 
 def mergerfileinfo(snapkey,subfindID,size=2,trange=[-2.0,2.0]):
     #merger_file = '/astro/snyder_lab2/Illustris/MorphologyAnalysis/imagedata_mergerinfo_SB25.hdf5'
-    merger_file = '/astro/snyder_lab2/Illustris/MorphologyAnalysis/imagedata_mergerinfo_SB25_2017March3.hdf5'
+    merger_file = '/astro/snyder_lab2/Illustris/MorphologyAnalysis/imagedata_mergerinfo_SB25_2017May08.hdf5'
 
 
     #update figure and exploratory quantities here
     #want to build training sets cleverly from these parameters
     
     with h5py.File(merger_file,'r') as mcat:
-        vals = mcat['mergerinfo'][snapkey]['latest_NumMajorMergersLastGyr'].value
+        vals = mcat['mergerinfo'][snapkey]['latest_NumMinorMergersLastGyr'].value
         sfids = mcat['mergerinfo'][snapkey]['SubfindID'].value
         lsn = mcat['mergerinfo'][snapkey]['LatestTree_snapnum'].value
         last_merger = mcat['mergerinfo'][snapkey]['latest_SnapNumLastMajorMerger'].value
         last_minmerger = mcat['mergerinfo'][snapkey]['latest_SnapNumLastMinorMerger'].value
+        next_merger = mcat['mergerinfo'][snapkey]['latest_SnapNumNextMajorMerger'].value
+        next_minmerger = mcat['mergerinfo'][snapkey]['latest_SnapNumNextMinorMerger'].value
 
         
         sfi = np.where(sfids==subfindID)[0][0]
@@ -102,7 +104,7 @@ def mergerfileinfo(snapkey,subfindID,size=2,trange=[-2.0,2.0]):
         
 
     #also: get ALL keys for this subhalo
-    return gsu.age_at_snap(lsn), gsu.age_at_snap(last_merger[sfi]), gsu.age_at_snap(last_minmerger[sfi])
+    return gsu.age_at_snap(lsn), gsu.age_at_snap(last_merger[sfi]), gsu.age_at_snap(last_minmerger[sfi]), gsu.age_at_snap(next_merger[sfi]), gsu.age_at_snap(next_minmerger[sfi]),val
 
 
 def rftimehelper(axi,ts,te,ys,yw,s,fs=16):
@@ -126,8 +128,10 @@ def masshistory(snapkey,subfindID,camnum=0,basepath='/astro/snyder_lab2/Illustri
     time_now = gsu.age_at_snap(this_snap_int)
 
 
-    time_latest,time_lastmajor,time_lastminor = mergerfileinfo(snapkey,subfindID)
+    time_latest,time_lastmajor,time_lastminor,time_nextmajor,time_nextminor,val = mergerfileinfo(snapkey,subfindID)
 
+    print(time_lastmajor-time_now,time_lastminor-time_now,time_nextmajor-time_now,time_nextminor-time_now, time_latest, time_now,val)
+    
     bhlum = radeff*((u.Msun/u.year)*bhmdot*((1.0e10)/ilh)/(0.978*1.0e9/ilh))*(astropy.constants.c**2)
     bhlum_lsun = bhlum.to('solLum')
 
@@ -153,6 +157,8 @@ def masshistory(snapkey,subfindID,camnum=0,basepath='/astro/snyder_lab2/Illustri
 
     majm,=axi.plot([time_lastmajor-time_now,time_lastmajor-time_now],[8,13],marker=None,linestyle='solid',color='Red',linewidth=4.0)
     minm,=axi.plot([time_lastminor-time_now,time_lastminor-time_now],[8,13],marker=None,linestyle='dotted',color='Red',linewidth=4.0)
+    majm,=axi.plot([time_nextmajor-time_now,time_nextmajor-time_now],[8,13],marker=None,linestyle='solid',color='Red',linewidth=4.0)
+    minm,=axi.plot([time_nextminor-time_now,time_nextminor-time_now],[8,13],marker=None,linestyle='dotted',color='Red',linewidth=4.0)
 
     if do_bh is True:
         axi.legend((ml,bh,majm,minm),['$log_{10} M_* (t)$','$log_{10} M_{bh} (t) x200$','last major','last minor'],loc='upper left',fontsize=18)
