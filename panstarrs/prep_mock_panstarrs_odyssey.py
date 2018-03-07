@@ -14,13 +14,27 @@ import illustris_python as il
 
 # ---------------------- GLOBAL VARIABLES ------------------------
 
-parttype_list = [0, 1, 4, 5]  # gas, DM, stars, BHs
+parttype_list = [0, 4, 5]  # gas, stars, BHs
 parttype_stars = 4
 
 # ------------------------- FUNCTIONS ----------------------------
 
 def _populate_group(group, npart_thisfile, basedir, snapnum, subfind_id, parttype):
-    sub = il.snapshot.loadSubhalo(basedir, snapnum, subfind_id, parttype)
+    # Only load necessary fields
+    if parttype == 0:
+        fields = ['ParticleIDs', 'Coordinates', 'Velocities', 'Masses',
+                  'SmoothingLength', 'StarFormationRate', 'InternalEnergy',
+                  'ElectronAbundance', 'GFM_Metallicity']
+    elif parttype == 4:
+        fields = ['ParticleIDs', 'Coordinates', 'Velocities', 'Masses',
+                  'GFM_Metallicity', 'GFM_StellarFormationTime']
+    elif parttype == 5:
+        fields = ['ParticleIDs', 'Coordinates', 'Velocities', 'Masses',
+                  'BH_Mass', 'BH_Mdot']
+    else:
+        raise NotImplementedError
+
+    sub = il.snapshot.loadSubhalo(basedir, snapnum, subfind_id, parttype, fields=fields)
     for key in sub.keys():
         if key == 'count':
             npart_thisfile[parttype] = sub[key]
@@ -28,6 +42,9 @@ def _populate_group(group, npart_thisfile, basedir, snapnum, subfind_id, parttyp
             # Careful: SUNRISE doesn't like big IDs, so we make up new ones...
             new_ids = np.arange(sub['count'], dtype=np.uint64)
             group.create_dataset(key, data=new_ids)
+        elif key == 'GFM_Metals':
+            # Metal fractions are wrong for both gas and stars...
+            pass
         else:
             group.create_dataset(key, data=sub[key])
 
@@ -90,7 +107,8 @@ def get_subhalo(basedir, writedir, snapnum, subfind_id):
     return sub_filename
 
 def generate_sfrhist_config(rundir, datadir, stubdir, sub_filename,
-                            galprops, run_type, nthreads, scale_convert, num_rhalfs):
+                            galprops, run_type, nthreads, nrays_per_pixel,
+                            scale_convert, num_rhalfs):
     """
     Based on a similar function from "illustris_sunrise_utils.py"
     """
@@ -111,6 +129,9 @@ def generate_sfrhist_config(rundir, datadir, stubdir, sub_filename,
             -1.0*gridw, -1.0*gridw,-1.0*gridw))
         sf.write('grid_max                  %.1f\t%.1f\t%.1f         / [kpc]\n\n' % (
             1.0*gridw, 1.0*gridw, 1.0*gridw))
+
+        npixels = 2*gridw
+        sf.write('n_rays_estimated          %d\n\n' % (nrays_per_pixel * npixels**2))
 
         if run_type == 'images':
             sf.write('min_wavelength            %s\n' % ("0.02e-6"))
@@ -136,7 +157,7 @@ def generate_sfrhist_config(rundir, datadir, stubdir, sub_filename,
             sf.write('stellarmodelfile          %s\n' % (
                 datadir+'/GFS_combined_nolines.fits'))   
 
-def generate_mcrx_config(rundir, stubdir, galprops, run_type, nthreads,
+def generate_mcrx_config(rundir, stubdir, galprops, run_type, nthreads, nrays_per_pixel,
                          scale_convert, num_rhalfs, cam_file=None):
     """
     Based on a similar function from "illustris_sunrise_utils.py"
@@ -168,7 +189,10 @@ def generate_mcrx_config(rundir, stubdir, galprops, run_type, nthreads,
         mf.write('npixels                   %d\n' % (npixels))
 
         mf.write('aux_particles_only        false\n')
-        mf.write('nrays_nonscatter          %s' % ('1e7'))
+        mf.write('nrays_nonscatter          %d\n' % (nrays_per_pixel * npixels**2))
+        mf.write('nrays_scatter             %d\n' % (nrays_per_pixel * npixels**2))
+        mf.write('nrays_aux                 %d\n' % (nrays_per_pixel * npixels**2))
+
 
 def generate_broadband_config_images(rundir, datadir, stubdir, redshift):
     """
@@ -180,8 +204,8 @@ def generate_broadband_config_images(rundir, datadir, stubdir, redshift):
         bf.write('redshift                          %.1f\n\n' % (0.0))
         bf.write('input_file                        %s\n' % (rundir + '/mcrx.fits'))
         bf.write('output_file                       %s\n' % (rundir + '/broadband.fits'))
-        bf.write('filter_list                       %s\n' % (datadir + 'sunrise_filters/filters_panstarrs'))
-        bf.write('filter_file_directory             %s\n' % (datadir + 'sunrise_filters'))
+        bf.write('filter_list                       %s\n' % (datadir + '/sunrise_filters/filters_panstarrs'))
+        bf.write('filter_file_directory             %s\n' % (datadir + '/sunrise_filters/'))  # need to include the trailing slash...
     
     with open(rundir + '/broadbandz.config', 'w') as bfz:
         bfz.write('# Parameter file for SUNRISE, broadbandz\n\n')
@@ -189,8 +213,8 @@ def generate_broadband_config_images(rundir, datadir, stubdir, redshift):
         bfz.write('redshift                          %.8f\n\n' % (redshift))
         bfz.write('input_file                        %s\n' % (rundir + '/mcrx.fits'))
         bfz.write('output_file                       %s\n' % (rundir + '/broadbandz.fits'))
-        bfz.write('filter_list                       %s\n' % (datadir + 'sunrise_filters/filters_panstarrs'))
-        bfz.write('filter_file_directory             %s\n' % (datadir + 'sunrise_filters'))
+        bfz.write('filter_list                       %s\n' % (datadir + '/sunrise_filters/filters_panstarrs'))
+        bfz.write('filter_file_directory             %s\n' % (datadir + '/sunrise_filters/'))  # need to include the trailing slash...
 
 def generate_sbatch(rundir, nthreads):
     filepath = rundir + '/sunrise.sbatch'
@@ -231,7 +255,8 @@ def setup_sunrise_subhalo(sub_filename, galprops, stubdir, datadir, num_rhalfs, 
     print("Using stubs in %s..." % (stubdir))
     
     list_of_types = ['images']
-    nthreads = 24
+    nthreads = 16
+    nrays_per_pixel = 10
 
     # Redshift can be obtained from subhalo cutout file
     with h5py.File(sub_filename, 'r') as f:
@@ -253,12 +278,12 @@ def setup_sunrise_subhalo(sub_filename, galprops, stubdir, datadir, num_rhalfs, 
         print('\tGenerating sfrhist.config file...')
         generate_sfrhist_config(
             rundir, datadir, stubdir, sub_filename, galprops,
-            run_type, nthreads, scale_convert, num_rhalfs)
+            run_type, nthreads, nrays_per_pixel, scale_convert, num_rhalfs)
 
         print('\tGenerating mcrx.config file...')
         generate_mcrx_config(
-            rundir, stubdir, galprops, run_type, nthreads, scale_convert,
-            num_rhalfs, cam_file=None)
+            rundir, stubdir, galprops, run_type, nthreads, nrays_per_pixel,
+            scale_convert, num_rhalfs, cam_file=None)
 
         print('\tGenerating broadband.config file...')
         generate_broadband_config_images(rundir, datadir, stubdir, redshift)
