@@ -8,6 +8,8 @@
 import numpy as np
 import h5py
 import os
+import time
+from scipy.spatial import cKDTree
 
 import illustris_python as il
 
@@ -19,11 +21,14 @@ parttype_stars = 4
 
 # ------------------------- FUNCTIONS ----------------------------
 
-def _populate_group(group, npart_thisfile, basedir, snapnum, subfind_id, parttype):
+def _populate_group(group, sub_header, npart_thisfile, basedir, snapnum,
+                    subfind_id, parttype, nthreads):
+
     # Only load necessary fields
     if parttype == 0:
+        # SofteningLength added later
         fields = ['ParticleIDs', 'Coordinates', 'Velocities', 'Masses',
-                  'SmoothingLength', 'StarFormationRate', 'InternalEnergy',
+                  'StarFormationRate', 'InternalEnergy',
                   'ElectronAbundance', 'GFM_Metallicity']
     elif parttype == 4:
         fields = ['ParticleIDs', 'Coordinates', 'Velocities', 'Masses',
@@ -48,7 +53,47 @@ def _populate_group(group, npart_thisfile, basedir, snapnum, subfind_id, parttyp
         else:
             group.create_dataset(key, data=sub[key])
 
-def get_subhalo(basedir, writedir, snapnum, subfind_id):
+    if parttype == 0:
+        # Instead of using the SmoothingLength from the snapshots,
+        # use some multiple of the distance to the 32th nearest gas cell.
+        # If I understand correctly, SUNRISE only needs this to optimize
+        # the construction of the octree for the radiative transfer, so
+        # the exact values don't matter that much.
+
+        if npart_thisfile[parttype] == 0:
+            # Not much to do
+            group.create_dataset('SmoothingLength', data=np.array([], dtype=np.float32))
+        elif npart_thisfile[parttype] == 1:
+            # Also not much to do (use 10x the gravitational softening in Illustris)
+            group.create_dataset('SmoothingLength', data=np.array([5.0], dtype=np.float32))
+        else:
+            pos = sub['Coordinates']
+            N = min(32, len(pos)-1)
+
+            # Periodic boundary conditions (including the first particle)
+            box_size = sub_header.attrs['BoxSize']
+            dx = pos[:] - pos[0]
+            dx = dx - (np.abs(dx) > 0.5*box_size) * np.copysign(box_size, dx - 0.5*box_size)
+
+            # Construct k-d tree
+            start = time.time()
+            print('Constructing k-d tree...')
+            tree = cKDTree(dx)
+            print ('Time: %f s.' % (time.time() - start))
+
+            # Query k-d tree
+            start = time.time()
+            print('Querying k-d tree...')
+            # ~ d, i = tree.query(dx, k=N+1, n_jobs=nthreads)
+            d, i = tree.query(dx, k=N+1, n_jobs=1)
+            print ('Time: %f s.' % (time.time() - start))
+
+            # Also impose a minimum equal to 10x the gravitational softening in Illustris...
+            smoothing_length = np.maximum(5.0, 10.0 * d[:, N])
+            group.create_dataset('SmoothingLength', data=smoothing_length)
+
+
+def get_subhalo(basedir, writedir, snapnum, subfind_id, nthreads):
     """Load all particles/cells for a given subhalo and store them
     in an HDF5 file that is readable by SUNRISE.
     
@@ -78,29 +123,30 @@ def get_subhalo(basedir, writedir, snapnum, subfind_id):
     sub_dir = '%s/snapnum_%03d/sub_%d' % (writedir, snapnum, subfind_id)
     if not os.path.lexists(sub_dir):
         os.makedirs(sub_dir)
-    
+
     # Save subhalo data in HDF5 file
     sub_filename = '%s/cutout.hdf5' % (sub_dir)
     with h5py.File(sub_filename, 'w') as f_sub:
         # Create header for subhalo file
         sub_header = f_sub.create_group('Header')
-        
+
         # We only need a handful of attributes, so we copy them by hand:
-        keys = ['Time', 'HubbleParam', 'Omega0', 'OmegaLambda', 'MassTable', 'Redshift']
+        keys = ['Time', 'HubbleParam', 'Omega0', 'OmegaLambda', 'MassTable', 'Redshift', 'BoxSize']
         snap_filename = '%s/snapdir_%03d/snap_%03d.0.hdf5' % (basedir, snapnum, snapnum)
         with h5py.File(snap_filename, 'r') as f_snap:
             snap_header = f_snap['Header']
             for key in keys:
                 sub_header.attrs[key] = snap_header.attrs[key]
-        
+
         # This attribute will be modified and added later:
         npart_thisfile = np.zeros(len(sub_header.attrs['MassTable']), dtype=np.int64)
-        
+
         # Copy particle data from snapshot file to subhalo file,
         # one particle type at a time.
         for parttype in parttype_list:
             group = f_sub.create_group('PartType%d' % (parttype))
-            _populate_group(group, npart_thisfile, basedir, snapnum, subfind_id, parttype)
+            _populate_group(group, sub_header, npart_thisfile, basedir, snapnum,
+                            subfind_id, parttype, nthreads)
 
         sub_header.attrs['NumPart_ThisFile'] = npart_thisfile
 
@@ -247,7 +293,7 @@ def generate_sbatch(rundir, nthreads):
 
     return os.path.abspath(filepath)
 
-def setup_sunrise_subhalo(sub_filename, galprops, stubdir, datadir, num_rhalfs, use_z=None):
+def setup_sunrise_subhalo(sub_filename, galprops, stubdir, datadir, num_rhalfs, nthreads, use_z=None):
     """
     Based on a similar function from "illustris_sunrise_utils.py"
     """
@@ -255,7 +301,6 @@ def setup_sunrise_subhalo(sub_filename, galprops, stubdir, datadir, num_rhalfs, 
     print("Using stubs in %s..." % (stubdir))
     
     list_of_types = ['images']
-    nthreads = 16
     nrays_per_pixel = 10
 
     # Redshift can be obtained from subhalo cutout file
@@ -301,7 +346,7 @@ def setup_sunrise_subhalo(sub_filename, galprops, stubdir, datadir, num_rhalfs, 
 
 
 def prep_mock_panstarrs(basedir, stubdir, writedir, datadir, snapnum, subfind_ids,
-        num_rhalfs, use_z=0.05):
+        num_rhalfs, nthreads, use_z=0.05):
     """
     Parameters
     ----------
@@ -324,14 +369,20 @@ def prep_mock_panstarrs(basedir, stubdir, writedir, datadir, snapnum, subfind_id
     """
 
     # Read some subhalo info
+    start = time.time()
+    print('Reading some info for all subhalos...')
     sub_cm = il.groupcat.loadSubhalos(basedir, snapnum, fields=['SubhaloCM'])
     sub_pos = il.groupcat.loadSubhalos(basedir, snapnum, fields=['SubhaloPos'])
     sub_rhalf = il.groupcat.loadSubhalos(basedir, snapnum, fields=['SubhaloHalfmassRadType'])[:, parttype_stars]
+    print ('Time: %f s.' % (time.time() - start))
 
     # Loop over selected objects
     for subfind_id in subfind_ids:
         # Get particle/cell data for current subhalo
-        sub_filename = get_subhalo(basedir, writedir, snapnum, subfind_id)
+        start = time.time()
+        print('Reading snapshot info...')
+        sub_filename = get_subhalo(basedir, writedir, snapnum, subfind_id, nthreads)
+        print ('Time: %f s.' % (time.time() - start))
 
         # Create "galprops" for this subhalo.
         galprops = {
@@ -345,7 +396,7 @@ def prep_mock_panstarrs(basedir, stubdir, writedir, datadir, snapnum, subfind_id
         }
         
         # Create {sfrhist,mcrx,broadband}.config files
-        batch_filename = setup_sunrise_subhalo(sub_filename, galprops, stubdir, datadir, num_rhalfs, use_z=use_z)
+        batch_filename = setup_sunrise_subhalo(sub_filename, galprops, stubdir, datadir, num_rhalfs, nthreads, use_z=use_z)
 
         #~ # This checks if subhalo exists, downloads it if not, and converts
         #~ # into SUNRISE-readable format.
@@ -367,5 +418,6 @@ def prep_mock_panstarrs(basedir, stubdir, writedir, datadir, snapnum, subfind_id
         # ~ #save "sbatch <script>" in text files for later use
         # ~ print(script)
 
+        print('Finished for subhalo %d.' % (subfind_id))
 
     return
