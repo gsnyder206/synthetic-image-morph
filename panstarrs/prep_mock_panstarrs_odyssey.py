@@ -62,7 +62,7 @@ def _populate_group(group, sub_header, npart_thisfile, basedir, snapnum,
 
         if npart_thisfile[parttype] == 0:
             # Not much to do
-            group.create_dataset('SmoothingLength', data=np.array([], dtype=np.float32))
+            pass
         elif npart_thisfile[parttype] == 1:
             # Also not much to do (use 10x the gravitational softening in Illustris)
             group.create_dataset('SmoothingLength', data=np.array([5.0], dtype=np.float32))
@@ -154,7 +154,7 @@ def get_subhalo(basedir, writedir, snapnum, subfind_id, nthreads):
 
 def generate_sfrhist_config(rundir, datadir, stubdir, sub_filename,
                             galprops, run_type, nthreads, nrays_per_pixel,
-                            scale_convert, num_rhalfs):
+                            scale_convert, num_rhalfs, kpc_h_per_pixel):
     """
     Based on a similar function from "illustris_sunrise_utils.py"
     """
@@ -166,7 +166,10 @@ def generate_sfrhist_config(rundir, datadir, stubdir, sub_filename,
         sf.write('output_file               %s\n\n' % (rundir + '/sfrhist.fits'))
         sf.write('n_threads                 %d\n' % (nthreads))
 
-        gridw = int(np.ceil(num_rhalfs*galprops['rhalf']*scale_convert))
+        half_npixels = int(np.ceil(num_rhalfs*galprops['rhalf']/kpc_h_per_pixel))
+        # Approximately match Torrey/Snyder settings (grid = 4 * fov):
+        gridw = 4 * half_npixels * kpc_h_per_pixel * scale_convert
+
         sf.write('translate_origin          %.2f\t%.2f\t%.2f         / [kpc]\n' % (
             galprops['pos_x']*scale_convert,
             galprops['pos_y']*scale_convert,
@@ -176,7 +179,7 @@ def generate_sfrhist_config(rundir, datadir, stubdir, sub_filename,
         sf.write('grid_max                  %.1f\t%.1f\t%.1f         / [kpc]\n\n' % (
             1.0*gridw, 1.0*gridw, 1.0*gridw))
 
-        npixels = 2*gridw
+        npixels = 2*half_npixels
         sf.write('n_rays_estimated          %d\n\n' % (nrays_per_pixel * npixels**2))
 
         if run_type == 'images':
@@ -204,7 +207,7 @@ def generate_sfrhist_config(rundir, datadir, stubdir, sub_filename,
                 datadir+'/GFS_combined_nolines.fits'))   
 
 def generate_mcrx_config(rundir, stubdir, galprops, run_type, nthreads, nrays_per_pixel,
-                         scale_convert, num_rhalfs, cam_file=None):
+                         scale_convert, num_rhalfs, kpc_h_per_pixel, cam_file=None):
     """
     Based on a similar function from "illustris_sunrise_utils.py"
     """
@@ -214,24 +217,27 @@ def generate_mcrx_config(rundir, stubdir, galprops, run_type, nthreads, nrays_pe
         mf.write('input_file                %s\n' % (rundir + '/sfrhist.fits'))
         mf.write('output_file               %s\n' % (rundir + '/mcrx.fits'))
 
+        half_npixels = int(np.ceil(num_rhalfs*galprops['rhalf']/kpc_h_per_pixel))
+        npixels = 2*half_npixels
+        camerafov = npixels * kpc_h_per_pixel * scale_convert
+        
         #approximating Torrey and HST13887 settings
         if cam_file is None:
             mf.write('exclude_south_pole        true\n')
-            mf.write('camerafov                 120\n')
+            mf.write('camerafov                 %.1f\n' % (camerafov))
             mf.write('ntheta                    2\n')
             mf.write('nphi                      3\n')
         else:
             mf.write('camera_positions          %s\n' % (cam_file))
 
         mf.write('n_threads                 %d\n' % (nthreads))
-            
+
         if run_type != 'ifu':
             mf.write('use_kinematics            %s\n' % ('false  # true for IFU'))
         else:
             mf.write('use_kinematics            %s\n' % ('true  # false for images'))
 
         #move npixels to .config file
-        npixels = 2*int(np.ceil(num_rhalfs*galprops['rhalf']*scale_convert))
         mf.write('npixels                   %d\n' % (npixels))
 
         mf.write('aux_particles_only        false\n')
@@ -269,14 +275,15 @@ def generate_sbatch(rundir, nthreads):
         bsubf.write('#!/bin/bash\n')
         bsubf.write('\n')
         bsubf.write('#SBATCH --mail-user=%s\n' % ('vrg@jhu.edu'))
-        #bsubf.write('#SBATCH --mail-type=ALL\n')
+        bsubf.write('#SBATCH --mail-type=ALL\n')
         bsubf.write('#SBATCH -J sunrise\n')
         bsubf.write('#SBATCH -o sunrise.out\n')
         bsubf.write('#SBATCH -e sunrise.err\n')
         bsubf.write('#SBATCH -p hernquist\n')
         bsubf.write('#SBATCH -N 1\n')
         bsubf.write('#SBATCH --ntasks-per-node=%d\n' % (nthreads))
-        bsubf.write('#SBATCH -t %s\n' % ('1-00:00:00'))
+        bsubf.write('#SBATCH --mem-per-cpu=1875\n')
+        bsubf.write('#SBATCH -t %s\n' % ('2-00:00:00'))
         bsubf.write('#SBATCH --export=ALL\n')
         bsubf.write('\n')
 
@@ -285,15 +292,20 @@ def generate_sbatch(rundir, nthreads):
         bsubf.write('\n')
         
         bsubf.write('cd ' + rundir + '\n')   # go to directory where job should run
-        bsubf.write('${SUNRISE_BIN}/sfrhist sfrhist.config 1> sfrhist.out 2> sfrhist.err\n')
-        bsubf.write('${SUNRISE_BIN}/mcrx mcrx.config 1> mcrx.out 2> mcrx.err\n')
-        bsubf.write('${SUNRISE_BIN}/broadband broadbandz.config 1> broadbandz.out 2> broadbandz.err\n')
-        bsubf.write('${SUNRISE_BIN}/broadband broadband.config 2> broadband.out 2> broadband.err\n')
+        bsubf.write('echo "Starting sfrhist stage..."\n')
+        bsubf.write('time ${SUNRISE_BIN}/sfrhist sfrhist.config 1> sfrhist.out 2> sfrhist.err\n')
+        bsubf.write('echo "Starting mcrx stage..."\n')
+        bsubf.write('time ${SUNRISE_BIN}/mcrx mcrx.config 1> mcrx.out 2> mcrx.err\n')
+        bsubf.write('echo "Starting broadbandz stage..."\n')
+        bsubf.write('time ${SUNRISE_BIN}/broadband broadbandz.config 1> broadbandz.out 2> broadbandz.err\n')
+        # ~ bsubf.write('echo "Starting broadband stage..."\n')
+        # ~ bsubf.write('${SUNRISE_BIN}/broadband broadband.config 2> broadband.out 2> broadband.err\n')
         bsubf.write('\n')
 
     return os.path.abspath(filepath)
 
-def setup_sunrise_subhalo(sub_filename, galprops, stubdir, datadir, num_rhalfs, nthreads, use_z=None):
+def setup_sunrise_subhalo(sub_filename, galprops, stubdir, datadir, num_rhalfs,
+                          nthreads, kpc_h_per_pixel, nrays_per_pixel, use_z=None):
     """
     Based on a similar function from "illustris_sunrise_utils.py"
     """
@@ -301,7 +313,6 @@ def setup_sunrise_subhalo(sub_filename, galprops, stubdir, datadir, num_rhalfs, 
     print("Using stubs in %s..." % (stubdir))
     
     list_of_types = ['images']
-    nrays_per_pixel = 10
 
     # Redshift can be obtained from subhalo cutout file
     with h5py.File(sub_filename, 'r') as f:
@@ -323,12 +334,12 @@ def setup_sunrise_subhalo(sub_filename, galprops, stubdir, datadir, num_rhalfs, 
         print('\tGenerating sfrhist.config file...')
         generate_sfrhist_config(
             rundir, datadir, stubdir, sub_filename, galprops,
-            run_type, nthreads, nrays_per_pixel, scale_convert, num_rhalfs)
+            run_type, nthreads, nrays_per_pixel, scale_convert, num_rhalfs, kpc_h_per_pixel)
 
         print('\tGenerating mcrx.config file...')
         generate_mcrx_config(
             rundir, stubdir, galprops, run_type, nthreads, nrays_per_pixel,
-            scale_convert, num_rhalfs, cam_file=None)
+            scale_convert, num_rhalfs, kpc_h_per_pixel, cam_file=None)
 
         print('\tGenerating broadband.config file...')
         generate_broadband_config_images(rundir, datadir, stubdir, redshift)
@@ -336,17 +347,11 @@ def setup_sunrise_subhalo(sub_filename, galprops, stubdir, datadir, num_rhalfs, 
         print('\tGenerating sunrise.sbatch file...')
         batch_filename = generate_sbatch(rundir, nthreads)
 
-        # ~ # SUNRISE expects "simpar" in the run directory
-        # ~ os.popen('cp %s/simpar %s/' % (stubdir, rundir))
-        
-        # ~ # SUNRISE also asks for units.dat file
-        # ~ os.popen('cp /n/home10/vrodrigu/sunrise_code/units.dat %s/' % (rundir))
-
     return batch_filename
 
 
 def prep_mock_panstarrs(basedir, stubdir, writedir, datadir, snapnum, subfind_ids,
-        num_rhalfs, nthreads, use_z=0.05):
+        num_rhalfs, nthreads, kpc_h_per_pixel, nrays_per_pixel, use_z=None):
     """
     Parameters
     ----------
@@ -396,27 +401,9 @@ def prep_mock_panstarrs(basedir, stubdir, writedir, datadir, snapnum, subfind_id
         }
         
         # Create {sfrhist,mcrx,broadband}.config files
-        batch_filename = setup_sunrise_subhalo(sub_filename, galprops, stubdir, datadir, num_rhalfs, nthreads, use_z=use_z)
-
-        #~ # This checks if subhalo exists, downloads it if not, and converts
-        #~ # into SUNRISE-readable format.
-        #~ # get_parent means it downloads the FOF group but points to each
-        #~ # individual subhalo (duplicates data, but OK).
-        #~ f,s,d = iau.get_subhalo(simulation, snapnums[i], subfind_ids[i],
-                #~ savepath=savepath, verbose=True, clobber=False, get_parent=False)
-
-        # may want to create new functions based around setup_sunrise_illustris_panstarrs(f,s,use_z=use_z,filters='$MOCK_SURVEYS/tng/filters_lsst_light.txt')  ?
-        #examples in "isu" code:
-        #isu.setup_sunrise_subhalo(f,s,use_z=use_z)
-        
-        # ~ script = setup_sunrise_subhalo(f,s,use_z=use_z)
-
-        #this also needs to be edited to include the realism and morphology steps in the job scripts, and output job submission scripts a la the lightcone function in "isu" module.
-        #script=setup_sunrise_illustris_panstarrs(f,s,use_z=use_z)        
-        #the result will be all necessary snapshot data plus ancillary Sunrise data and input files, plus submission scripts
-
-        # ~ #save "sbatch <script>" in text files for later use
-        # ~ print(script)
+        batch_filename = setup_sunrise_subhalo(
+            sub_filename, galprops, stubdir, datadir, num_rhalfs, nthreads,
+            kpc_h_per_pixel, nrays_per_pixel, use_z=use_z)
 
         print('Finished for subhalo %d.' % (subfind_id))
 
