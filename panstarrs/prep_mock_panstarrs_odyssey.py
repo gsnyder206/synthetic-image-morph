@@ -9,7 +9,6 @@ import numpy as np
 import h5py
 import os
 import time
-from scipy.spatial import cKDTree
 
 import illustris_python as il
 
@@ -17,6 +16,7 @@ import illustris_python as il
 # ---------------------- GLOBAL VARIABLES ------------------------
 
 parttype_list = [0, 4, 5]  # gas, stars, BHs
+parttype_gas = 0
 parttype_stars = 4
 
 # ------------------------- FUNCTIONS ----------------------------
@@ -28,7 +28,7 @@ def _populate_group(group, sub_header, npart_thisfile, basedir, snapnum,
     if parttype == 0:
         # SofteningLength added later
         fields = ['ParticleIDs', 'Coordinates', 'Velocities', 'Masses',
-                  'StarFormationRate', 'InternalEnergy',
+                  'StarFormationRate', 'InternalEnergy', 'Density',
                   'ElectronAbundance', 'GFM_Metallicity']
     elif parttype == 4:
         fields = ['ParticleIDs', 'Coordinates', 'Velocities', 'Masses',
@@ -54,44 +54,16 @@ def _populate_group(group, sub_header, npart_thisfile, basedir, snapnum,
             group.create_dataset(key, data=sub[key])
 
     if parttype == 0:
-        # Instead of using the SmoothingLength from the snapshots,
-        # use some multiple of the distance to the 32th nearest gas cell.
-        # If I understand correctly, SUNRISE only needs this to optimize
-        # the construction of the octree for the radiative transfer, so
-        # the exact values don't matter that much.
-
+        # Instead of using the Arepo SmoothingLength from the snapshots,
+        # we use twice the radius corresponding to the cell volume.
         if npart_thisfile[parttype] == 0:
             # Not much to do
             pass
-        elif npart_thisfile[parttype] == 1:
-            # Also not much to do (use 10x the gravitational softening in Illustris)
-            group.create_dataset('SmoothingLength', data=np.array([5.0], dtype=np.float32))
         else:
-            pos = sub['Coordinates']
-            N = min(32, len(pos)-1)
-
-            # Periodic boundary conditions (including the first particle)
-            box_size = sub_header.attrs['BoxSize']
-            dx = pos[:] - pos[0]
-            dx = dx - (np.abs(dx) > 0.5*box_size) * np.copysign(box_size, dx - 0.5*box_size)
-
-            # Construct k-d tree
-            start = time.time()
-            print('Constructing k-d tree...')
-            tree = cKDTree(dx)
-            print ('Time: %f s.' % (time.time() - start))
-
-            # Query k-d tree
-            start = time.time()
-            print('Querying k-d tree...')
-            # ~ d, i = tree.query(dx, k=N+1, n_jobs=nthreads)
-            d, i = tree.query(dx, k=N+1, n_jobs=1)
-            print ('Time: %f s.' % (time.time() - start))
-
-            # Also impose a minimum equal to 10x the gravitational softening in Illustris...
-            smoothing_length = np.maximum(5.0, 10.0 * d[:, N])
+            vol = sub['Masses'] / sub['Density']
+            vol_radius = (3.0/(4.0*np.pi)*vol)**(1.0/3.0)
+            smoothing_length = 2.0 * vol_radius
             group.create_dataset('SmoothingLength', data=smoothing_length)
-
 
 def get_subhalo(basedir, writedir, snapnum, subfind_id, nthreads):
     """Load all particles/cells for a given subhalo and store them
@@ -150,7 +122,11 @@ def get_subhalo(basedir, writedir, snapnum, subfind_id, nthreads):
 
         sub_header.attrs['NumPart_ThisFile'] = npart_thisfile
 
-    return sub_filename
+        with_dust = True
+        if npart_thisfile[parttype_gas] == 0:
+            with_dust = False
+
+    return sub_filename, with_dust
 
 def generate_sfrhist_config(rundir, datadir, stubdir, sub_filename,
                             galprops, run_type, nthreads, nrays_per_pixel,
@@ -165,6 +141,7 @@ def generate_sfrhist_config(rundir, datadir, stubdir, sub_filename,
         sf.write('snapshot_file             %s\n'% (sub_filename))
         sf.write('output_file               %s\n\n' % (rundir + '/sfrhist.fits'))
         sf.write('n_threads                 %d\n' % (nthreads))
+        sf.write('work_chunk_levels         %d\n' % (2))
 
         half_npixels = int(np.ceil(num_rhalfs*galprops['rhalf']/kpc_h_per_pixel))
         # Approximately match Torrey/Snyder settings (grid = 4 * fov):
@@ -207,7 +184,7 @@ def generate_sfrhist_config(rundir, datadir, stubdir, sub_filename,
                 datadir+'/GFS_combined_nolines.fits'))   
 
 def generate_mcrx_config(rundir, stubdir, galprops, run_type, nthreads, nrays_per_pixel,
-                         scale_convert, num_rhalfs, kpc_h_per_pixel, cam_file=None):
+                         scale_convert, num_rhalfs, kpc_h_per_pixel, with_dust, cam_file=None):
     """
     Based on a similar function from "illustris_sunrise_utils.py"
     """
@@ -242,7 +219,10 @@ def generate_mcrx_config(rundir, stubdir, galprops, run_type, nthreads, nrays_pe
 
         mf.write('aux_particles_only        false\n')
         mf.write('nrays_nonscatter          %d\n' % (nrays_per_pixel * npixels**2))
-        mf.write('nrays_scatter             %d\n' % (nrays_per_pixel * npixels**2))
+        if with_dust:
+            mf.write('nrays_scatter             %d\n' % (nrays_per_pixel * npixels**2))
+        else:
+            mf.write('nrays_scatter             %d\n' % (0))
         mf.write('nrays_aux                 %d\n' % (nrays_per_pixel * npixels**2))
 
 
@@ -292,20 +272,20 @@ def generate_sbatch(rundir, nthreads):
         bsubf.write('\n')
         
         bsubf.write('cd ' + rundir + '\n')   # go to directory where job should run
-        bsubf.write('echo "Starting sfrhist stage..."\n')
+        bsubf.write('echo "Starting sfrhist stage..." 1>&2\n')
         bsubf.write('time ${SUNRISE_BIN}/sfrhist sfrhist.config 1> sfrhist.out 2> sfrhist.err\n')
-        bsubf.write('echo "Starting mcrx stage..."\n')
+        bsubf.write('echo "Starting mcrx stage..." 1>&2\n')
         bsubf.write('time ${SUNRISE_BIN}/mcrx mcrx.config 1> mcrx.out 2> mcrx.err\n')
-        bsubf.write('echo "Starting broadbandz stage..."\n')
+        bsubf.write('echo "Starting broadbandz stage..." 1>&2\n')
         bsubf.write('time ${SUNRISE_BIN}/broadband broadbandz.config 1> broadbandz.out 2> broadbandz.err\n')
-        # ~ bsubf.write('echo "Starting broadband stage..."\n')
+        # ~ bsubf.write('echo "Starting broadband stage..." 1>&2\n')
         # ~ bsubf.write('${SUNRISE_BIN}/broadband broadband.config 2> broadband.out 2> broadband.err\n')
         bsubf.write('\n')
 
     return os.path.abspath(filepath)
 
 def setup_sunrise_subhalo(sub_filename, galprops, stubdir, datadir, num_rhalfs,
-                          nthreads, kpc_h_per_pixel, nrays_per_pixel, use_z=None):
+                          nthreads, kpc_h_per_pixel, nrays_per_pixel, with_dust, use_z=None):
     """
     Based on a similar function from "illustris_sunrise_utils.py"
     """
@@ -339,7 +319,7 @@ def setup_sunrise_subhalo(sub_filename, galprops, stubdir, datadir, num_rhalfs,
         print('\tGenerating mcrx.config file...')
         generate_mcrx_config(
             rundir, stubdir, galprops, run_type, nthreads, nrays_per_pixel,
-            scale_convert, num_rhalfs, kpc_h_per_pixel, cam_file=None)
+            scale_convert, num_rhalfs, kpc_h_per_pixel, with_dust, cam_file=None)
 
         print('\tGenerating broadband.config file...')
         generate_broadband_config_images(rundir, datadir, stubdir, redshift)
@@ -386,7 +366,7 @@ def prep_mock_panstarrs(basedir, stubdir, writedir, datadir, snapnum, subfind_id
         # Get particle/cell data for current subhalo
         start = time.time()
         print('Reading snapshot info...')
-        sub_filename = get_subhalo(basedir, writedir, snapnum, subfind_id, nthreads)
+        sub_filename, with_dust = get_subhalo(basedir, writedir, snapnum, subfind_id, nthreads)
         print ('Time: %f s.' % (time.time() - start))
 
         # Create "galprops" for this subhalo.
@@ -403,7 +383,7 @@ def prep_mock_panstarrs(basedir, stubdir, writedir, datadir, snapnum, subfind_id
         # Create {sfrhist,mcrx,broadband}.config files
         batch_filename = setup_sunrise_subhalo(
             sub_filename, galprops, stubdir, datadir, num_rhalfs, nthreads,
-            kpc_h_per_pixel, nrays_per_pixel, use_z=use_z)
+            kpc_h_per_pixel, nrays_per_pixel, with_dust, use_z=use_z)
 
         print('Finished for subhalo %d.' % (subfind_id))
 
