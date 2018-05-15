@@ -23,7 +23,7 @@ import congrid
 import astropy.io.ascii as ascii
 import warnings
 import subprocess
-import photutils
+#import photutils
 import astropy
 import astropy.cosmology
 import astropy.io.fits as pyfits
@@ -351,8 +351,8 @@ def evaluate_pair(basepath,primary_snap,primary_sfid,secondary_snap,secondary_sf
         primary_tree = load_full_tree(basepath,tree_id_primary)
         secondary_tree = load_full_tree(basepath,tree_id_secondary)
 
-        primary_desc,primary_snaps,primary_mass,primary_mstar,r1,r2,sfidA,sfrA,timesA = mmpb_from_tree(primary_tree,sublink_id_primary)
-        secondary_desc,secondary_snaps,secondary_mass,secondary_mstar,r1s,r2s,sfidB,sfrB,timesB = mmpb_from_tree(secondary_tree,sublink_id_secondary)
+        primary_desc,primary_snaps,primary_mass,primary_mstar,r1,r2,sfidA,sfrA,timesA,mlpidsA,bhmdotA,bhmA = mmpb_from_tree(primary_tree,sublink_id_primary)
+        secondary_desc,secondary_snaps,secondary_mass,secondary_mstar,r1s,r2s,sfidB,sfrB,timesB,mlpidsB,bhmdotB,bhmB = mmpb_from_tree(secondary_tree,sublink_id_secondary)
 
         for i,pdi in enumerate(primary_desc):
             matchi = np.where(np.logical_and(secondary_desc==pdi,secondary_snaps > secondary_snap))[0]
@@ -732,13 +732,23 @@ if __name__=="__main__":
     #find_pairs('Illustris-1_RADEC_hudfwide_75Mpc_7_6_zyx_corners.txt','/astro/snyder_lab2/Illustris/Lightcones/forgreg/Illustris1_pairs_r100_h0.70_mstar10.5_mr10_dz0.020_mock3.list',
     #           usemstar=True,label='mstar10.5',bp = '/astro/snyder_lab2/Illustris/Illustris-1')
 
-    find_pairs('Illustris-1_RADEC_hudfwide_75Mpc_7_6_xyz_corners.txt','/astro/snyder_lab2/Illustris/Lightcones/new3/Illustris1_pairs_r100_h0.70_mstar10.5_mr100000_dz0.020_z10_mock1.list',
-               usemstar=True,label='mstar10.5new3',bp = '/astro/snyder_lab2/Illustris/Illustris-1')
-    find_pairs('Illustris-1_RADEC_hudfwide_75Mpc_7_6_yxz_corners.txt','/astro/snyder_lab2/Illustris/Lightcones/new3/Illustris1_pairs_r100_h0.70_mstar10.5_mr100000_dz0.020_z10_mock2.list',
-               usemstar=True,label='mstar10.5new3',bp = '/astro/snyder_lab2/Illustris/Illustris-1')
-    find_pairs('Illustris-1_RADEC_hudfwide_75Mpc_7_6_zyx_corners.txt','/astro/snyder_lab2/Illustris/Lightcones/new3/Illustris1_pairs_r100_h0.70_mstar10.5_mr100000_dz0.020_z10_mock3.list',
-               usemstar=True,label='mstar10.5new3',bp = '/astro/snyder_lab2/Illustris/Illustris-1')
+    #find_pairs('Illustris-1_RADEC_hudfwide_75Mpc_7_6_xyz_corners.txt','/astro/snyder_lab2/Illustris/Lightcones/new3/Illustris1_pairs_r100_h0.70_mstar10.5_mr100000_dz0.020_z10_mock1.list',
+    #           usemstar=True,label='mstar10.5new3',bp = '/astro/snyder_lab2/Illustris/Illustris-1')
+    #find_pairs('Illustris-1_RADEC_hudfwide_75Mpc_7_6_yxz_corners.txt','/astro/snyder_lab2/Illustris/Lightcones/new3/Illustris1_pairs_r100_h0.70_mstar10.5_mr100000_dz0.020_z10_mock2.list',
+    #           usemstar=True,label='mstar10.5new3',bp = '/astro/snyder_lab2/Illustris/Illustris-1')
+    #find_pairs('Illustris-1_RADEC_hudfwide_75Mpc_7_6_zyx_corners.txt','/astro/snyder_lab2/Illustris/Lightcones/new3/Illustris1_pairs_r100_h0.70_mstar10.5_mr100000_dz0.020_z10_mock3.list',
+    #           usemstar=True,label='mstar10.5new3',bp = '/astro/snyder_lab2/Illustris/Illustris-1')
 
+    #find_pairs('Illustris-1_RADEC_JWST1_75Mpc_7_6_xyz.txt','Pairs_7_6_xyz.txt',
+    #           usemstar=True,label='mstar9.5',massmin=10.0**(9.5),bp = '/astro/snyder_lab2/Illustris/Illustris-1' )
+
+    #find_pairs('Illustris-1_RADEC_JWST1_75Mpc_7_6_yxz.txt','Pairs_7_6_yxz.txt',
+    #           usemstar=True,label='mstar9.5',massmin=10.0**(9.5),bp = '/astro/snyder_lab2/Illustris/Illustris-1' )
+
+    find_pairs('Illustris-1_RADEC_JWST1_75Mpc_7_6_zyx.txt','Pairs_7_6_zyx.txt',
+               usemstar=True,label='mstar9.5',massmin=10.0**(9.5),bp = '/astro/snyder_lab2/Illustris/Illustris-1' )
+
+    #pass
 
     #find_pairs('Illustris-2_RADEC_hudfwide_75Mpc_7_6_xyz.txt','/user/lotz/illustris/Illustris2_pairs_r100_h0.70_mhalo10.5_mr10_dz0.020_mock1.list',usemstar=False,label='mhalo11.5',massmin=10.0**(11.5))
     #find_pairs('Illustris-2_RADEC_hudfwide_75Mpc_7_6_yxz.txt','/user/lotz/illustris/Illustris2_pairs_r100_h0.70_mhalo10.5_mr10_dz0.020_mock2.list',usemstar=False,label='mhalo11.5',massmin=10.0**(11.5))

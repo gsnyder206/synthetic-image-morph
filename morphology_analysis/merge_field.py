@@ -33,9 +33,9 @@ def select_data(i_all,j_all,h_all,zrange=None,mrange=None,snpix_limit=[1.0,3.0,3
 def merge_field(folder='/Users/gsnyder/Dropbox/Projects/PythonCode/candels',field='egs'):
 
     if field=='gds-n':
-        folder=folder+'/gdsn'
+        folder=folder+'/gds-n'
     elif field=='gds-s':
-        folder=folder+'/gdss'
+        folder=folder+'/gds-s'
     else:
         folder=folder+'/'+field
         

@@ -75,5 +75,5 @@ def showgalaxy(axi,snapkey,subfindID,camera,filters=['NC-F115W','NC-F150W','NC-F
         except:
             pass
         
-    return axi
+    return axi, rgbthing, pixsize_arcsec
 

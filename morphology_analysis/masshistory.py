@@ -92,10 +92,10 @@ def mergerfileinfo(snapkey,subfindID,size=2,trange=[-2.0,2.0]):
         vals = mcat['mergerinfo'][snapkey]['latest_NumMinorMergersLastGyr'].value
         sfids = mcat['mergerinfo'][snapkey]['SubfindID'].value
         lsn = mcat['mergerinfo'][snapkey]['LatestTree_snapnum'].value
-        last_merger = mcat['mergerinfo'][snapkey]['latest_SnapNumLastMajorMerger'].value
-        last_minmerger = mcat['mergerinfo'][snapkey]['latest_SnapNumLastMinorMerger'].value
-        next_merger = mcat['mergerinfo'][snapkey]['latest_SnapNumNextMajorMerger'].value
-        next_minmerger = mcat['mergerinfo'][snapkey]['latest_SnapNumNextMinorMerger'].value
+        last_merger = mcat['mergerinfo'][snapkey]['this_SnapNumLastMajorMerger'].value
+        last_minmerger = mcat['mergerinfo'][snapkey]['this_SnapNumLastMinorMerger'].value
+        next_merger = mcat['mergerinfo'][snapkey]['this_SnapNumNextMajorMerger'].value
+        next_minmerger = mcat['mergerinfo'][snapkey]['this_SnapNumNextMinorMerger'].value
 
         
         sfi = np.where(sfids==subfindID)[0][0]
@@ -127,7 +127,6 @@ def masshistory(snapkey,subfindID,camnum=0,basepath='/astro/snyder_lab2/Illustri
     mmpb_sublink_id,snaps,mass,mstar,r1,r2,mmpb_sfid,sfr,times,mlpids,bhmdot,bhm = gsu.mmpb_from_tree(tree,sublink_id)
     time_now = gsu.age_at_snap(this_snap_int)
 
-
     time_latest,time_lastmajor,time_lastminor,time_nextmajor,time_nextminor,val = mergerfileinfo(snapkey,subfindID)
 
     print(time_lastmajor-time_now,time_lastminor-time_now,time_nextmajor-time_now,time_nextminor-time_now, time_latest, time_now,val)
@@ -137,34 +136,48 @@ def masshistory(snapkey,subfindID,camnum=0,basepath='/astro/snyder_lab2/Illustri
 
     bhm_msun = bhm*(1.0e10)/ilh
     
-    fig=pyplot.figure(figsize=(size*2,size),dpi=500) 
-    pyplot.subplots_adjust(wspace=0.0,hspace=0.0,top=0.99,right=0.99,left=0.10,bottom=0.17)
+    fig=pyplot.figure(figsize=(size*2.05,size),dpi=500) 
+    pyplot.subplots_adjust(wspace=0.0,hspace=0.0,top=0.99,right=0.99,left=0.13,bottom=0.16)
     
     #mass history plot
     axi = fig.add_subplot(1,2,1)
 
-    ml,=axi.plot(times-time_now,np.log10(mstar))
+    ml,=axi.plot(times-time_now,np.log10(mstar),color='black',lw=4.0)
 
     if do_bh is True:
         bh,=axi.plot(times[bhm_msun > 0]-time_now,np.log10(bhm_msun[bhm_msun > 0]*2.0e2))
 
     
-    axi.plot([0.0,0.0],[8,12],marker=None,linestyle='dashed',color='black',linewidth=2.0)
+    axi.plot([0.0,0.0],[6,15],marker=None,linestyle='solid',color='SlateGray',linewidth=2.0)
 
+    '''
     if gyrbox is True:
         axi.plot([time_latest-time_now,time_latest-time_now],[8,13],marker=None,linestyle='solid',color='gray',linewidth=1.0)
         axi.plot([time_latest-time_now-1.0,time_latest-time_now-1.0],[8,13],marker=None,linestyle='solid',color='gray',linewidth=1.0)
+    '''
 
-    majm,=axi.plot([time_lastmajor-time_now,time_lastmajor-time_now],[8,13],marker=None,linestyle='solid',color='Red',linewidth=4.0)
-    minm,=axi.plot([time_lastminor-time_now,time_lastminor-time_now],[8,13],marker=None,linestyle='dotted',color='Red',linewidth=4.0)
-    majm,=axi.plot([time_nextmajor-time_now,time_nextmajor-time_now],[8,13],marker=None,linestyle='solid',color='Red',linewidth=4.0)
-    minm,=axi.plot([time_nextminor-time_now,time_nextminor-time_now],[8,13],marker=None,linestyle='dotted',color='Red',linewidth=4.0)
 
+
+    majm1,=axi.plot([time_lastmajor-time_now],[np.interp(time_lastmajor,times,np.log10(mstar))],marker='o',markeredgecolor='None',markerfacecolor='Red',markersize=24,linestyle='None')
+    majm2,=axi.plot([time_nextmajor-time_now],[np.interp(time_nextmajor,times,np.log10(mstar))],marker='o',markeredgecolor='None',markerfacecolor='Red',markersize=24,linestyle='None')
+    
+    minm1,=axi.plot([time_lastminor-time_now],[np.interp(time_lastminor,times,np.log10(mstar))],marker='o',markeredgecolor='Red',markerfacecolor='White',markersize=12,linestyle='None')
+    minm2,=axi.plot([time_nextminor-time_now],[np.interp(time_nextminor,times,np.log10(mstar))],marker='o',markeredgecolor='Red',markerfacecolor='White',markersize=12,linestyle='None')
+    
+    
+    #majm1,=axi.plot([time_lastmajor-time_now,time_lastmajor-time_now],[8,13],marker=None,linestyle='solid',color='Red',linewidth=4.0)
+    #minm1,=axi.plot([time_lastminor-time_now,time_lastminor-time_now],[8,13],marker=None,linestyle='dotted',color='Red',linewidth=4.0)
+    #majm2,=axi.plot([time_nextmajor-time_now,time_nextmajor-time_now],[8,13],marker=None,linestyle='solid',color='Red',linewidth=4.0)
+    #minm2,=axi.plot([time_nextminor-time_now,time_nextminor-time_now],[8,13],marker=None,linestyle='dotted',color='Red',linewidth=4.0)
+
+    '''
     if do_bh is True:
         axi.legend((ml,bh,majm,minm),['$log_{10} M_* (t)$','$log_{10} M_{bh} (t) x200$','last major','last minor'],loc='upper left',fontsize=18)
     else:
         axi.legend((ml,majm,minm),['$log_{10} M_* (t)$','last major','last minor'],loc='upper left',fontsize=18)
-        
+    '''
+    axi.legend((majm1,minm1),['$M_{2}/M_{1} \geq 0.25$','$0.25 \geq M_{2}/M_{1} \geq 0.1$'],loc='upper left', fontsize=18)
+    
     axi.set_xlim(trange[0],trange[1])
     inrange=np.where(np.logical_and(times-time_now > trange[0], times-time_now <= trange[1]))[0]
 
@@ -195,12 +208,20 @@ def masshistory(snapkey,subfindID,camnum=0,basepath='/astro/snyder_lab2/Illustri
         rftimehelper(axi,ts_win500,te_win500,yb+2*yd,yd,'+/-250Myr',fs=14)
 
 
-        
-    axi.set_ylim(np.log10(np.min(mstar[inrange])/2.0),np.log10(np.max(mstar[inrange])*2.0))
+    ylim_lo=np.log10(np.min(mstar[inrange])/2.0)
+    ylim_hi=np.log10(np.max(mstar[inrange])*2.0)
 
+    ylim_lo=max([6.0,ylim_lo])
+    ylim_hi=min([ylim_hi,13.0])
+    axi.set_ylim(ylim_lo,ylim_hi)
+
+    shade=patches.Rectangle((-0.25,ylim_lo),0.50,ylim_hi-ylim_lo,color='Silver',alpha=0.5,zorder=1)
+    axi.add_patch(shade)
+
+    
     ls = 25
     axi.set_xlabel('$t-t_{obs} (Gyr)$',size=ls)
-    #axi.set_ylabel('$M_* (t)$,   $M_{bh} (t)/200$',size=ls)
+    axi.set_ylabel('$M_* (t)$',size=ls)
     axi.tick_params(axis='both', which='major', labelsize=ls)
     axi.locator_params(nbins=5,prune='both')
 

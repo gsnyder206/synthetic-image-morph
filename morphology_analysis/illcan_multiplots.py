@@ -141,16 +141,45 @@ class simple_forest():
         return
 
 
-def do_masshistory(sk,sfid,cam,alph=0.2,Q=5.0,ckpc=50.0,lab='',interact=False,**kwargs):
+def do_masshistory(sk,sfid,cam,alph=0.2,Q=5.0,ckpc=50.0,lab='',subdir=None,relpath=None,interact=False,**kwargs):
     if interact is True:
         fn=None
     else:
-        fn='masshistory/'+lab+'_masshistory_'+sk+'_sh{:}_cam{:}.pdf'.format(sfid,cam)#multi merger
-        
+        if subdir is None:
+            fn1='masshistory/'+lab+'_masshistory_'+sk+'_sh{:}_cam{:}.svg'.format(sfid,cam)#multi merger
+        else:
+            fn1='masshistory/'+subdir+'/'+lab+'_masshistory_'+sk+'_sh{:}_cam{:}.pdf'.format(sfid,cam)#multi merger
+
+        if relpath is None:
+            fn=fn1
+        else:
+            fn=os.path.join(relpath,fn1)
+            
     masshistory.masshistory(sk,sfid,camnum=cam,size=6.0,alph=alph,
                             Q=Q,sb='SB25',gyrbox=False,ckpc=ckpc,Npix=None,
-                            trange=[-0.71,1.01],plot_rfs=True,savefile=fn,**kwargs)  
+                            trange=[-0.71,1.01],savefile=fn,**kwargs)  
+    return fn1
+
+
+def plot_mass_history_all(sk,tp_id,tp_cam,fp_id,fp_cam,tn_id,tn_cam,fn_id,fn_cam):
+
+    alph=0.2 ; Q=6.0
+    if not os.path.lexists('masshistory'):
+        os.mkdir('masshistory')
+    if not os.path.lexists('masshistory/'+sk):
+        os.mkdir('masshistory/'+sk)
+
+    for idn,cam in zip(tp_id,tp_cam):
+        do_masshistory(sk,idn,int(cam),alph=alph,Q=Q,lab='tp',subdir=sk)
+    for idn,cam in zip(fp_id,fp_cam):
+        do_masshistory(sk,idn,int(cam),alph=alph,Q=Q,lab='fp',subdir=sk)
+    for idn,cam in zip(tn_id,tn_cam):
+        do_masshistory(sk,idn,int(cam),alph=alph,Q=Q,lab='tn',subdir=sk)
+    for idn,cam in zip(fn_id,fn_cam):
+        do_masshistory(sk,idn,int(cam),alph=alph,Q=Q,lab='fn',subdir=sk)
+        
     return
+
 
 
 def do_mass_history_examples():
@@ -161,36 +190,6 @@ def do_mass_history_examples():
     if not os.path.lexists('masshistory'):
         os.mkdir('masshistory')
     
-    sk='snapshot_068'
-
-    '''
-    sfid=76287 ; fn='masshistory/masshistory_'+sk+'_sh{:}_cam{:}.pdf'.format(sfid,cam)
-    masshistory.masshistory(sk,sfid,camnum=cam,size=6.0,alph=alph,
-                            Q=Q,sb='SB25',gyrbox=False,ckpc=50.0,Npix=None,
-                            trange=[-0.71,0.71],plot_rfs=True,savefile=fn)
-    sfid=99982   #Ring!
-    sfid=103701 ; fn='masshistory/masshistory_'+sk+'_sh{:}_cam{:}.pdf'.format(sfid,cam) #late merger
-    masshistory.masshistory(sk,sfid,camnum=cam,size=6.0,alph=alph,
-                            Q=Q,sb='SB25',gyrbox=False,ckpc=50.0,Npix=None,
-                            trange=[-0.71,0.71],plot_rfs=True,savefile=fn)
-    sfid=99450  ; fn='masshistory/masshistory_'+sk+'_sh{:}_cam{:}.pdf'.format(sfid,cam)#double nucleus
-    masshistory.masshistory(sk,sfid,camnum=cam,size=6.0,alph=alph,
-                            Q=Q,sb='SB25',gyrbox=False,ckpc=50.0,Npix=None,
-                            trange=[-0.71,0.71],plot_rfs=True,savefile=fn)
-    
-    sfid=102672 ; fn='masshistory/masshistory_'+sk+'_sh{:}_cam{:}.pdf'.format(sfid,cam)#appears isolated
-    masshistory.masshistory(sk,sfid,camnum=cam,size=6.0,alph=alph,
-                            Q=Q,sb='SB25',gyrbox=False,ckpc=50.0,Npix=None,
-                            trange=[-0.71,0.71],plot_rfs=True,savefile=fn)
-    sfid=105747 ; fn='masshistory/masshistory_'+sk+'_sh{:}_cam{:}.pdf'.format(sfid,cam)#wreck
-    masshistory.masshistory(sk,sfid,camnum=cam,size=6.0,alph=alph,
-                            Q=Q,sb='SB25',gyrbox=False,ckpc=50.0,Npix=None,
-                            trange=[-0.71,0.71],plot_rfs=True,savefile=fn)
-    sfid=102098 ; fn='masshistory/masshistory_'+sk+'_sh{:}_cam{:}.pdf'.format(sfid,cam)#multi merger
-    masshistory.masshistory(sk,sfid,camnum=cam,size=6.0,alph=alph,
-                            Q=Q,sb='SB25',gyrbox=False,ckpc=50.0,Npix=None,
-                            trange=[-0.71,0.71],plot_rfs=True,savefile=fn)
-    '''
 
     sk='snapshot_075'
     do_masshistory(sk,61699,3,alph=alph,Q=Q,lab='tp')
@@ -222,38 +221,7 @@ def do_mass_history_examples():
 
     
 
-    #77564 pre-merger but low-lum AGN
-    #minor pair 25561
-    
-    #8468 whoa clumps
-    #73247 pair and high OIII
-    #46001 merger wreck
-    #100838 compact starburst
-    '''
-    sk='snapshot_075'
 
-    sfid=46001 ; fn='masshistory/masshistory_'+sk+'_{:8d}.pdf'.format(sfid)
-    masshistory.masshistory(sk,sfid,camnum=0,size=6.0,alph=0.5,
-                            Q=5,sb='SB25',gyrbox=False,ckpc=50.0,Npix=None,
-                            trange=[-0.71,0.71],plot_rfs=True,savefile=fn)
-    sfid=100838 ; fn='masshistory/masshistory_'+sk+'_{:8d}.pdf'.format(sfid)
-    masshistory.masshistory(sk,sfid,camnum=0,size=6.0,alph=0.5,
-                            Q=5,sb='SB25',gyrbox=False,ckpc=50.0,Npix=None,
-                            trange=[-0.71,0.71],plot_rfs=True,savefile=fn)
-    sfid=73247 ; fn='masshistory/masshistory_'+sk+'_{:8d}.pdf'.format(sfid)
-    masshistory.masshistory(sk,sfid,camnum=0,size=6.0,alph=0.5,
-                            Q=5,sb='SB25',gyrbox=False,ckpc=50.0,Npix=None,
-                            trange=[-0.71,0.71],plot_rfs=True,savefile=fn)
-    sfid=77564 ; fn='masshistory/masshistory_'+sk+'_{:8d}.pdf'.format(sfid)
-    masshistory.masshistory(sk,sfid,camnum=0,size=6.0,alph=0.5,
-                            Q=5,sb='SB25',gyrbox=False,ckpc=50.0,Npix=None,
-                            trange=[-0.71,0.71],plot_rfs=True,savefile=fn)
-    sfid=8468 ; fn='masshistory/masshistory_'+sk+'_{:8d}.pdf'.format(sfid)
-    masshistory.masshistory(sk,sfid,camnum=0,size=6.0,alph=0.5,
-                            Q=5,sb='SB25',gyrbox=False,ckpc=50.0,Npix=None,
-                            trange=[-0.71,0.71],plot_rfs=True,savefile=fn)
-    '''
-    
     return
     
 
@@ -615,6 +583,9 @@ def simple_random_forest(msF,merF,snap_key,fil_key,fil2_key=None,paramsetting='m
     ROCtests['thresh_color_mcc']='DodgerBlue'
 
 
+    if not os.path.lexists('rf_plots'):
+        os.mkdir('rf_plots')
+    
     if not os.path.lexists('rf_plots/'+labelfunc):
         os.mkdir('rf_plots/'+labelfunc)
     
@@ -1975,7 +1946,7 @@ def plot_rf_grid(f6,rf_data,rfprob,rf_class,rf_flag,cols,plotlabels=None,rfthres
 
 
 def make_merger_images(msF,merF,snap_key,fil_key,fil2_key=None,bd='/astro/snyder_lab/Illustris_CANDELS/Illustris-1_z1_images_bc03/',
-                       rflabel='paramsmod',rf_masscut=0.0,labelfunc='label_merger1',Npix=None,ckpc=75.0,ckpcz=None,seed=0):
+                       rflabel='paramsmod',rf_masscut=0.0,labelfunc='label_merger1',Npix=None,ckpc=75.0,ckpcz=None,seed=0,**kwargs):
 
     j=-1
     sk=snap_key
@@ -1984,13 +1955,16 @@ def make_merger_images(msF,merF,snap_key,fil_key,fil2_key=None,bd='/astro/snyder
     
     plotdir = 'images/'+labelfunc
     if fil2_key is None:
-        plot_filen = plotdir+'/'+rflabel+'_mergers_'+sk+'_'+fku+'.pdf'
+        plot_filen = plotdir+'/'+sk+'/'+rflabel+'_mergers_'+sk+'_'+fku
     else:
-        plot_filen = plotdir+'/'+rflabel+'_mergers_'+sk+'_'+fku+'_'+fil2_key+'.pdf'
+        plot_filen = plotdir+'/'+sk+'/'+rflabel+'_mergers_'+sk+'_'+fku+'_'+fil2_key
         
     if not os.path.lexists(plotdir):
         os.mkdir(plotdir)
-        
+    if not os.path.lexists(plotdir+'/'+sk):
+        os.mkdir(plotdir+'/'+sk)
+    if not os.path.lexists(plotdir+'/'+sk+'/masshistory'):
+        os.mkdir(plotdir+'/'+sk+'/masshistory')        
 
     N_columns = 12
     N_rows = N_columns
@@ -2131,25 +2105,27 @@ def make_merger_images(msF,merF,snap_key,fil_key,fil2_key=None,bd='/astro/snyder
     
     tp_dict={'imfiles_r':im_file[tpi],'imfiles_g':im_file[tpi],'imfiles_b':im_file[tpi],
              'rf_prob':rf_prob[tpi],'sfid':rf_sfids[tpi],'rf_flag':flags[tpi],
-             'istart':0,'jstart':0,'N':N_each}
+             'istart':0,'jstart':0,'N':N_each,'sk':sk,'lab':'tp'}
     fp_dict={'imfiles_r':im_file[fpi],'imfiles_g':im_file[fpi],'imfiles_b':im_file[fpi],
              'rf_prob':rf_prob[fpi],'sfid':rf_sfids[fpi],'rf_flag':flags[fpi],
-             'istart':0,'jstart':6,'N':N_each}
+             'istart':0,'jstart':6,'N':N_each,'sk':sk,'lab':'fp'}
     tn_dict={'imfiles_r':im_file[tni],'imfiles_g':im_file[tni],'imfiles_b':im_file[tni],
              'rf_prob':rf_prob[tni],'sfid':rf_sfids[tni],'rf_flag':flags[tni],
-             'istart':6,'jstart':0,'N':N_each}
+             'istart':6,'jstart':0,'N':N_each,'sk':sk,'lab':'tn'}
     fn_dict={'imfiles_r':im_file[fni],'imfiles_g':im_file[fni],'imfiles_b':im_file[fni],
              'rf_prob':rf_prob[fni],'sfid':rf_sfids[fni],'rf_flag':flags[fni],
-             'istart':6,'jstart':6,'N':N_each}
+             'istart':6,'jstart':6,'N':N_each,'sk':sk,'lab':'fn'}
 
 
-    plot_image_classifications(tp_dict,f1,redshift,N_rows,N_columns,Npix=Npix,ckpc=ckpc,ckpcz=ckpcz)
-
-    plot_image_classifications(fp_dict,f1,redshift,N_rows,N_columns,Npix=Npix,ckpc=ckpc,ckpcz=ckpcz)
-
-    plot_image_classifications(tn_dict,f1,redshift,N_rows,N_columns,Npix=Npix,ckpc=ckpc,ckpcz=ckpcz)
-    
-    plot_image_classifications(fn_dict,f1,redshift,N_rows,N_columns,Npix=Npix,ckpc=ckpc,ckpcz=ckpcz)
+    print('TP   ',sk)
+    tp_id,tp_cam=plot_image_classifications(tp_dict,f1,redshift,N_rows,N_columns,Npix=Npix,ckpc=ckpc,ckpcz=ckpcz,plotdir=plotdir,**kwargs)
+    print('FP   ',sk)
+    fp_id,fp_cam=plot_image_classifications(fp_dict,f1,redshift,N_rows,N_columns,Npix=Npix,ckpc=ckpc,ckpcz=ckpcz,plotdir=plotdir,**kwargs)
+    print('TN   ',sk)
+    tn_id,tn_cam=plot_image_classifications(tn_dict,f1,redshift,N_rows,N_columns,Npix=Npix,ckpc=ckpc,ckpcz=ckpcz,plotdir=plotdir,**kwargs)
+    print('FN   ',sk)
+   
+    fn_id,fn_cam=plot_image_classifications(fn_dict,f1,redshift,N_rows,N_columns,Npix=Npix,ckpc=ckpc,ckpcz=ckpcz,plotdir=plotdir,**kwargs)
 
 
     ax=f1.add_subplot(111)
@@ -2159,13 +2135,15 @@ def make_merger_images(msF,merF,snap_key,fil_key,fil2_key=None,bd='/astro/snyder
     
     ax.plot([0.0,1.0],[0.5,0.5],linestyle='solid',color=thresh_color_balance_point,lw=5)
     ax.plot([0.5,0.5],[0.0,1.0],linestyle='solid',color=thresh_color_balance_point,lw=5)
-    
+
     ax.annotate('TP' ,(0.25,0.98),xycoords='axes fraction',ha='center',va='center',color=thresh_color_balance_point,size=30 )
     ax.annotate('FP',(0.75,0.98),xycoords='axes fraction',ha='center',va='center',color=thresh_color_balance_point,size=30 )
     ax.annotate('TN' ,(0.25,0.07),xycoords='axes fraction',ha='center',va='center',color=thresh_color_balance_point,size=30 )
     ax.annotate('FN',(0.75,0.07),xycoords='axes fraction',ha='center',va='center',color=thresh_color_balance_point,size=30 )
                                         
-    f1.savefig(plot_filen,dpi=300,facecolor='Black')
+    f1.savefig(plot_filen+'.pdf',dpi=300,facecolor='Black')
+    f1.savefig(plot_filen+'.svg',dpi=300,facecolor='Black')
+
     pyplot.close(f1)
 
 
@@ -2198,10 +2176,10 @@ def make_merger_images(msF,merF,snap_key,fil_key,fil2_key=None,bd='/astro/snyder
     f2.savefig(plot_filen,dpi=300)
     pyplot.close(f2)
     
-    return 0
+    return sk, tp_id, tp_cam, fp_id, fp_cam, tn_id, tn_cam, fn_id, fn_cam
 
 
-def plot_image_classifications(info,fig,redshift,N_rows,N_columns,Npix=None,ckpc=75.0,ckpcz=None,alph=0.2,Q=8.0):
+def plot_image_classifications(info,fig,redshift,N_rows,N_columns,Npix=None,ckpc=75.0,ckpcz=None,alph=0.2,Q=8.0,omd=False,plotdir=None):
 
     #https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
     indf = lambda m, n: [i*n//m + n//(2*m) for i in range(m)]
@@ -2214,10 +2192,14 @@ def plot_image_classifications(info,fig,redshift,N_rows,N_columns,Npix=None,ckpc
     else:
         n_take=info['N']**2
 
-    print(n_take,n_things)
     
     ti=np.flipud( np.argsort(info['rf_prob']))[indf(n_take,n_things)]
 
+    idn=[]
+    camn=[]
+
+    sk=info['sk']
+    
     k=0
     ki=1
     for this_r,this_g,this_b,this_prob,this_id,this_flag in zip(info['imfiles_r'][ti],info['imfiles_g'][ti],info['imfiles_b'][ti],info['rf_prob'][ti],info['sfid'][ti],info['rf_flag'][ti]):
@@ -2256,7 +2238,11 @@ def plot_image_classifications(info,fig,redshift,N_rows,N_columns,Npix=None,ckpc
 
         this_loc= info['jstart'] + (info['istart']+ki-1)*N_columns + (k-1) % info['N']+1
         
-        print(k,ki,this_loc)
+
+        this_cam=this_r.split('_')[-3][-2:]
+        idn.append(this_id)
+        camn.append(this_cam)
+        
         if k==info['N']*ki:
             ki=ki+1
 
@@ -2266,8 +2252,9 @@ def plot_image_classifications(info,fig,redshift,N_rows,N_columns,Npix=None,ckpc
             
 
         rgbthing = make_color_image.make_interactive(b,g,r,alph,Q)
-        axi.imshow(rgbthing,interpolation='nearest',aspect='auto',origin='lower')
-
+        im=axi.imshow(rgbthing,interpolation='nearest',aspect='auto',origin='lower')
+        if omd is True:
+            overplot_morph_data(axi,this_g,mid,delt,lw=0.5)
                     
         axi.annotate('${:4.2f}$'.format(this_prob),(0.25,0.10),xycoords='axes fraction',ha='center',va='center',color='White',size=7)
                         
@@ -2275,10 +2262,14 @@ def plot_image_classifications(info,fig,redshift,N_rows,N_columns,Npix=None,ckpc
 
         axi.annotate('${:2d}$'.format(this_camnum_int),(0.75,0.07),xycoords='axes fraction',ha='center',va='center',color='White',size=4 )
 
-
-
-    
-    return
+        alph=0.2 ; Q=6.0
+        relative_path=do_masshistory(sk,this_id,int(this_cam),alph=alph,Q=Q,lab=info['lab'],relpath=plotdir+'/'+sk)
+        print(relative_path)
+        
+        im.set_url(relative_path)
+        
+        
+    return idn, camn
 
 
 def overplot_morph_data(axi,rf_im,mid,delt,lw=0.1):
@@ -2313,7 +2304,8 @@ def overplot_morph_data(axi,rf_im,mid,delt,lw=0.1):
         segmap = saveseg_hdu.data[mid-delt:mid+delt,mid-delt:mid+delt]
         clabel = saveseg_hdu.header['CLABEL']
         segmap_masked = np.where(segmap==clabel,segmap,np.zeros_like(segmap))
-        axi.contour(np.transpose(segmap_masked), (clabel-0.0001,), linewidths=lw, colors=('DodgerBlue',))
+        #skip this one in favor of more relevant petrosian-based one?
+        #axi.contour(np.transpose(segmap_masked), (clabel-0.0001,), linewidths=lw, colors=('Orange',))
 
 
     if tbhdu is not None:
@@ -2342,7 +2334,7 @@ def overplot_morph_data(axi,rf_im,mid,delt,lw=0.1):
     #plot petrosian morphology segmap in different linestyle
     if ap_seghdu is not None:
         ap_segmap = ap_seghdu.data[mid-delt:mid+delt,mid-delt:mid+delt]
-        axi.contour(np.transpose(ap_segmap), (10.0-0.0001,), linewidths=lw,colors='Orange')
+        axi.contour(np.transpose(ap_segmap), (10.0-0.0001,), linewidths=lw,colors='DodgerBlue')
 
     hlist.close()
     
@@ -3356,9 +3348,10 @@ def do_snapshot_evolution(msF,merF,
 
         if skipdata is False:
 
-            res = make_merger_images(msF,merF,sk,fk,rflabel=rflabel,rf_masscut=10.0**(10.5),labelfunc=labelfunc)
-            res = make_merger_images(msF,merF,sk,fk,fil2_key=fk2,rflabel=rflabel,rf_masscut=10.0**(10.5),labelfunc=labelfunc)
-        
+            sk,tp_id,tp_cam,fp_id,fp_cam,tn_id,tn_cam,fn_id,fn_cam = make_merger_images(msF,merF,sk,fk,rflabel=rflabel,rf_masscut=10.0**(10.5),labelfunc=labelfunc,omd=True)
+            make_merger_images(msF,merF,sk,fk,fil2_key=fk2,rflabel=rflabel,rf_masscut=10.0**(10.5),labelfunc=labelfunc,omd=True)
+
+            plot_mass_history_all(sk,tp_id,tp_cam,fp_id,fp_cam,tn_id,tn_cam,fn_id,fn_cam)
 
         
     if skipstruct is False:
@@ -3465,7 +3458,7 @@ if __name__=="__main__":
                                       dz1 =[0.1, 0.75,1.25,1.75,2.25,2.75,3.5,4.5],
                                       dz2 =[0.75,1.25,1.75,2.25,2.75,3.5 ,4.5,5.9],
                                       mln =[50,50,25,25,20,20,10,10],
-                                      labelfunc=labelfunc,skipcalc=True,skipdata=True,skipstruct=True,style='fix')
+                                      labelfunc=labelfunc,skipcalc=True,skipdata=False,skipstruct=True,style='fix')
 
                 do_snapshot_evolution(msF,merF,
                                       sku =['snapshot_103','snapshot_085','snapshot_075','snapshot_068','snapshot_064','snapshot_060','snapshot_054','snapshot_049'],

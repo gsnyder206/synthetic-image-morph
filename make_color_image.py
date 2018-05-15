@@ -320,76 +320,83 @@ def make_interactive(b,g,r,alph,Q,inches=5.0,dpi=72,fwhm_pixels=0.0,sigma_tuple=
 #inputs:  b,g,r images, arcsinh scaling parameters, and optional noise/PSF parameters
 #outputs:  3xNxN array containing scaled RGB values appropriate for passing to matplotlib's imshow function.
 
-def make_interactive_nasa(b,g,r,alph,Q,inches=5.0,dpi=72,fwhm_pixels=[0.0,0.0,0.0],sigma_tuple=[0.0,0.0,0.0],zlabel=-1):
+def make_interactive_nasa(b,g,r,alph,Q,inches=5.0,dpi=72,fwhm_pixels=[0.0,0.0,0.0],sigma_tuple=[0.0,0.0,0.0],zlabel=-1,sigma_same=0.0):
 
-	b = b*1.0
-	g = g*1.0
-	r = r*1.0
+        b = b*1.0
+        g = g*1.0
+        r = r*1.0
 
-	if fwhm_pixels[0] > 1.0e-5:
-		sR=np.zeros_like(r) ; sG = np.zeros_like(g) ; sB = np.zeros_like(b)
-		fwhm = fwhm_pixels #pixels, 0.5kpc/pixel
-		sigma = fwhm/(2.0*math.sqrt(2.0*math.log(2.0)))
-		resR = sp.ndimage.filters.gaussian_filter(r,sigma[2],output=sR)
-		resG = sp.ndimage.filters.gaussian_filter(g,sigma[1],output=sG)
-		resB = sp.ndimage.filters.gaussian_filter(b,sigma[0],output=sB)
+        if fwhm_pixels[0] > 1.0e-5:
+                sR=np.zeros_like(r) ; sG = np.zeros_like(g) ; sB = np.zeros_like(b)
+                fwhm = fwhm_pixels #pixels, 0.5kpc/pixel
+                sigma = fwhm/(2.0*math.sqrt(2.0*math.log(2.0)))
+                resR = sp.ndimage.filters.gaussian_filter(r,sigma[2],output=sR)
+                resG = sp.ndimage.filters.gaussian_filter(g,sigma[1],output=sG)
+                resB = sp.ndimage.filters.gaussian_filter(b,sigma[0],output=sB)
 
-		b = sB
-		g = sG
-		r = sR
+                b = sB
+                g = sG
+                r = sR
 
-	if sigma_tuple[0] > 1.0e-8:
-		print("Adding noise to b image: sigma = {:12.6f}".format(sigma_tuple[0]))
-		b = b + sigma_tuple[0]*np.random.standard_normal(b.shape)
+        if sigma_tuple[0] > 1.0e-8:
+                print("Adding noise to b image: sigma = {:12.6f}".format(sigma_tuple[0]))
+                b = b + sigma_tuple[0]*np.random.standard_normal(b.shape)
 
-	if sigma_tuple[1] > 1.0e-8:
-		print("Adding noise to g image: sigma = {:12.6f}".format(sigma_tuple[1]))
-		g = g + sigma_tuple[1]*np.random.standard_normal(g.shape)
+        if sigma_tuple[1] > 1.0e-8:
+                print("Adding noise to g image: sigma = {:12.6f}".format(sigma_tuple[1]))
+                g = g + sigma_tuple[1]*np.random.standard_normal(g.shape)
 
-	if sigma_tuple[2] > 1.0e-8:
-		print("Adding noise to r image: sigma = {:12.6f}".format(sigma_tuple[2]))
-		r = r + sigma_tuple[2]*np.random.standard_normal(r.shape)
+        if sigma_tuple[2] > 1.0e-8:
+                print("Adding noise to r image: sigma = {:12.6f}".format(sigma_tuple[2]))
+                r = r + sigma_tuple[2]*np.random.standard_normal(r.shape)
 
-	b[sp.where(b <= 0.0)]=0.0 ; g[sp.where(g <= 0.0)]=0.0 ; r[sp.where(r <= 0.0)]=0.0
+        if sigma_same > 1.0e-8:
+                noise= sigma_same*np.random.standard_normal(r.shape)
+                r = r + noise
+                g = g + noise
+                b = b + noise
+
+                
+        b[sp.where(b <= 0.0)]=0.0 ; g[sp.where(g <= 0.0)]=0.0 ; r[sp.where(r <= 0.0)]=0.0
 	
-	I = (b+g+r)/3.0 + 1.0e-20
-	
-	
-	minval = 0.0
-	maxval = np.max(I)
-
-	
-	factor = little_f(I,minval,maxval,Q,alph)/I
-	
-
-	R = little_f(r,minval,maxval,Q,alph)
-	G = little_f(g,minval,maxval,Q,alph)
-	B = little_f(b,minval,maxval,Q,alph)
+        I = (b+g+r)/3.0 + 1.0e-20
 	
 	
-	imarray = np.asarray([R,G,B])
+        minval = 0.0
+        maxval = np.max(I)
+
 	
-	maxrgbval = np.amax(imarray, axis=0)
+        factor = little_f(I,minval,maxval,Q,alph)/I
 	
-	changeind = np.where(maxrgbval > 1.0)
-	R[changeind] = R[changeind]/maxrgbval[changeind]
-	G[changeind] = G[changeind]/maxrgbval[changeind]
-	B[changeind] = B[changeind]/maxrgbval[changeind]
+
+        R = little_f(r,minval,maxval,Q,alph)
+        G = little_f(g,minval,maxval,Q,alph)
+        B = little_f(b,minval,maxval,Q,alph)
+	
+	
+        imarray = np.asarray([R,G,B])
+	
+        maxrgbval = np.amax(imarray, axis=0)
+	
+        changeind = np.where(maxrgbval > 1.0)
+        R[changeind] = R[changeind]/maxrgbval[changeind]
+        G[changeind] = G[changeind]/maxrgbval[changeind]
+        B[changeind] = B[changeind]/maxrgbval[changeind]
 	
 	
 		
-	ind = sp.where(I < 1.0e-10)
-	R[ind]=0.0 ; G[ind]=0.0 ; B[ind]=0.0
+        ind = sp.where(I < 1.0e-10)
+        R[ind]=0.0 ; G[ind]=0.0 ; B[ind]=0.0
 
 
-	imarray = np.asarray(np.transpose([R,G,B]))
+        imarray = np.asarray(np.transpose([R,G,B]))
 
-	leny = float( len(R[0,:]))
-	lenx = float( len(R[:,0]))
-	inx = lenx/float(dpi)
-	iny = leny/float(dpi)
+        leny = float( len(R[0,:]))
+        lenx = float( len(R[:,0]))
+        inx = lenx/float(dpi)
+        iny = leny/float(dpi)
 	
-	return imarray
+        return imarray
 
 
 
