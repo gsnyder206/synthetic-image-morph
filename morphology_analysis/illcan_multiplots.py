@@ -275,14 +275,14 @@ def simple_random_forest(msF,merF,snap_key,fil_key,fil2_key=None,paramsetting='m
         if paramsetting=='twofilters_snp':
             cols=['dGM20','fGM20','asym','Dstat','cc','snp','dGM20_2','fGM20_2','asym_2','Dstat_2','cc_2','snp_2']
             rflabel='twofilters_snp'
-            plotlabels=np.asarray([r'$GMS_{'+fk[-5:]+'}$',
-                                   r'$GMF_{'+fk[-5:]+'}$',
+            plotlabels=np.asarray([r'$S(G,M_{20})_{'+fk[-5:]+'}$',
+                                   r'$F(G,M_{20})_{'+fk[-5:]+'}$',
                                    r'$A_{'+fk[-5:]+'}$',
                                    r'$D_{'+fk[-5:]+'}$',
                                    r'$C_{'+fk[-5:]+'}$',
                                    r'SN/pix$_{'+fk[-5:]+'}$',
-                                   r'$GMS_{'+fk2[-5:]+'}$',
-                                   r'$GMF_{'+fk2[-5:]+'}$',
+                                   r'$S(G,M_{20})_{'+fk2[-5:]+'}$',
+                                   r'$F(G,M_{20})_{'+fk2[-5:]+'}$',
                                    r'$A_{'+fk2[-5:]+'}$',
                                    r'$D_{'+fk2[-5:]+'}$',
                                    r'$C_{'+fk2[-5:]+'}$',
@@ -291,16 +291,16 @@ def simple_random_forest(msF,merF,snap_key,fil_key,fil2_key=None,paramsetting='m
             cols=['dGM20','fGM20','asym','Mstat','Istat','Dstat','cc','snp','dGM20_2','fGM20_2','asym_2','Mstat_2','Istat_2','Dstat_2','cc_2','snp_2']
             rflabel='twofilters_snp_mi'
             max_features=3
-            plotlabels=np.asarray([r'$GMS_{'+fk[-5:]+'}$',
-                                   r'$GMF_{'+fk[-5:]+'}$',
+            plotlabels=np.asarray([r'$S(G,M_{20})_{'+fk[-5:]+'}$',
+                                   r'$F(G,M_{20})_{'+fk[-5:]+'}$',
                                    r'$A_{'+fk[-5:]+'}$',
                                    r'$M_{'+fk[-5:]+'}$',
                                    r'$I_{'+fk[-5:]+'}$',
                                    r'$D_{'+fk[-5:]+'}$',
                                    r'$C_{'+fk[-5:]+'}$',
                                    r'SN/pix$_{'+fk[-5:]+'}$',
-                                   r'$GMS_{'+fk2[-5:]+'}$',
-                                   r'$GMF_{'+fk2[-5:]+'}$',
+                                   r'$S(G,M_{20})_{'+fk2[-5:]+'}$',
+                                   r'$F(G,M_{20})_{'+fk2[-5:]+'}$',
                                    r'$A_{'+fk2[-5:]+'}$',
                                    r'$M_{'+fk2[-5:]+'}$',
                                    r'$I_{'+fk2[-5:]+'}$',
@@ -310,13 +310,13 @@ def simple_random_forest(msF,merF,snap_key,fil_key,fil2_key=None,paramsetting='m
         else:
             cols=['dGM20','fGM20','asym','Dstat','cc','dGM20_2','fGM20_2','asym_2','Dstat_2','cc_2']
             rflabel='twofilters'
-            plotlabels=np.asarray([r'$GMS_{'+fk[-5:]+'}$',
-                                   r'$GMF_{'+fk[-5:]+'}$',
+            plotlabels=np.asarray([r'$S(G,M_{20})_{'+fk[-5:]+'}$',
+                                   r'$F(G,M_{20})_{'+fk[-5:]+'}$',
                                    r'$A_{'+fk[-5:]+'}$',
                                    r'$D_{'+fk[-5:]+'}$',
                                    r'$C_{'+fk[-5:]+'}$',
-                                   r'$GMS_{'+fk2[-5:]+'}$',
-                                   r'$GMF_{'+fk2[-5:]+'}$',
+                                   r'$S(G,M_{20})_{'+fk2[-5:]+'}$',
+                                   r'$F(G,M_{20})_{'+fk2[-5:]+'}$',
                                    r'$A_{'+fk2[-5:]+'}$',
                                    r'$D_{'+fk2[-5:]+'}$',
                                    r'$C_{'+fk2[-5:]+'}$'])            
@@ -678,16 +678,20 @@ def simple_random_forest(msF,merF,snap_key,fil_key,fil2_key=None,paramsetting='m
     #axi3.semilogx(ROCtrain['thresh'],ROCtrain['ppv'],lw=1,linestyle='dotted',color='Red')
 
     factor=(0.2/np.min(frac_error_thing))
-    axi3.semilogx(ROCtests['thresh'],frac_error_thing*factor,lw=2,linestyle='solid',color=ROCtests['thresh_color_frac_error'],alpha=0.7)
-    axi3.semilogx(ROCtests['thresh'],balance_point,lw=2,linestyle='solid',color=ROCtests['thresh_color_balance_point'],alpha=0.7)
+    #plot actual F1 score instead
+    axi3.semilogx(ROCtests['thresh'],2.0/frac_error_thing,lw=2,linestyle='solid',color=ROCtests['thresh_color_frac_error'],alpha=0.7)
+
+    #axi3.semilogx(ROCtests['thresh'],frac_error_thing*factor,lw=2,linestyle='solid',color=ROCtests['thresh_color_frac_error'],alpha=0.7)
+    #axi3.semilogx(ROCtests['thresh'],balance_point,lw=2,linestyle='solid',color=ROCtests['thresh_color_balance_point'],alpha=0.7)
     axi3.semilogx(ROCtests['thresh'],ROCtests['mcc'],lw=2,linestyle='solid',color=ROCtests['thresh_color_mcc'],alpha=0.7)
 
+    bp_point=axi3.plot([ROCtests['thresh'][best_i3]],[ROCtests['tpr'][best_i3]],'s',color=ROCtests['thresh_color_balance_point'],markersize=6,linestyle='None')
+
     #axi3.plot([ROCtests['thresh'][best_i1],ROCtests['thresh'][best_i1]],[-1,2],color='Gray',lw=0.5)
-    axi3.legend(['TPR(RF)','FPR(RF)','PPV(RF)','1/F1 Score','TPR=1-FPR','MCC'],fontsize=8,ncol=3,loc='upper center',handletextpad=0,columnspacing=1)
+    axi3.legend(['TPR','FPR','PPV','F1 Score','MCC','TPR=1-FPR'],fontsize=8,ncol=3,loc='upper center',handletextpad=0,columnspacing=1)
 
 
-    axi3.plot([ROCtests['thresh'][best_i2]],[frac_error_thing[best_i2]*factor],'o',color=ROCtests['thresh_color_frac_error'],markersize=6,linestyle='None')
-    axi3.plot([ROCtests['thresh'][best_i3]],[balance_point[best_i3]],'s',color=ROCtests['thresh_color_balance_point'],markersize=6,linestyle='None')
+    axi3.plot([ROCtests['thresh'][best_i2]],[2.0/frac_error_thing[best_i2]],'o',color=ROCtests['thresh_color_frac_error'],markersize=6,linestyle='None')
     axi3.plot([ROCtests['thresh'][best_i4]],[ROCtests['mcc'][best_i4]],'^',color=ROCtests['thresh_color_mcc'],markersize=6,linestyle='None')
     
 
@@ -707,7 +711,7 @@ def simple_random_forest(msF,merF,snap_key,fil_key,fil2_key=None,paramsetting='m
     axi3.set_ylim(-0.05,1.25)
     axi3.set_xlim(0.015,1.05)
     axi3.set_xlabel('Threshold')
-    axi3.set_ylabel('Rate')
+    axi3.set_ylabel('Score')
     f3.savefig(roc_filen,dpi=300)
     pyplot.close(f3)
 
@@ -721,14 +725,19 @@ def simple_random_forest(msF,merF,snap_key,fil_key,fil2_key=None,paramsetting='m
     sorted_idx=np.argsort(feature_importance)
     pos = np.arange(sorted_idx.shape[0]) + .5
 
-
-    
+    use_plotlabels=[]
+    for pl in plotlabels:
+        newpl=pl.replace('F814W','I')
+        newpl=newpl.replace('F160W','H')
+        use_plotlabels.append(newpl)
+    use_plotlabels=np.asarray(use_plotlabels)
+        
     grid_filen = 'rf_plots/'+labelfunc+'/'+rflabel+'_'+sk+'_'+fk+'_importances.pdf'
     f6 = pyplot.figure(figsize=(5.5,5.5), dpi=300)
     pyplot.subplots_adjust(left=0.20, right=0.99, bottom=0.10, top=0.99,wspace=0.0,hspace=0.0)
 
     pyplot.barh(pos, feature_importance[sorted_idx], align='center')
-    pyplot.yticks(pos, plotlabels[sorted_idx])
+    pyplot.yticks(pos, use_plotlabels[sorted_idx])
     pyplot.xlabel('Relative Importance')
 
     f6.savefig(grid_filen,dpi=300)
@@ -841,13 +850,13 @@ def simple_random_forest(msF,merF,snap_key,fil_key,fil2_key=None,paramsetting='m
 
     axi4.semilogy(rf_mass,rf_probs,'o',markersize=2,markeredgecolor='None',markerfacecolor='Gray',zorder=99)
     axi4.semilogy(rf_mass[rf_flag==True],rf_probs[rf_flag==True],'o',markersize=5,markerfacecolor='Black',markeredgecolor='Orange',markeredgewidth=0.4,zorder=99)
-    axi4.semilogy(rf_mass[rf_class],rf_probs[rf_class],'*g',markersize=3,markeredgecolor='None',zorder=99)
+    #axi4.semilogy(rf_mass[rf_class],rf_probs[rf_class],'*g',markersize=3,markeredgecolor='None',zorder=99)
 
-    axi4.semilogy([10,13],[ROCtests['thresh'][best_i2],ROCtests['thresh'][best_i2]],color=ROCtests['thresh_color_frac_error'],lw=0.5,zorder=1)
-    axi4.semilogy([10,13],[ROCtests['thresh'][best_i3],ROCtests['thresh'][best_i3]],color=ROCtests['thresh_color_balance_point'],lw=0.5,zorder=1)
-    axi4.semilogy([10,13],[ROCtests['thresh'][best_i4],ROCtests['thresh'][best_i4]],color=ROCtests['thresh_color_mcc'],lw=0.5,zorder=1)
+    axi4.semilogy([10,13],[ROCtests['thresh'][best_i2],ROCtests['thresh'][best_i2]],color=ROCtests['thresh_color_frac_error'],lw=2)
+    axi4.semilogy([10,13],[ROCtests['thresh'][best_i3],ROCtests['thresh'][best_i3]],color=ROCtests['thresh_color_balance_point'],lw=2)
+    axi4.semilogy([10,13],[ROCtests['thresh'][best_i4],ROCtests['thresh'][best_i4]],color=ROCtests['thresh_color_mcc'],lw=2)
                 
-    leg=pyplot.legend(['nonmerger','merger',r'$P_{RF}>$'+'{:5.3f}'.format(best_th)],fontsize=sp,
+    leg=pyplot.legend(['nonmerger','merger', 'F1 score', 'TPR=1-FPR', 'MCC'],fontsize=sp,
                       markerscale=1,scatterpoints=3,numpoints=3,framealpha=1.0,loc='lower right')
     leg.set_zorder(102)
     
@@ -855,7 +864,7 @@ def simple_random_forest(msF,merF,snap_key,fil_key,fil2_key=None,paramsetting='m
     axi4.set_xlim(10.4,12.2)
     axi4.set_ylim(0.015,1.30)
     axi4.set_xlabel(r'log$_{10} M_*/M_{\odot}$')
-    axi4.set_ylabel(r'$P_{RF}$')
+    axi4.set_ylabel(r'$P_{RF}$ threshold')
     axi4.tick_params(labelsize=sp)
     
     
@@ -1413,7 +1422,7 @@ def make_rf_evolution_plots(snap_keys_use,fil_keys_use,dz1,dz2,cols,plotlabels,r
     pyplot.subplots_adjust(left=0.22, right=0.98, bottom=0.15, top=0.98,wspace=0.0,hspace=0.0)
 
     fml_filen = 'rf_plots/'+labelfunc+'/'+rflabel+'_'+style+'_merger_stats_light.pdf'
-    f7 = pyplot.figure(figsize=(3.5,3.0), dpi=300)
+    f7 = pyplot.figure(figsize=(3.5,3.2), dpi=300)
     pyplot.subplots_adjust(left=0.22, right=0.98, bottom=0.15, top=0.96,wspace=0.0,hspace=0.0)
 
     
@@ -1437,7 +1446,7 @@ def make_rf_evolution_plots(snap_keys_use,fil_keys_use,dz1,dz2,cols,plotlabels,r
 
     axi5 = f5.add_subplot(1,1,1)
     axi5.set_xlim(0.2,4.5)
-    axi5.set_ylim(5.0e-3,5.0)
+    axi5.set_ylim(2.5e-2,5.0)
     axi5.tick_params(axis='both',which='both',labelsize=labs)
     axi5.locator_params(nbins=7,prune='both')
 
@@ -1457,7 +1466,7 @@ def make_rf_evolution_plots(snap_keys_use,fil_keys_use,dz1,dz2,cols,plotlabels,r
 
     axi7 = f7.add_subplot(1,1,1)
     axi7.set_xlim(1.25,9.5)
-    axi7.set_ylim(1.0e-2,10.0)
+    axi7.set_ylim(3.5e-2,15.0)
     axi7.tick_params(axis='both',which='both',labelsize=labs)
     axi7.locator_params(nbins=7,prune='both')
     
@@ -1570,11 +1579,19 @@ def make_rf_evolution_plots(snap_keys_use,fil_keys_use,dz1,dz2,cols,plotlabels,r
         pos = np.flipud( np.arange(feature_importance.shape[0]) + .5 )
 
         for imp,p in zip(feature_importance,pos):
-            print(imp,p)
             axi2.plot(redshift,p,'o',markersize=20.0*(0.01*imp)**2,color='Black')
 
+
+        use_plotlabels=[]
+        for pl in plotlabels:
+            newpl=pl.replace('F814W','I')
+            newpl=newpl.replace('F160W','H')
+            use_plotlabels.append(newpl)
+        use_plotlabels=np.asarray(use_plotlabels)
+        
+            
         axi2.set_yticks(pos)
-        axi2.set_yticklabels(plotlabels)
+        axi2.set_yticklabels(use_plotlabels)
         
         axi2.set_xlabel('redshift')
 
@@ -1624,12 +1641,13 @@ def make_rf_evolution_plots(snap_keys_use,fil_keys_use,dz1,dz2,cols,plotlabels,r
 
 
         
-        df1,df2,df3=merge_field.select_data(df1_all,df2_all,df3_all,zrange=[dz1u,dz2u],snpix_limit=[0.5,3.0,3.0],mrange=[10.50,15.0])
+        df1,df2,df3=merge_field.select_data(df1_all,df2_all,df3_all,zrange=[dz1u,dz2u],snpix_limit=[3.0,3.0,3.0],mrange=[10.50,15.0])
 
         candels_df = apply_sim_rf_to_data(sk,fk,cols,df1,df2,df3,best_i,rflabel=rflabel,labelfunc=labelfunc)
         #includes RF_PROB column
 
         print(candels_df.columns)
+        print(np.median(candels_df['lmass_x']))
         
         sim_asym_fraction=np.sum(asym_classifier)/asym_classifier.shape[0]
         if dgm_tpr > 0.0:
@@ -1668,7 +1686,7 @@ def make_rf_evolution_plots(snap_keys_use,fil_keys_use,dz1,dz2,cols,plotlabels,r
         axi5.semilogy(redshift,candels_f_rf,'sk',markersize=10,markerfacecolor='None')
         axi5.semilogy(redshift,candels_f_rf*mergers_per_true*ppv[best_i]/tpr[best_i],'ok',markersize=10)
 
-        axi5.semilogy(redshift,candels_f_a*mergers_per_true*asym_ppv/asym_tpr,'o',color='Gray',markersize=3)
+        #axi5.semilogy(redshift,candels_f_a*mergers_per_true*asym_ppv/asym_tpr,'o',color='Gray',markersize=3)
         #axi5.semilogy(redshift,candels_f_s*mergers_per_true*dgm_ppv/dgm_tpr,'^',color='Green',markersize=3)
 
 
@@ -1679,8 +1697,10 @@ def make_rf_evolution_plots(snap_keys_use,fil_keys_use,dz1,dz2,cols,plotlabels,r
         twin=0.5
         axi7.semilogy(illcos.age(redshift).value,(1.0/twin)*candels_f_rf*mergers_per_true*ppv[best_i]/tpr[best_i],'ok',markersize=10)
 
-        axi7.semilogy(illcos.age(redshift).value,(1.0/twin)*candels_f_a*mergers_per_true*asym_ppv/asym_tpr,'o',color='Gray',markersize=3)
+        #axi7.semilogy(illcos.age(redshift).value,(1.0/twin)*candels_f_a*mergers_per_true*asym_ppv/asym_tpr,'o',color='Gray',markersize=3)
 
+        axi7.annotate(r'$M_2/M_1 > 0.1$',(0.5,0.75),xycoords='axes fraction', fontsize=11)
+        
         gfs17_times=np.asarray([2.5,3.1,3.95,4.55,8.2])
         gfs17_redshifts=np.zeros_like(gfs17_times)
         
@@ -1697,9 +1717,9 @@ def make_rf_evolution_plots(snap_keys_use,fil_keys_use,dz1,dz2,cols,plotlabels,r
 
             # Add the legend manually to the current Axes.
             #ax = plt.gca().add_artist(first_legend)
-            firstleg= axi5.legend( [r'$f_{RF}(sim)$',r'$f_{merger}(sim)$',r'$N_{RF}(data)$',r'$f_{merger}(data)$',r'$f_{merger}(A\ only)$'],loc='lower right',fontsize=8,handletextpad=0,ncol=2,columnspacing=1)
-            first7leg=axi7.legend( [r'machine learning (GFS+ in prep.)',r'classical image-based',r'evolving pair timescales (GFS+ 2017)'],loc='lower center',fontsize=8,handletextpad=0,ncol=1,columnspacing=1,
-                                   title='Data:',markerscale=0.5,labelspacing=0.2)
+            firstleg= axi5.legend( [r'$f_{RF}(sim)$',r'$f_{merger}(sim)$',r'$f_{RF}(data)$',r'$f_{merger}(data)$'],loc='lower right',fontsize=8,handletextpad=0,ncol=2,columnspacing=1)
+            first7leg=axi7.legend( [r'mock-image random forest (this work)',r'evolving pair timescales (Snyder+ 2017)'],loc='lower center',fontsize=8,handletextpad=0,ncol=1,columnspacing=1,
+                                   title='Inferred from data:',markerscale=0.5,labelspacing=0.2)
         
         rf_fractional_error_sq = (1.0/candels_class.shape[0] + 1.0/np.sum(candels_class) + 1.0/np.sum(rf_flag) + 1.0/np.sum(rf_class))
         
@@ -1723,7 +1743,6 @@ def make_rf_evolution_plots(snap_keys_use,fil_keys_use,dz1,dz2,cols,plotlabels,r
         axi6.semilogy(redshift,asym_fractional_error_sq_H**0.5,'o',markersize=symsiz/9.0,color='Gray',markerfacecolor='None')
         axi6.semilogy(redshift,dgm_fractional_error_sq_H**0.5,'^',markersize=symsiz/9.0,color='Green',markerfacecolor='None')
         
-        print(rf_fractional_error_sq,asym_fractional_error_sq,dgm_fractional_error_sq)
         #if sk=='snapshot_103':
         #    axi5.legend([ 'A > 0.25','dGM > 0.1', 'RF model (thresh=0.4)',r'$f_{merge}$'],loc='lower center',fontsize=10,numpoints=1)
 
@@ -1738,11 +1757,13 @@ def make_rf_evolution_plots(snap_keys_use,fil_keys_use,dz1,dz2,cols,plotlabels,r
 
     #500 Myr window implies predicted merger fraction is R*t_window
     vrg,=axi5.semilogy(np.asarray(vrg_z),np.asarray(vrg_rate)*twin,linestyle='solid',color='black',linewidth=1.5)
-    axi5.legend((vrg,),['R-G15'],loc='upper left',fontsize=10,numpoints=1)
+    axi5.legend((vrg,),['Rodriguez-Gomez et al. (2015)'],loc='upper left',fontsize=9,numpoints=1)
     axi5.add_artist(firstleg)
 
     vrg,=axi7.semilogy(illcos.age(np.asarray(vrg_z)).value,np.asarray(vrg_rate),linestyle='solid',color='black',linewidth=1.5)
-    axi7.legend((vrg,),['Theory'],loc='upper left',fontsize=10,numpoints=1)
+    vrg2,=axi7.semilogy(illcos.age(np.asarray(vrg_z)).value,np.asarray(vrg_rate)*2,linestyle='dashed',color='gray',linewidth=1.5)
+
+    axi7.legend((vrg,vrg2),['Rodriguez-Gomez et al. (2015)',r'$\times 2$'],loc='upper left',fontsize=9,numpoints=1)
     axi7.add_artist(first7leg)
     
     f5.savefig(fm_filen,dpi=300)
@@ -1815,8 +1836,6 @@ def apply_sim_rf_to_data(snap_key,fil_key,cols,df1,df2,df3, best_i, dkz1=1.25,dk
     ppv = rocdata['ppv'][best_i]
     tpr = rocdata['tpr'][best_i]
 
-    print(candels_df['D_I'])
-    print(np.min(candels_df['D_I']))
     
     candels_prob=rfo.predict_proba(candels_values)[:,1]
     candels_df['RF_PROB']=candels_prob
@@ -3256,7 +3275,7 @@ def do_rf_result_grid(snap_keys_par,fil_keys_par,rflabel='paramsmod',rf_labelfun
 
 
 
-def print_tables(msF,merF,fil_keys,rf_labelfuncs=['label_merger_window500_both','label_merger_forward250_both'],rflabel='paramsmod2',rf_masscut=10.0**(10.5)):
+def print_tables(msF,merF,fil_keys,rf_labelfuncs=['label_merger_window500_both_new','label_merger_forward250_both_new'],rflabel='paramsmod2',rf_masscut=10.0**(10.5),seed=0):
 
     print(r'\begin{table*}')
     print(r'\centering')
@@ -3297,6 +3316,135 @@ def print_tables(msF,merF,fil_keys,rf_labelfuncs=['label_merger_window500_both',
 
 
 
+
+
+
+
+
+    
+    print(r'\begin{table*}')
+    print(r'\centering')
+    print(r'\caption{Simulation morphology catalog, example entries, first 14 columns. We include the full catalog as online-only supplementary material.}')
+    print(r'\label{tab:morphcatalog}')
+    print(r'\begin{tabular}{cc ccc ccccc ccccc}')
+    print(r'Snapshot & Subhalo ID & $log_{10} M_*/M_{\odot}$ & Merger? & $P_{RF}$ & A_I & C_I & G_I & M_{20,I} & D_I & A_H & C_H & G_H & M_{20,H} & D_H  \\')
+
+    snapshots=['103','085','075','068','064','060','054','049','045','041','038','035']
+    for sn in snapshots:
+        sk='snapshot_'+sn
+
+        mstar_cam0=get_all_snap_val(msF,sk,'Mstar_Msun',camera='CAMERA0')
+        mstar_all=get_all_snap_val(msF,sk,'Mstar_Msun')
+        subhalo_id=get_all_snap_val(msF,sk,'SubfindID')
+        
+        gi= mstar_cam0 >= rf_masscut
+        gia= mstar_all >= rf_masscut
+        
+        redshift = msF['nonparmorphs'][sk]['NC-F200W']['CAMERA0']['REDSHIFT'].value[0]
+
+        boolean_flag1,number1,x,x,x,x = eval(rf_labelfuncs[0]+'(merF,sk)')
+        boolean_flag2,number2,x,x,x,x = eval(rf_labelfuncs[1]+'(merF,sk)')
+
+        morphdict_I=get_morphs(msF,sk,'ACS-F814W')
+        morphdict_H=get_morphs(msF,sk,'WFC3-F160W')
+        
+        si=np.flipud(np.argsort(mstar_all))
+
+
+
+
+        rfdata = 'rfoutput/'+rf_labelfuncs[0]+'/'
+        
+        data_file = rfdata+rflabel+'_data_{}_{}_{}.pkl'.format(sk,'ACS-F814W',seed)
+        prob_file = rfdata+rflabel+'_probability_{}_{}_{}.pkl'.format(sk,'ACS-F814W',seed)
+    
+        rf_data = np.load(data_file,encoding='bytes')
+        imfiles=rf_data['IMFILE'].values
+        
+        rf_flag = rf_data['mergerFlag'].values
+ 
+        rf_t_lastMaj = rf_data['t_lastMaj']
+        rf_t_lastMin = rf_data['t_lastMin']
+        rf_t_nextMaj = rf_data['t_nextMaj']
+        rf_t_nextMin = rf_data['t_nextMin']
+
+        probstuff = np.load(prob_file)
+        
+        average_prob=probstuff[0].values
+        rf_prob=average_prob
+        rf_sfids=probstuff['SubfindID'].values
+
+        print(imfiles[0:100:7])
+        print(rf_sfids[0:100:7])
+
+        pvals=[]
+        
+        for sid in subhalo_id:
+            
+            rfi=np.where(rf_sfids==sid)[0]
+            if rfi.shape[0] > 0:
+                pvals.append(rf_prob[rfi])
+            else:
+                pvals.append([None,None])
+
+        
+        for i in si[0:12]:
+            
+            print('{:5s}  {:10d}  {:6.2f}  {:6s}  {:6.3f}'\
+                  '{:8.4f} {:8.4f} {:8.4f} {:8.4f} {:8.4f} '\
+                  '{:8.4f} {:8.4f} {:8.4f} {:8.4f} {:8.4f} '.format(sn,subhalo_id[i],np.log10(mstar_all[i]),str(boolean_flag1[i]), pvals[i],
+                                                         morphdict_I['ASYM'][i],
+                                                         morphdict_I['CC'][i],
+                                                         morphdict_I['GINI'][i],
+                                                         morphdict_I['M20'][i],
+                                                         np.log10(morphdict_I['MID1_DSTAT'][i]),
+                                                         morphdict_H['ASYM'][i],
+                                                         morphdict_H['CC'][i],
+                                                         morphdict_H['GINI'][i],
+                                                         morphdict_H['M20'][i],
+                                                         np.log10(morphdict_H['MID1_DSTAT'][i])))
+
+    print(r'\end{tabular}')
+    print(r'\end{table*}')
+
+
+
+
+    print(r'\begin{table*}')
+    print(r'\centering')
+    print(r'\caption{Data morphology catalog, example entries. We include the full catalog as online-only supplementary material.}')
+    print(r'\label{tab:morphcatalog}')
+    print(r'\begin{tabular}{ccccccccc}')
+    print(r'ID & Field & Classification & $P_{RF}$ & A_I & C_I & G_I & M_{20,I} & D_I & A_H & C_H & G_H & M_{20,H} & D_H  \\')
+
+    snapshots=['103','085','075','068','064','060','054','049','045','041','038','035']
+    for sn in snapshots:
+        sk='snapshot_'+sn
+
+        mstar_cam0=get_all_snap_val(msF,sk,'Mstar_Msun',camera='CAMERA0')
+        mstar_all=get_all_snap_val(msF,sk,'Mstar_Msun')
+        
+        gi= mstar_cam0 >= rf_masscut
+        gia= mstar_all >= rf_masscut
+        
+        redshift = msF['nonparmorphs'][sk]['NC-F200W']['CAMERA0']['REDSHIFT'].value[0]
+
+        boolean_flag1,number1,x,x,x,x = eval(rf_labelfuncs[0]+'(merF,sk)')
+        boolean_flag2,number2,x,x,x,x = eval(rf_labelfuncs[1]+'(merF,sk)')
+
+
+    print(r'\end{tabular}')
+    print(r'\end{table*}')
+    
+def get_morphs(msF,sk,fk,morphkeys=['ASYM','CC','GINI','M20', 'MID1_DSTAT']):
+
+    md={}
+    for mk in morphkeys:
+        mval=get_all_morph_val(msF,sk,fk,mk)
+        md[mk]=mval
+    
+    return md
+
 def do_snapshot_evolution(msF,merF,
                           sku =['snapshot_103','snapshot_085','snapshot_075','snapshot_068','snapshot_064','snapshot_060','snapshot_054','snapshot_049'],
                           fku =['ACS-F814W'   ,'ACS-F814W'   ,'ACS-F814W'   ,'ACS-F814W'   ,'ACS-F814W'   ,'ACS-F814W'   ,'ACS-F814W'   ,'ACS-F814W'   ],
@@ -3321,16 +3469,37 @@ def do_snapshot_evolution(msF,merF,
         if redshift > 4.2:
             threshes.append(0.0)
             continue
-        
+        '''
         rflabel,cols,plotlabels,best_th=simple_random_forest(msF,merF,sk,fk, paramsetting='onefilter',max_leaf_nodes=mlnu,
                                                              rf_masscut=10.0**(10.5),labelfunc=labelfunc,skipcalc=skipcalc,style=style,seed=seed)
         rflabel,cols,plotlabels,best_th=simple_random_forest(msF,merF,sk,fk2, paramsetting='onefilter',max_leaf_nodes=mlnu,
                                                              rf_masscut=10.0**(10.5),labelfunc=labelfunc,skipcalc=skipcalc,style=style,seed=seed)
+        '''
         
         rflabel,cols,plotlabels,best_th=simple_random_forest(msF,merF,sk,fk,fil2_key=fk2, paramsetting='twofilters',max_leaf_nodes=mlnu,
                                                              rf_masscut=10.0**(10.5),labelfunc=labelfunc,skipcalc=skipcalc,style=style,seed=seed)
 
+        if skipdata is False:
 
+            sk,tp_id,tp_cam,fp_id,fp_cam,tn_id,tn_cam,fn_id,fn_cam = make_merger_images(msF,merF,sk,fk,rflabel=rflabel,rf_masscut=10.0**(10.5),labelfunc=labelfunc,omd=True,seed=seed)
+            make_merger_images(msF,merF,sk,fk,fil2_key=fk2,rflabel=rflabel,rf_masscut=10.0**(10.5),labelfunc=labelfunc,omd=True,seed=seed)
+
+            plot_mass_history_all(sk,tp_id,tp_cam,fp_id,fp_cam,tn_id,tn_cam,fn_id,fn_cam)
+
+    if skipevo is False:
+        res = make_rf_evolution_plots(sku,fku,dz1,dz2,cols,plotlabels,rf_labelfunc=labelfunc,rflabel=rflabel,style=style,seed=seed)
+
+
+
+        
+    for sk,fk,fk2,dz1u,dz2u,mlnu in zip(sku,fku,f2ku,dz1,dz2,mln):
+
+
+        redshift = msF['nonparmorphs'][sk][fk]['CAMERA0']['REDSHIFT'].value[0]
+        if redshift > 4.2:
+            threshes.append(0.0)
+            continue           
+        '''
         rflabel,cols,plotlabels,best_th=simple_random_forest(msF,merF,sk,fk, paramsetting='onefilter_snp',max_leaf_nodes=mlnu,
                                                              rf_masscut=10.0**(10.5),labelfunc=labelfunc,skipcalc=skipcalc,style=style,seed=seed)
         rflabel,cols,plotlabels,best_th=simple_random_forest(msF,merF,sk,fk2, paramsetting='onefilter_snp',max_leaf_nodes=mlnu,
@@ -3340,27 +3509,32 @@ def do_snapshot_evolution(msF,merF,
 
         rflabel,cols,plotlabels,best_th=simple_random_forest(msF,merF,sk,fk,fil2_key=fk2, paramsetting='twofilters_snp_mi',max_leaf_nodes=mlnu,
                                                              rf_masscut=10.0**(10.5),labelfunc=labelfunc,skipcalc=skipcalc,seed=seed)
+        '''
         
         rflabel,cols,plotlabels,best_th=simple_random_forest(msF,merF,sk,fk,fil2_key=fk2, paramsetting='twofilters_snp',max_leaf_nodes=mlnu,
                                                              rf_masscut=10.0**(10.5),labelfunc=labelfunc,skipcalc=skipcalc,seed=seed)
 
+            
         threshes.append(best_th)
 
         if skipdata is False:
 
-            sk,tp_id,tp_cam,fp_id,fp_cam,tn_id,tn_cam,fn_id,fn_cam = make_merger_images(msF,merF,sk,fk,rflabel=rflabel,rf_masscut=10.0**(10.5),labelfunc=labelfunc,omd=True)
-            make_merger_images(msF,merF,sk,fk,fil2_key=fk2,rflabel=rflabel,rf_masscut=10.0**(10.5),labelfunc=labelfunc,omd=True)
+            sk,tp_id,tp_cam,fp_id,fp_cam,tn_id,tn_cam,fn_id,fn_cam = make_merger_images(msF,merF,sk,fk,rflabel=rflabel,rf_masscut=10.0**(10.5),labelfunc=labelfunc,omd=True,seed=seed)
+            make_merger_images(msF,merF,sk,fk,fil2_key=fk2,rflabel=rflabel,rf_masscut=10.0**(10.5),labelfunc=labelfunc,omd=True,seed=seed)
 
             plot_mass_history_all(sk,tp_id,tp_cam,fp_id,fp_cam,tn_id,tn_cam,fn_id,fn_cam)
 
-        
+
+
+            
     if skipstruct is False:
-        res = make_all_structures(msF,merF,sku,fku,dz1,dz2,rf_labelfunc=labelfunc,rflabel=rflabel,style=style+'1',source='sim')
-        res = make_all_structures(msF,merF,sku,f2ku,dz1,dz2,rf_labelfunc=labelfunc,rflabel='onefilter_snp',style=style+'2',source='sim')
+        res = make_all_structures(msF,merF,sku,fku,dz1,dz2,rf_labelfunc=labelfunc,rflabel=rflabel,style=style+'1',source='sim',seed=seed)
+        res = make_all_structures(msF,merF,sku,f2ku,dz1,dz2,rf_labelfunc=labelfunc,rflabel='onefilter_snp',style=style+'2',source='sim',seed=seed)
 
 
     if skipevo is False:
-        res = make_rf_evolution_plots(sku,fku,dz1,dz2,cols,plotlabels,rf_labelfunc=labelfunc,rflabel=rflabel,style=style)
+        res = make_rf_evolution_plots(sku,fku,dz1,dz2,cols,plotlabels,rf_labelfunc=labelfunc,rflabel=rflabel,style=style,seed=seed)
+
 
 
     
@@ -3424,32 +3598,21 @@ if __name__=="__main__":
                 rflabel='twofilters'
                 skipmi=True
 
+
+
+
+                seed=0
+
                 
-                print_tables(msF,merF,fil_keys_use,rf_labelfuncs=['label_merger_window500_both_new','label_merger_window500_major_new'],rflabel=rflabel)
+                
+                #print_tables(msF,merF,fil_keys_use,rf_labelfuncs=['label_merger_window500_both_new','label_merger_window500_major_new'],rflabel=rflabel,seed=seed)
                 #exit()
 
 
 
 
-                #something like this:
-                '''
-                do_snapshot_evolution(msF,merF,
-                                      sku =['snapshot_075'],
-                                      fku =['ACS-F814W'],
-                                      f2ku=['WFC3-F160W'],
-                                      mln=[25],
-                                      labelfunc='label_merger_window500_major_new',skipcalc=True,skipstruct=True,skipdata=False)
-                '''
-                '''
-                do_snapshot_evolution(msF,merF,
-                                      sku =['snapshot_075'],
-                                      fku =['ACS-F814W'],
-                                      f2ku=['WFC3-F160W'],
-                                      mln=[25],
-                                      labelfunc='label_merger_window500_both_new',skipcalc=False,skipstruct=True,skipdata=True,skipevo=True)
-                '''
-
                 labelfunc='label_merger_window500_both_new'
+
                 
                 do_snapshot_evolution(msF,merF,
                                       sku =['snapshot_103','snapshot_085','snapshot_075','snapshot_068','snapshot_064','snapshot_060','snapshot_054','snapshot_049'],
@@ -3458,7 +3621,8 @@ if __name__=="__main__":
                                       dz1 =[0.1, 0.75,1.25,1.75,2.25,2.75,3.5,4.5],
                                       dz2 =[0.75,1.25,1.75,2.25,2.75,3.5 ,4.5,5.9],
                                       mln =[50,50,25,25,20,20,10,10],
-                                      labelfunc=labelfunc,skipcalc=True,skipdata=False,skipstruct=True,style='fix')
+                                      labelfunc=labelfunc,skipcalc=False,skipdata=True,skipstruct=True,style='fix',seed=seed)
+
 
                 do_snapshot_evolution(msF,merF,
                                       sku =['snapshot_103','snapshot_085','snapshot_075','snapshot_068','snapshot_064','snapshot_060','snapshot_054','snapshot_049'],
@@ -3467,7 +3631,7 @@ if __name__=="__main__":
                                       dz1 =[0.1, 0.75,1.25,1.75,2.25,2.75,3.5,4.5],
                                       dz2 =[0.75,1.25,1.75,2.25,2.75,3.5 ,4.5,5.9],
                                       mln =[50,50,25,25,20,20,10,10],
-                                      labelfunc=labelfunc,skipcalc=True,skipdata=True,skipstruct=True,style='evo')
+                                      labelfunc=labelfunc,skipcalc=True,skipdata=True,skipstruct=True,style='evo',seed=seed)
                 
                 
 

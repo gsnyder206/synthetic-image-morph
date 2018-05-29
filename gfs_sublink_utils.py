@@ -5,7 +5,6 @@ import string
 import sys
 import struct
 import numpy as np
-import asciitable
 import scipy.ndimage
 import scipy.stats as ss
 import scipy.signal
