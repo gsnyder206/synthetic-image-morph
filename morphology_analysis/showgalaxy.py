@@ -28,6 +28,8 @@ def showgalaxy(axi,snapkey,subfindID,camera,filters=['NC-F115W','NC-F150W','NC-F
         b = pyfits.open(b_fn[0])[0].data
         pixsize_arcsec=pyfits.open(g_fn[0])[0].header['PIXSCALE']
         pixsize_kpc=pyfits.open(g_fn[0])[0].header['PIXKPC']
+
+        headers=[pyfits.open(r_fn[0])[0].header,pyfits.open(g_fn[0])[0].header,pyfits.open(b_fn[0])[0].header]
         
     except:
         print(r_fn,g_fn,b_fn)
@@ -42,7 +44,7 @@ def showgalaxy(axi,snapkey,subfindID,camera,filters=['NC-F115W','NC-F150W','NC-F
         this_z=gsu.redshift_from_snapshot(snap_int)
         #factor=icmp.illcos.kpc_comoving_per_arcmin(this_z).value/60.0
         
-        Npix=ckpc/pixsize_kpc
+        Npix=((1.0 + this_z)**(-1.0))*ckpc/pixsize_kpc
         
         delt=np.int64(Npix/2)
     elif ckpcz is not None:
@@ -75,5 +77,5 @@ def showgalaxy(axi,snapkey,subfindID,camera,filters=['NC-F115W','NC-F150W','NC-F
         except:
             pass
         
-    return axi, rgbthing, pixsize_arcsec
+    return axi, rgbthing, pixsize_arcsec, headers
 

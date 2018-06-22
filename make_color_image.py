@@ -245,20 +245,20 @@ def make_general(b,g,r,filename,alph,Q,inches=5.0,dpi=72,fwhm_pixels=0.0,sigma_t
 #inputs:  b,g,r images, arcsinh scaling parameters, and optional noise/PSF parameters
 #outputs:  3xNxN array containing scaled RGB values appropriate for passing to matplotlib's imshow function.
 
-def make_interactive(b,g,r,alph,Q,inches=5.0,dpi=72,fwhm_pixels=0.0,sigma_tuple=[0.0,0.0,0.0],zlabel=-1):
+def make_interactive(b,g,r,alph,Q,inches=5.0,dpi=72,fwhm_pixels=[0.0,0.0,0.0],sigma_tuple=[0.0,0.0,0.0],zlabel=-1):
 
 
 	b = b*1.0
 	g = g*1.0
 	r = r*1.0
 
-	if fwhm_pixels > 1.0e-5:
+	if fwhm_pixels[0] > 1.0e-5:
 		sR=np.zeros_like(r) ; sG = np.zeros_like(g) ; sB = np.zeros_like(b)
 		fwhm = fwhm_pixels #pixels, 0.5kpc/pixel
 		sigma = fwhm/(2.0*math.sqrt(2.0*math.log(2.0)))
-		resR = sp.ndimage.filters.gaussian_filter(r,sigma,output=sR)
-		resG = sp.ndimage.filters.gaussian_filter(g,sigma,output=sG)
-		resB = sp.ndimage.filters.gaussian_filter(b,sigma,output=sB)
+		resR = sp.ndimage.filters.gaussian_filter(r,sigma[2],output=sR)
+		resG = sp.ndimage.filters.gaussian_filter(g,sigma[1],output=sG)
+		resB = sp.ndimage.filters.gaussian_filter(b,sigma[0],output=sB)
 
 		b = sB
 		g = sG

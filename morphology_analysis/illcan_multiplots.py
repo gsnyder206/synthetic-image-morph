@@ -154,7 +154,8 @@ def do_masshistory(sk,sfid,cam,alph=0.2,Q=5.0,ckpc=50.0,lab='',subdir=None,relpa
             fn=fn1
         else:
             fn=os.path.join(relpath,fn1)
-            
+
+    print(sk,sfid,cam,alph,Q)
     masshistory.masshistory(sk,sfid,camnum=cam,size=6.0,alph=alph,
                             Q=Q,sb='SB25',gyrbox=False,ckpc=ckpc,Npix=None,
                             trange=[-0.71,1.01],savefile=fn,**kwargs)  

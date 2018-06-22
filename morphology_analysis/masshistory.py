@@ -15,6 +15,7 @@ import astropy.units as u
 import showgalaxy
 import illcan_multiplots as icmp
 import warnings
+from matplotlib import rc
 
 
 ilh = 0.704
@@ -75,8 +76,36 @@ illcos.redshifts = np.asarray([  4.67730470e+01,   4.45622040e+01,   4.24536740e
          1.52748770e-01,   1.41876200e-01,   1.25759330e-01,
          1.09869940e-01,   9.94018030e-02,   8.38844310e-02,
          7.36613850e-02,   5.85073230e-02,   4.85236300e-02,
-         3.37243720e-02,   2.39744280e-02,   9.52166700e-03,
-                              0.00])
+         3.37243720e-02,   2.39744280e-02,   9.52166700e-03,           0.00])
+
+
+def multicolor_ylabel(ax,list_of_strings,list_of_colors,axis='x',anchorpad=0,**kw):
+    """this function creates axes labels with multiple colors
+    ax specifies the axes object where the labels should be drawn
+    list_of_strings is a list of all of the text items
+    list_if_colors is a corresponding list of colors for the strings
+    axis='x', 'y', or 'both' and specifies which label(s) should be drawn"""
+    from matplotlib.offsetbox import AnchoredOffsetbox, TextArea, HPacker, VPacker
+
+    # x-axis label
+    if axis=='x' or axis=='both':
+        boxes = [TextArea(text, textprops=dict(color=color, ha='left',va='bottom',**kw)) 
+                    for text,color in zip(list_of_strings,list_of_colors) ]
+        xbox = HPacker(children=boxes,align="center",pad=0, sep=5)
+        anchored_xbox = AnchoredOffsetbox(loc=3, child=xbox, pad=anchorpad,frameon=False,bbox_to_anchor=(0.2, -0.09),
+                                          bbox_transform=ax.transAxes, borderpad=0.)
+        ax.add_artist(anchored_xbox)
+
+    # y-axis label
+    if axis=='y' or axis=='both':
+        boxes = [TextArea(text, textprops=dict(color=color, ha='left',va='bottom',rotation=90,**kw)) 
+                     for text,color in zip(list_of_strings[::-1],list_of_colors[::-1]) ]
+        ybox = VPacker(children=boxes,align="center", pad=0, sep=5)
+        anchored_ybox = AnchoredOffsetbox(loc=3, child=ybox, pad=anchorpad, frameon=False, bbox_to_anchor=(-0.25, 0.2), 
+                                          bbox_transform=ax.transAxes, borderpad=0.)
+        ax.add_artist(anchored_ybox)
+
+    return
 
 illcos.ages = np.asarray( illcos.age(illcos.redshifts) )
 
@@ -118,7 +147,7 @@ def rftimehelper(axi,ts,te,ys,yw,s,fs=16):
     return
 
 
-def masshistory(snapkey,subfindID,camnum=0,basepath='/astro/snyder_lab2/Illustris/Illustris-1',size=2,trange=[-1.5,1.5],gyrbox=True,radeff=0.2,savefile=None,do_bh=False,plot_rfs=False,**kwargs):
+def masshistory(snapkey,subfindID,camnum=0,basepath='/astro/snyder_lab2/Illustris/Illustris-1',size=2,trange=[-1.5,1.5],gyrbox=True,radeff=0.2,savefile=None,do_bh=False,plot_rfs=False,do_mergers=True,annotation=None,label_redshift=False,bhtime=None,**kwargs):
     snapnum = snapkey[-3:]
     this_snap_int = np.int64(snapnum)
 
@@ -145,9 +174,8 @@ def masshistory(snapkey,subfindID,camnum=0,basepath='/astro/snyder_lab2/Illustri
     ml,=axi.plot(times-time_now,np.log10(mstar),color='black',lw=4.0)
 
     if do_bh is True:
-        bh,=axi.plot(times[bhm_msun > 0]-time_now,np.log10(bhm_msun[bhm_msun > 0]*2.0e2))
+        bh,=axi.plot(times[bhm_msun > 0]-time_now,np.log10(bhm_msun[bhm_msun > 0]*2.0e2),color='DodgerBlue',lw=4.0)
 
-    
     axi.plot([0.0,0.0],[6,15],marker=None,linestyle='solid',color='SlateGray',linewidth=2.0)
 
     '''
@@ -157,13 +185,15 @@ def masshistory(snapkey,subfindID,camnum=0,basepath='/astro/snyder_lab2/Illustri
     '''
 
 
+    if do_mergers is True:
+        majm1,=axi.plot([time_lastmajor-time_now],[np.interp(time_lastmajor,times,np.log10(mstar))],marker='o',markeredgecolor='None',markerfacecolor='Red',markersize=24,linestyle='None')
+        majm2,=axi.plot([time_nextmajor-time_now],[np.interp(time_nextmajor,times,np.log10(mstar))],marker='o',markeredgecolor='None',markerfacecolor='Red',markersize=24,linestyle='None')
+    
+        minm1,=axi.plot([time_lastminor-time_now],[np.interp(time_lastminor,times,np.log10(mstar))],marker='o',markeredgecolor='Red',markerfacecolor='White',markersize=12,linestyle='None')
+        minm2,=axi.plot([time_nextminor-time_now],[np.interp(time_nextminor,times,np.log10(mstar))],marker='o',markeredgecolor='Red',markerfacecolor='White',markersize=12,linestyle='None')
 
-    majm1,=axi.plot([time_lastmajor-time_now],[np.interp(time_lastmajor,times,np.log10(mstar))],marker='o',markeredgecolor='None',markerfacecolor='Red',markersize=24,linestyle='None')
-    majm2,=axi.plot([time_nextmajor-time_now],[np.interp(time_nextmajor,times,np.log10(mstar))],marker='o',markeredgecolor='None',markerfacecolor='Red',markersize=24,linestyle='None')
-    
-    minm1,=axi.plot([time_lastminor-time_now],[np.interp(time_lastminor,times,np.log10(mstar))],marker='o',markeredgecolor='Red',markerfacecolor='White',markersize=12,linestyle='None')
-    minm2,=axi.plot([time_nextminor-time_now],[np.interp(time_nextminor,times,np.log10(mstar))],marker='o',markeredgecolor='Red',markerfacecolor='White',markersize=12,linestyle='None')
-    
+    if bhtime is not None:
+        axi.plot([bhtime-time_now],[np.interp(bhtime,times[bhm_msun > 0],np.log10(bhm_msun[bhm_msun > 0]*2.0e2))],marker='o',markeredgecolor='None',markerfacecolor='DodgerBlue',markersize=24,linestyle='None')
     
     #majm1,=axi.plot([time_lastmajor-time_now,time_lastmajor-time_now],[8,13],marker=None,linestyle='solid',color='Red',linewidth=4.0)
     #minm1,=axi.plot([time_lastminor-time_now,time_lastminor-time_now],[8,13],marker=None,linestyle='dotted',color='Red',linewidth=4.0)
@@ -176,7 +206,9 @@ def masshistory(snapkey,subfindID,camnum=0,basepath='/astro/snyder_lab2/Illustri
     else:
         axi.legend((ml,majm,minm),['$log_{10} M_* (t)$','last major','last minor'],loc='upper left',fontsize=18)
     '''
-    axi.legend((majm1,minm1),['$M_{2}/M_{1} \geq 0.25$','$0.25 \geq M_{2}/M_{1} \geq 0.1$'],loc='upper left', fontsize=18)
+
+    if do_mergers is True:
+        axi.legend((majm1,minm1),['$M_{2}/M_{1} \geq 0.25$','$0.25 \geq M_{2}/M_{1} \geq 0.1$'],loc='upper left', fontsize=18)
     
     axi.set_xlim(trange[0],trange[1])
     inrange=np.where(np.logical_and(times-time_now > trange[0], times-time_now <= trange[1]))[0]
@@ -208,22 +240,37 @@ def masshistory(snapkey,subfindID,camnum=0,basepath='/astro/snyder_lab2/Illustri
         rftimehelper(axi,ts_win500,te_win500,yb+2*yd,yd,'+/-250Myr',fs=14)
 
 
-    ylim_lo=np.log10(np.min(mstar[inrange])/2.0)
-    ylim_hi=np.log10(np.max(mstar[inrange])*2.0)
-
+    if do_bh is False:
+        ylim_lo=np.log10(np.min(mstar[inrange])/2.0)
+        ylim_hi=np.log10(np.max(mstar[inrange])*2.0)
+    else:
+        ylim_lo=np.log10(np.min(200.0*bhm_msun[inrange][bhm_msun[inrange] > 0])/1.5)
+        ylim_hi=np.log10(np.max(mstar[inrange])*8.0)
+                         
     ylim_lo=max([6.0,ylim_lo])
     ylim_hi=min([ylim_hi,13.0])
     axi.set_ylim(ylim_lo,ylim_hi)
 
-    shade=patches.Rectangle((-0.25,ylim_lo),0.50,ylim_hi-ylim_lo,color='Silver',alpha=0.5,zorder=1)
-    axi.add_patch(shade)
+    if annotation is not None:
+        axi.annotate(annotation,(0.0,ylim_hi-0.05*(ylim_hi-ylim_lo)),xycoords='data',fontsize=25,ha='center',va='top',bbox=dict(boxstyle='round', fc="white", ec="DodgerBlue", lw=2.0))
+    
+
+    
+    if do_mergers is True:
+        shade=patches.Rectangle((-0.25,ylim_lo),0.50,ylim_hi-ylim_lo,color='Silver',alpha=0.5,zorder=1)
+        axi.add_patch(shade)
 
     
     ls = 25
     axi.set_xlabel('$t-t_{obs} (Gyr)$',size=ls)
-    axi.set_ylabel('$M_* (t)$',size=ls)
+    if do_bh is False:
+        axi.set_ylabel('$M_* (t)$',size=ls)
+    else:
+        multicolor_ylabel(axi,('$M_*$     ','$200\ M_{BH}$'),('black','blue'),axis='y',size=ls+5,weight='bold')
+        #axi.set_ylabel('$M_*$,'+r' \textcolor{blue}{$200M_{BH}$}',size=ls)
+        
     axi.tick_params(axis='both', which='major', labelsize=ls)
-    axi.locator_params(nbins=5,prune='both')
+    axi.locator_params(nbins=4,prune='both')
 
     #image(s?)
     axi2 = fig.add_subplot(1,2,2)
@@ -246,8 +293,13 @@ def masshistory(snapkey,subfindID,camnum=0,basepath='/astro/snyder_lab2/Illustri
             npix=400
     '''
     
-    axi2 = showgalaxy.showgalaxy(axi2,snapkey,subfindID,camstr,**kwargs)
+    axi2,rgbt,pixas,headers_rgb = showgalaxy.showgalaxy(axi2,snapkey,subfindID,camstr,**kwargs)
 
+    
+    if label_redshift is True:
+        axi2.annotate('z= {:5.2f}'.format(gsu.redshift_from_snapshot(int(snapkey[-3:]))),(0.5,0.85),ha='center',xycoords='axes fraction', color='white', fontsize=ls)
+        axi2.annotate('AB mag = {:4.2f}'.format(headers_rgb[0]['SUNAPMAG']),(0.5,0.10),ha='center',xycoords='axes fraction', color='white', fontsize=ls)
+        
     if savefile is not None:
         fig.savefig(savefile,dpi=500)
     else:
