@@ -47,6 +47,7 @@ import masshistory
 from sklearn.ensemble import RandomForestClassifier
 import seaborn as sns
 import merge_field
+import medianstats_bootstrap as msbs
 
 ilh = 0.704
 illcos = astropy.cosmology.FlatLambdaCDM(H0=70.4,Om0=0.2726,Ob0=0.0456)
@@ -146,7 +147,7 @@ def do_masshistory(sk,sfid,cam,alph=0.2,Q=5.0,ckpc=50.0,lab='',subdir=None,relpa
         fn=None
     else:
         if subdir is None:
-            fn1='masshistory/'+lab+'_masshistory_'+sk+'_sh{:}_cam{:}.svg'.format(sfid,cam)#multi merger
+            fn1='masshistory/'+lab+'_masshistory_'+sk+'_sh{:}_cam{:}.jpg'.format(sfid,cam)#multi merger
         else:
             fn1='masshistory/'+subdir+'/'+lab+'_masshistory_'+sk+'_sh{:}_cam{:}.pdf'.format(sfid,cam)#multi merger
 
@@ -228,7 +229,8 @@ def do_mass_history_examples():
 
 
 def simple_random_forest(msF,merF,snap_key,fil_key,fil2_key=None,paramsetting='medium',rfiter=3,rf_masscut=10.0**(10.5),labelfunc='label_merger1',
-                         n_estimators=2000,max_leaf_nodes=-1,max_features=4,balancetrain=True,skip_mi=False,trainfrac=0.67, traininglabel='mergerFlag',skipcalc=False,seed=0,**kwargs):
+                         n_estimators=2000,max_leaf_nodes=-1,max_features=4,balancetrain=True,skip_mi=False,trainfrac=0.67, traininglabel='mergerFlag',
+                         skipcalc=False,seed=0,force_balanced=False,**kwargs):
 
     sk=snap_key
     fk=fil_key
@@ -253,7 +255,8 @@ def simple_random_forest(msF,merF,snap_key,fil_key,fil2_key=None,paramsetting='m
     
     size = np.log10(rpet*pix_arcsec*scale)
 
-
+    mag=get_all_morph_val(msF,sk,fk,'MAG')
+    
     
     snpix= get_all_morph_val(msF,sk,fk,'SNPIX')
     if fil2_key is not None:
@@ -267,6 +270,7 @@ def simple_random_forest(msF,merF,snap_key,fil_key,fil2_key=None,paramsetting='m
         Dstat_2 = get_all_morph_val(msF,sk,fk2,'MID2_DSTAT')
         rpet_2 = get_all_morph_val(msF,sk,fk2,'RP')
         pix_arcsec2=get_all_morph_val(msF,sk,fk2,'PIX_ARCSEC')
+        mag_2=get_all_morph_val(msF,sk,fk2,'MAG')
 
         size_2 = np.log10(rpet_2*pix_arcsec2*scale)
         
@@ -310,7 +314,7 @@ def simple_random_forest(msF,merF,snap_key,fil_key,fil2_key=None,paramsetting='m
                                    r'SN/pix$_{'+fk2[-5:]+'}$'])            
         else:
             cols=['dGM20','fGM20','asym','Dstat','cc','dGM20_2','fGM20_2','asym_2','Dstat_2','cc_2']
-            rflabel='twofilters'
+            rflabel='twofiltersnewf'
             plotlabels=np.asarray([r'$S(G,M_{20})_{'+fk[-5:]+'}$',
                                    r'$F(G,M_{20})_{'+fk[-5:]+'}$',
                                    r'$A_{'+fk[-5:]+'}$',
@@ -397,7 +401,8 @@ def simple_random_forest(msF,merF,snap_key,fil_key,fil2_key=None,paramsetting='m
         rf_dict['size']=size[gi] #already log kpc
         rf_dict['Dstat']=np.log10(1.0+Dstat[gi])   #NOTE log quantity in paramsmod2
         rf_dict['cc']=cc[gi]
-
+        rf_dict['mag']=mag[gi]
+        
         S_GM20_2 = SGM20(gini_2[gi],m20_2[gi])
         F_GM20_2 = FGM20(gini_2[gi],m20_2[gi])
         
@@ -410,6 +415,7 @@ def simple_random_forest(msF,merF,snap_key,fil_key,fil2_key=None,paramsetting='m
         rf_dict['Dstat_2']=np.log10(1.0+Dstat_2[gi])   #NOTE log quantity in paramsmod2
         rf_dict['cc_2']=cc_2[gi]
         rf_dict['snp_2']=snpix_2[gi]
+        rf_dict['mag2']=mag_2[gi]
 
         rf_dict['IM2FILE']=f2k_imfile[gi]
         
@@ -472,6 +478,21 @@ def simple_random_forest(msF,merF,snap_key,fil_key,fil2_key=None,paramsetting='m
     df=pandas.DataFrame(rf_dict)
 
 
+    #other options desired:  1) balanced train and test set;  2) balanced train, normal test
+
+    if force_balanced is True:
+        nprand.seed(seed=seed)
+        
+        df_m=df[df['mergerFlag']==True]
+        df_nm=df[df['mergerFlag']==False]
+        print(len(df_nm.index),len(df_m.index))
+        select_i=nprand.choice(df_nm.index,size=len(df_m.index),replace=True)
+
+
+        df=pandas.concat((df_m.ix[df_m.index],df_nm.ix[select_i]))
+        df=df.reindex()
+        
+        print(df,df.shape)
     
     trainDF, testDF = PyML.trainingSet(df,training_fraction=trainfrac,seed=seed)
 
@@ -483,10 +504,17 @@ def simple_random_forest(msF,merF,snap_key,fil_key,fil2_key=None,paramsetting='m
 
     if skipcalc==True:        
         return rflabel,cols,plotlabels,0.0
-    
-    rfc = RandomForestClassifier(n_jobs=-1,oob_score=True,n_estimators=n_estimators,max_leaf_nodes=max_leaf_nodes,
-                                 max_features=max_features)  #,class_weight='balanced_subsample'
 
+    if labelfunc=='label_merger_window500_both_new3':
+        rfc = RandomForestClassifier(n_jobs=-1,oob_score=True,n_estimators=n_estimators,max_leaf_nodes=max_leaf_nodes,
+                                     max_features=max_features,class_weight='balanced_subsample')        
+    else:
+        rfc = RandomForestClassifier(n_jobs=-1,oob_score=True,n_estimators=n_estimators,max_leaf_nodes=max_leaf_nodes,
+                                     max_features=max_features) #,class_weight='balanced_subsample')
+
+
+    #note:  using balanced_subsample gives broadly similar ROC results but scrambles some of the rate results (i.e. not as smooth in inferred merger fraction)
+    
 
     rfc.fit(train,labels) 
             
@@ -756,6 +784,7 @@ def simple_random_forest(msF,merF,snap_key,fil_key,fil2_key=None,paramsetting='m
 
     rf_mass = np.log10( df['Mstar_Msun'].values)
 
+    '''
     ssfr_filen = 'rf_plots/'+labelfunc+'/'+rflabel+'_'+sk+'_'+fk+'_ssfr.pdf'
     f7 = pyplot.figure(figsize=(5.5,3.0), dpi=300)
     pyplot.subplots_adjust(left=0.17, right=0.95, bottom=0.17, top=0.95,wspace=0.0,hspace=0.0)
@@ -819,7 +848,7 @@ def simple_random_forest(msF,merF,snap_key,fil_key,fil2_key=None,paramsetting='m
 
     f7.savefig(ssfr_filen,dpi=300)
     pyplot.close(f7)     
-
+    '''
 
 
     
@@ -874,6 +903,74 @@ def simple_random_forest(msF,merF,snap_key,fil_key,fil2_key=None,paramsetting='m
 
 
 
+    
+    prob_filen = 'rf_plots/'+labelfunc+'/'+rflabel+'_'+sk+'_'+fk+'_metricvmass.pdf'
+    f7 = pyplot.figure(figsize=(3.5,2.0), dpi=300)
+    pyplot.subplots_adjust(left=0.22, right=0.98, bottom=0.22, top=0.98,wspace=0.0,hspace=0.0)
+    sp=10
+
+
+    axi4=f7.add_subplot(1,1,1)
+    axi4.locator_params(nbins=5,prune='both')
+
+    mass_bin_le=[10.5,10.7,10.9,11.1,11.3,11.6,12.0]
+    mass_bin_re=[10.7,10.9,11.1,11.3,11.6,12.0,12.5]
+
+    nmb=len(mass_bin_le)
+    for i in range(nmb):
+        wmi=np.where(np.logical_and(rf_mass>=mass_bin_le[i],rf_mass<mass_bin_re[i]))
+        #TPR= TP/Nm
+        num_mergers_thisbin=np.sum(rf_flag[wmi])
+        #print(num_mergers_thisbin)
+        tp_bin=np.sum(np.logical_and(rf_class[wmi]==True,rf_flag[wmi]==True))
+        tpr_mass=tp_bin/num_mergers_thisbin
+        tp_plus_fp_bin=np.sum(rf_class[wmi]==True)
+        ppv_mass=tp_bin/tp_plus_fp_bin
+        
+        #print(tpr_mass, mass_bin_le[i])
+        axi4.plot((mass_bin_re[i]+mass_bin_le[i])/2.0,tpr_mass,'o',markersize=8,markerfacecolor='Orange',markeredgecolor='Orange')
+        axi4.plot((mass_bin_re[i]+mass_bin_le[i])/2.0,ppv_mass,'^',markersize=8,markerfacecolor='Orange',markeredgecolor='Orange')
+
+
+    axi4.legend(['TPR','PPV'],loc='lower center',ncol=3,fontsize=8,handletextpad=0)
+    
+    axi4.set_xlim(10.4,12.2)
+    axi4.set_ylim(0.015,1.05)
+    axi4.set_xlabel(r'log$_{10} M_*/M_{\odot}$')
+    axi4.set_ylabel(r'value')
+    axi4.tick_params(labelsize=sp)
+    
+    
+    f7.savefig(prob_filen,dpi=300)
+    pyplot.close(f7)     
+
+    #exit()
+
+
+    
+    prob_filen = 'rf_plots/'+labelfunc+'/'+rflabel+'_'+sk+'_'+fk+'_magvmass.pdf'
+    f7 = pyplot.figure(figsize=(3.5,3.0), dpi=300)
+    pyplot.subplots_adjust(left=0.22, right=0.98, bottom=0.18, top=0.98,wspace=0.0,hspace=0.0)
+    sp=10
+
+
+    axi4=f7.add_subplot(1,1,1)
+    axi4.locator_params(nbins=5,prune='both')
+
+
+    axi4.set_xlim(10.4,12.2)
+    axi4.set_ylim(28.0,20.0)
+    axi4.set_xlabel(r'log$_{10} M_*/M_{\odot}$')
+    axi4.set_ylabel(r'$m_{AB}$(F160W)')
+    axi4.tick_params(labelsize=sp)
+
+    axi4.plot(rf_mass,df['mag2'].values,'ok',markersize=4)
+    
+    f7.savefig(prob_filen,dpi=300)
+    pyplot.close(f7)     
+
+    
+
 
     #saves the output as a file
     if not os.path.lexists('rfoutput'):
@@ -886,9 +983,9 @@ def simple_random_forest(msF,merF,snap_key,fil_key,fil2_key=None,paramsetting='m
         
     #is this the right df?
     #labels['mergerFlag']=df['mergerFlag']
-    prob_df['mergerFlag']=df['mergerFlag']
+    prob_df['mergerFlag']=df['mergerFlag'].values
     #labels['SubfindID']=df['SubfindID']
-    prob_df['SubfindID']=df['SubfindID']
+    prob_df['SubfindID']=df['SubfindID'].values
     prob_df['BestThresh']=best_th*np.ones_like(rf_probs)
                 
     df.to_pickle('rfoutput/'+labelfunc+'/'+rflabel+'_data_{}_{}_{}.pkl'.format(sk,fk,seed))
@@ -978,7 +1075,27 @@ def simple_classifier_stats(classifications,labels):
     
     return completeness, ppv, tpr, fpr
 
-def FGM20(gini,m20):
+def FGM20(gini,m20,a=-0.14,b=1.0,x0=-1.75,y0=0.533,s=5.0):
+
+    m = -1.0*a
+    c = -1.0*(y0 - m*x0)
+
+    gini_f = gini*1.0
+    m20_f = m20*1.0
+
+    d = np.abs(a*m20_f + b*gini_f + c)/((a**2 + b**2)**0.5)
+    si = np.where(gini_f < -1.0*(a/b)*m20_f - (c/b))[0]
+
+
+    d[si] = -1.0*d[si]
+
+    f = d*1.0*s
+
+    return f
+
+
+#old version got copied here somehow??
+'''
     a = -0.14
     b = 1.0
     c = -0.80
@@ -996,6 +1113,10 @@ def FGM20(gini,m20):
 
 
     return f
+'''
+
+
+
 
 
 def SGM20(gini,m20):
@@ -1156,6 +1277,101 @@ def label_merger_window500_both_new(merF,sk):
 
     
     return label_boolean,merger_number,t_lastMaj,t_lastMin,t_nextMaj,t_nextMin
+
+
+
+
+def label_merger_window500_both_new2(merF,sk):
+    
+    return label_merger_window500_both_new(merF,sk)
+
+
+
+
+def label_merger_window500_both_new3(merF,sk):
+    return label_merger_window500_both_new(merF,sk)
+
+
+def label_merger_forward250_both_new(merF,sk):
+    this_NumMajorMergersLast250Myr = get_mergerinfo_val(merF,sk,'this_NumMajorMergersLast250Myr')
+    this_NumMinorMergersLast250Myr = get_mergerinfo_val(merF,sk,'this_NumMinorMergersLast250Myr')
+    
+    this_snapNextMajorMerger = get_mergerinfo_val(merF,sk,'this_SnapNumNextMajorMerger')
+    this_snapNextMinorMerger = get_mergerinfo_val(merF,sk,'this_SnapNumNextMinorMerger')
+
+    this_snapLastMajorMerger = get_mergerinfo_val(merF,sk,'this_SnapNumLastMajorMerger')
+    this_snapLastMinorMerger = get_mergerinfo_val(merF,sk,'this_SnapNumLastMinorMerger')
+        
+    latest_NumMajorMergersLast500Myr = get_mergerinfo_val(merF,sk,'this_NumMajorMergersLast500Myr')
+    latest_NumMinorMergersLast500Myr = get_mergerinfo_val(merF,sk,'this_NumMinorMergersLast500Myr')
+
+    merger_number=latest_NumMajorMergersLast500Myr + latest_NumMinorMergersLast500Myr  #actually "this"
+    
+    sk_t = gsu.age_at_snap(int(sk[-3:]))
+
+    snaplist=np.arange(0,136,1)
+    agelist=np.zeros_like(snaplist*1.0)
+    
+    for sn in snaplist:
+        agelist[sn]=gsu.age_at_snap(sn)
+
+    t_lastMaj=np.where(this_snapLastMajorMerger != -1, agelist[this_snapLastMajorMerger], agelist[this_snapLastMajorMerger]*0.0-100.0)
+    t_lastMin=np.where(this_snapLastMinorMerger != -1, agelist[this_snapLastMinorMerger], agelist[this_snapLastMinorMerger]*0.0-100.0)
+    t_nextMaj=np.where(this_snapNextMajorMerger != -1, agelist[this_snapNextMajorMerger], agelist[this_snapNextMajorMerger]*0.0+100.0)
+    t_nextMin=np.where(this_snapNextMinorMerger != -1, agelist[this_snapNextMinorMerger], agelist[this_snapNextMinorMerger]*0.0+100.0)
+    
+    label_boolean = np.logical_or(np.logical_or(np.logical_or((t_lastMaj > sk_t-0.0),
+                                                              (t_lastMin > sk_t-0.0)),
+                                                (t_nextMaj <= sk_t+0.25),),
+                                  (t_nextMin <= sk_t+0.25 ))
+
+    #for i in np.arange(100):
+    #    print(merger_number[i],t_lastMaj[i],t_lastMin[i],t_nextMaj[i],t_nextMin[i],label_boolean[i],sk_t)
+
+    
+    return label_boolean,merger_number,t_lastMaj,t_lastMin,t_nextMaj,t_nextMin
+
+
+
+def label_merger_past250_both_new(merF,sk):
+    this_NumMajorMergersLast250Myr = get_mergerinfo_val(merF,sk,'this_NumMajorMergersLast250Myr')
+    this_NumMinorMergersLast250Myr = get_mergerinfo_val(merF,sk,'this_NumMinorMergersLast250Myr')
+    
+    this_snapNextMajorMerger = get_mergerinfo_val(merF,sk,'this_SnapNumNextMajorMerger')
+    this_snapNextMinorMerger = get_mergerinfo_val(merF,sk,'this_SnapNumNextMinorMerger')
+
+    this_snapLastMajorMerger = get_mergerinfo_val(merF,sk,'this_SnapNumLastMajorMerger')
+    this_snapLastMinorMerger = get_mergerinfo_val(merF,sk,'this_SnapNumLastMinorMerger')
+        
+    latest_NumMajorMergersLast500Myr = get_mergerinfo_val(merF,sk,'this_NumMajorMergersLast500Myr')
+    latest_NumMinorMergersLast500Myr = get_mergerinfo_val(merF,sk,'this_NumMinorMergersLast500Myr')
+
+    merger_number=latest_NumMajorMergersLast500Myr + latest_NumMinorMergersLast500Myr  #actually "this"
+    
+    sk_t = gsu.age_at_snap(int(sk[-3:]))
+
+    snaplist=np.arange(0,136,1)
+    agelist=np.zeros_like(snaplist*1.0)
+    
+    for sn in snaplist:
+        agelist[sn]=gsu.age_at_snap(sn)
+
+    t_lastMaj=np.where(this_snapLastMajorMerger != -1, agelist[this_snapLastMajorMerger], agelist[this_snapLastMajorMerger]*0.0-100.0)
+    t_lastMin=np.where(this_snapLastMinorMerger != -1, agelist[this_snapLastMinorMerger], agelist[this_snapLastMinorMerger]*0.0-100.0)
+    t_nextMaj=np.where(this_snapNextMajorMerger != -1, agelist[this_snapNextMajorMerger], agelist[this_snapNextMajorMerger]*0.0+100.0)
+    t_nextMin=np.where(this_snapNextMinorMerger != -1, agelist[this_snapNextMinorMerger], agelist[this_snapNextMinorMerger]*0.0+100.0)
+    
+    label_boolean = np.logical_or(np.logical_or(np.logical_or((t_lastMaj >= sk_t-0.25),
+                                                              (t_lastMin >= sk_t-0.25)),
+                                                (t_nextMaj <= sk_t+0.0),),
+                                  (t_nextMin <= sk_t+0.0 ))
+
+    #for i in np.arange(100):
+    #    print(merger_number[i],t_lastMaj[i],t_lastMin[i],t_nextMaj[i],t_nextMin[i],label_boolean[i],sk_t)
+
+    
+    return label_boolean,merger_number,t_lastMaj,t_lastMin,t_nextMaj,t_nextMin
+
 
 
 def label_merger_window500_major_new(merF,sk):
@@ -1389,7 +1605,9 @@ def pc_dict_from_candels(df,lab='_I'):
     return pc,pcd
 
 
-def make_rf_evolution_plots(snap_keys_use,fil_keys_use,dz1,dz2,cols,plotlabels,rflabel='paramsmod',rf_labelfunc='label_merger1',rf_masscut=0.0,twin=0.5,candels_stuff=None,style='fix',seed=0):
+def make_rf_evolution_plots(snap_keys_use,fil_keys_use,dz1,dz2,cols,plotlabels,
+                            rflabel='paramsmod',rf_labelfunc='label_merger1',
+                            rf_masscut=0.0,twin=0.5,candels_stuff=None,style='fix',seed=0):
 
     labelfunc=rf_labelfunc
 
@@ -1426,6 +1644,10 @@ def make_rf_evolution_plots(snap_keys_use,fil_keys_use,dz1,dz2,cols,plotlabels,r
     f7 = pyplot.figure(figsize=(3.5,3.2), dpi=300)
     pyplot.subplots_adjust(left=0.22, right=0.98, bottom=0.15, top=0.96,wspace=0.0,hspace=0.0)
 
+    fmlz_filen = 'rf_plots/'+labelfunc+'/'+rflabel+'_'+style+'_merger_stats_lightz.pdf'
+    f8 = pyplot.figure(figsize=(3.5,3.2), dpi=300)
+    pyplot.subplots_adjust(left=0.22, right=0.98, bottom=0.15, top=0.96,wspace=0.0,hspace=0.0)
+
     
 
     labs=11
@@ -1436,7 +1658,7 @@ def make_rf_evolution_plots(snap_keys_use,fil_keys_use,dz1,dz2,cols,plotlabels,r
     axi.locator_params(nbins=7,prune='both')
 
     axi.set_xlabel('redshift')
-    axi.set_ylabel('value')
+    axi.set_ylabel('classifier metric')
     
     axi2 = f2.add_subplot(1,1,1)
     axi2.set_xlim(0.2,4.5)
@@ -1473,6 +1695,16 @@ def make_rf_evolution_plots(snap_keys_use,fil_keys_use,dz1,dz2,cols,plotlabels,r
     
     axi7.set_xlabel(r'$cosmic\ time$ [Gyr]',size=labs)
     axi7.set_ylabel(r'$galaxy\ merger\ rate$ '+'$[Gyr^{-1}]$',size=labs)
+
+
+    axi8 = f8.add_subplot(1,1,1)
+    axi8.set_xlim(0.1,4.3)
+    axi8.set_ylim(3.5e-2,15.0)
+    axi8.tick_params(axis='both',which='both',labelsize=labs)
+    axi8.locator_params(nbins=7,prune='both')
+    
+    axi8.set_xlabel(r'redshift',size=labs)
+    axi8.set_ylabel(r'$galaxy\ merger\ rate$ '+'$[Gyr^{-1}]$',size=labs)
 
     
     #fakez=np.linspace(0.5,5.0,50)
@@ -1698,10 +1930,13 @@ def make_rf_evolution_plots(snap_keys_use,fil_keys_use,dz1,dz2,cols,plotlabels,r
         twin=0.5
         axi7.semilogy(illcos.age(redshift).value,(1.0/twin)*candels_f_rf*mergers_per_true*ppv[best_i]/tpr[best_i],'ok',markersize=10)
 
+        axi8.semilogy(redshift,(1.0/twin)*candels_f_rf*mergers_per_true*ppv[best_i]/tpr[best_i],'ok',markersize=10)
+
         #axi7.semilogy(illcos.age(redshift).value,(1.0/twin)*candels_f_a*mergers_per_true*asym_ppv/asym_tpr,'o',color='Gray',markersize=3)
 
         axi7.annotate(r'$M_2/M_1 > 0.1$',(0.5,0.75),xycoords='axes fraction', fontsize=11)
-        
+        #axi8.annotate(r'$M_2/M_1 > 0.1$',(0.5,0.75),xycoords='axes fraction', fontsize=11)
+
         gfs17_times=np.asarray([2.5,3.1,3.95,4.55,8.2])
         gfs17_redshifts=np.zeros_like(gfs17_times)
         
@@ -1711,6 +1946,7 @@ def make_rf_evolution_plots(snap_keys_use,fil_keys_use,dz1,dz2,cols,plotlabels,r
         print('RATES', gfs17_rates, gfs17_redshifts)
         
         axi7.semilogy(gfs17_times,gfs17_rates,'^',color='Purple',markersize=7)
+        axi8.semilogy(gfs17_redshifts,gfs17_rates,'^',color='Purple',markersize=7)
         
         
         if sk=='snapshot_103':
@@ -1736,13 +1972,13 @@ def make_rf_evolution_plots(snap_keys_use,fil_keys_use,dz1,dz2,cols,plotlabels,r
             dgm_fractional_error_sq_H =0.0
 
         axi6.semilogy(redshift,rf_fractional_error_sq**0.5,'s',markersize=symsiz,color=tc)
-        axi6.semilogy(redshift,asym_fractional_error_sq**0.5,'o',markersize=symsiz/3.0,color='Gray',markerfacecolor='None')
-        axi6.semilogy(redshift,dgm_fractional_error_sq**0.5,'^',markersize=symsiz/3.0,color='Green',markerfacecolor='None')
+        axi6.semilogy(redshift,asym_fractional_error_sq**0.5,'o',markersize=symsiz/2.0,color='Gray',markerfacecolor='None')
+        axi6.semilogy(redshift,dgm_fractional_error_sq**0.5,'^',markersize=symsiz/2.0,color='Green',markerfacecolor='None')
 
         axi6.legend(['RF classifier (I + H)','Asymmetry (I) alone', 'GMS (I) alone','Asymmetry (H) alone', 'GMS (H) alone'],loc='lower right',fontsize=8)
         
-        axi6.semilogy(redshift,asym_fractional_error_sq_H**0.5,'o',markersize=symsiz/9.0,color='Gray',markerfacecolor='None')
-        axi6.semilogy(redshift,dgm_fractional_error_sq_H**0.5,'^',markersize=symsiz/9.0,color='Green',markerfacecolor='None')
+        axi6.semilogy(redshift,asym_fractional_error_sq_H**0.5,'o',markersize=symsiz/3.0,color='Gray',markerfacecolor='Gray')
+        axi6.semilogy(redshift,dgm_fractional_error_sq_H**0.5,'^',markersize=symsiz/3.0,color='Green',markerfacecolor='Green')
         
         #if sk=='snapshot_103':
         #    axi5.legend([ 'A > 0.25','dGM > 0.1', 'RF model (thresh=0.4)',r'$f_{merge}$'],loc='lower center',fontsize=10,numpoints=1)
@@ -1763,6 +1999,8 @@ def make_rf_evolution_plots(snap_keys_use,fil_keys_use,dz1,dz2,cols,plotlabels,r
 
     vrg,=axi7.semilogy(illcos.age(np.asarray(vrg_z)).value,np.asarray(vrg_rate),linestyle='solid',color='black',linewidth=1.5)
     vrg2,=axi7.semilogy(illcos.age(np.asarray(vrg_z)).value,np.asarray(vrg_rate)*2,linestyle='dashed',color='gray',linewidth=1.5)
+    vrg,=axi8.semilogy(np.asarray(vrg_z),np.asarray(vrg_rate),linestyle='solid',color='black',linewidth=1.5)
+    vrg2,=axi8.semilogy(np.asarray(vrg_z),np.asarray(vrg_rate)*2,linestyle='dashed',color='gray',linewidth=1.5)
 
     axi7.legend((vrg,vrg2),['Rodriguez-Gomez et al. (2015)',r'$\times 2$'],loc='upper left',fontsize=9,numpoints=1)
     axi7.add_artist(first7leg)
@@ -1774,7 +2012,10 @@ def make_rf_evolution_plots(snap_keys_use,fil_keys_use,dz1,dz2,cols,plotlabels,r
     pyplot.close(f6)
     
     f7.savefig(fml_filen,dpi=300)
-    pyplot.close(f7)    
+    pyplot.close(f7)
+    
+    f8.savefig(fmlz_filen,dpi=300)
+    pyplot.close(f8)  
     return
 
 
@@ -1819,6 +2060,9 @@ def apply_sim_rf_to_data(snap_key,fil_key,cols,df1,df2,df3, best_i, dkz1=1.25,dk
         
         datacols=['GMS_I','GMF_I','ASYM_I','logD_I','CON_I','SN_PIX_I','GMS_H','GMF_H','ASYM_H','logD_H','CON_H','SN_PIX_H']
     elif rflabel=='twofilters':
+        mergedf=pandas.merge(df1,df3,on='CANDELS_ID')  #x=F814W, y=F160W
+        datacols=['GMS_I','GMF_I','ASYM_I','logD_I','CON_I','GMS_H','GMF_H','ASYM_H','logD_H','CON_H']
+    elif rflabel=='twofiltersnewf':
         mergedf=pandas.merge(df1,df3,on='CANDELS_ID')  #x=F814W, y=F160W
         datacols=['GMS_I','GMF_I','ASYM_I','logD_I','CON_I','GMS_H','GMF_H','ASYM_H','logD_H','CON_H']
 
@@ -1966,7 +2210,7 @@ def plot_rf_grid(f6,rf_data,rfprob,rf_class,rf_flag,cols,plotlabels=None,rfthres
 
 
 def make_merger_images(msF,merF,snap_key,fil_key,fil2_key=None,bd='/astro/snyder_lab/Illustris_CANDELS/Illustris-1_z1_images_bc03/',
-                       rflabel='paramsmod',rf_masscut=0.0,labelfunc='label_merger1',Npix=None,ckpc=75.0,ckpcz=None,seed=0,**kwargs):
+                       rflabel='paramsmod',rf_masscut=0.0,labelfunc='label_merger1',Npix=None,ckpc=75.0,ckpcz=None,seed=0,skip_images=False,**kwargs):
 
     j=-1
     sk=snap_key
@@ -1975,9 +2219,9 @@ def make_merger_images(msF,merF,snap_key,fil_key,fil2_key=None,bd='/astro/snyder
     
     plotdir = 'images/'+labelfunc
     if fil2_key is None:
-        plot_filen = plotdir+'/'+sk+'/'+rflabel+'_mergers_'+sk+'_'+fku
+        plot_filen_im = plotdir+'/'+sk+'/'+rflabel+'_mergers_'+sk+'_'+fku
     else:
-        plot_filen = plotdir+'/'+sk+'/'+rflabel+'_mergers_'+sk+'_'+fku+'_'+fil2_key
+        plot_filen_im = plotdir+'/'+sk+'/'+rflabel+'_mergers_'+sk+'_'+fku+'_'+fil2_key
         
     if not os.path.lexists(plotdir):
         os.mkdir(plotdir)
@@ -1994,9 +2238,7 @@ def make_merger_images(msF,merF,snap_key,fil_key,fil2_key=None,bd='/astro/snyder
     N_pix = Npix #im_npix[j]  #140
 
     
-    f1 = pyplot.figure(figsize=(float(N_columns),float(N_rows)), dpi=600)
-    pyplot.subplots_adjust(left=0.0, right=1.0, bottom=0.0, top=1.0,wspace=0.0,hspace=0.0)
-  
+
 
     #pick filter to select PC1 values
     b_fk = fku #im_fil_keys[sk]['r'][0]
@@ -2137,6 +2379,101 @@ def make_merger_images(msF,merF,snap_key,fil_key,fil2_key=None,bd='/astro/snyder
              'istart':6,'jstart':6,'N':N_each,'sk':sk,'lab':'fn'}
 
 
+
+    t_next_merger=np.minimum(rf_t_nextMaj,rf_t_nextMin)
+    gti=(t_next_merger < 15.0)
+
+    t_last_merger=np.maximum(rf_t_lastMaj,rf_t_lastMin)
+    gti2=(t_last_merger > 0.0)
+
+
+    t_fp = np.concatenate((t_next_merger[fpi*gti]-t_sk,t_last_merger[fpi*gti2]-t_sk))
+    t_fn = np.concatenate((t_next_merger[fni*gti]-t_sk,t_last_merger[fni*gti2]-t_sk))
+
+    t_tp = np.concatenate((t_next_merger[tpi*gti]-t_sk,t_last_merger[tpi*gti2]-t_sk))
+    t_tn = np.concatenate((t_next_merger[tni*gti]-t_sk,t_last_merger[tni*gti2]-t_sk))
+    
+
+    gti=(rf_t_nextMaj < 15.0)
+    gti2=(rf_t_lastMaj > 0.0)
+    
+    t_fp_maj = np.concatenate((rf_t_nextMaj[fpi*gti]-t_sk,rf_t_lastMaj[fpi*gti2]-t_sk))
+    t_fn_maj = np.concatenate((rf_t_nextMaj[fni*gti]-t_sk,rf_t_lastMaj[fni*gti2]-t_sk))
+    t_tp_maj = np.concatenate((rf_t_nextMaj[tpi*gti]-t_sk,rf_t_lastMaj[tpi*gti2]-t_sk))
+    t_tn_maj = np.concatenate((rf_t_nextMaj[tni*gti]-t_sk,rf_t_lastMaj[tni*gti2]-t_sk))
+
+    
+    kde=False ; hist=True
+    bins = np.linspace(-3.45,3.5,29)
+
+
+    plot_filen = plotdir+'/'+rflabel+'_mergertimes_'+sk+'_'+fku+'.pdf'
+    f2 = pyplot.figure(figsize=(3.5,5.0), dpi=300)
+    pyplot.subplots_adjust(left=0.12, right=0.98, bottom=0.12, top=0.98,wspace=0.0,hspace=0.0)
+    
+    ax=f2.add_subplot(211)
+
+    sns.distplot(t_fp,color='Dodgerblue',bins=bins,kde=kde,hist=hist)
+    sns.distplot(t_fn,color='Gray',bins=bins,kde=kde,hist=hist)
+
+    ax.legend(('False Positives','False Negatives'),loc='upper right',fontsize=9,title=r'$M_2/M_1 > 0.10$')
+    ax.set_xlim(-3.5,3.5) ; ax.set_ylim(0,100)
+
+    
+    ax=f2.add_subplot(212)
+    
+    sns.distplot(t_fp_maj,color='Goldenrod',bins=bins,kde=kde,hist=hist)
+    sns.distplot(t_fn_maj,color='Black',bins=bins,kde=kde,hist=hist)
+    ax.legend(('False Positives','False Negatives'),loc='upper right',fontsize=9,title=r'$M_2/M_1 > 0.25$')
+
+    
+    ax.set_xlim(-3.5,3.5) ; ax.set_ylim(0,100)
+    ax.set_xlabel(r'$t - t_{obs}$ (Gyr) of next and last mergers')
+    
+    f2.savefig(plot_filen,dpi=300)
+    pyplot.close(f2)
+
+
+    plot_filen = plotdir+'/'+rflabel+'_mergertimestrue_'+sk+'_'+fku+'.pdf'
+    f2 = pyplot.figure(figsize=(3.5,5.0), dpi=300)
+    pyplot.subplots_adjust(left=0.12, right=0.98, bottom=0.12, top=0.98,wspace=0.0,hspace=0.0)
+    
+    ax=f2.add_subplot(211)
+
+    sns.distplot(t_tp,color='Dodgerblue',bins=bins,kde=kde,hist=hist)
+    sns.distplot(t_tn,color='Gray',bins=bins,kde=kde,hist=hist)
+
+
+    print('    FWHM <|tobs - tmerger|> (TRUE POSITIVE): ', sk, msbs.MAD(t_tp)*2.355)
+    print('    FWHM <|tobs - tmerger|> (FALSE NEGATIVE): ', sk, msbs.MAD(t_fn)*2.355)
+    
+    ax.legend(('True Positives','True Negatives'),loc='upper right',fontsize=9,title=r'$M_2/M_1 > 0.10$')
+    ax.set_xlim(-1.75,1.75) ; ax.set_ylim(0,300)
+
+    
+    ax=f2.add_subplot(212)
+    
+    sns.distplot(t_tp_maj,color='Goldenrod',bins=bins,kde=kde,hist=hist)
+    sns.distplot(t_tn_maj,color='Black',bins=bins,kde=kde,hist=hist)
+    ax.legend(('True Positives','True Negatives'),loc='upper right',fontsize=9,title=r'$M_2/M_1 > 0.25$')
+
+    
+    ax.set_xlim(-1.75,1.75) ; ax.set_ylim(0,300)
+    ax.set_xlabel(r'$t - t_{obs}$ (Gyr) of next and last mergers')
+    
+    f2.savefig(plot_filen,dpi=300)
+    pyplot.close(f2)
+    
+
+    if skip_images is True:
+        return sk, None, None, None, None, None, None, None, None
+    
+
+    f1 = pyplot.figure(figsize=(float(N_columns),float(N_rows)), dpi=100)
+    pyplot.subplots_adjust(left=0.0, right=1.0, bottom=0.0, top=1.0,wspace=0.0,hspace=0.0)
+  
+    
+
     print('TP   ',sk)
     tp_id,tp_cam=plot_image_classifications(tp_dict,f1,redshift,N_rows,N_columns,Npix=Npix,ckpc=ckpc,ckpcz=ckpcz,plotdir=plotdir,**kwargs)
     print('FP   ',sk)
@@ -2161,41 +2498,15 @@ def make_merger_images(msF,merF,snap_key,fil_key,fil2_key=None,bd='/astro/snyder
     ax.annotate('TN' ,(0.25,0.07),xycoords='axes fraction',ha='center',va='center',color=thresh_color_balance_point,size=30 )
     ax.annotate('FN',(0.75,0.07),xycoords='axes fraction',ha='center',va='center',color=thresh_color_balance_point,size=30 )
                                         
-    f1.savefig(plot_filen+'.pdf',dpi=300,facecolor='Black')
-    f1.savefig(plot_filen+'.svg',dpi=300,facecolor='Black')
+    f1.savefig(plot_filen_im+'.pdf',dpi=100,facecolor='Black')
+    f1.savefig(plot_filen_im+'.svg',dpi=100,facecolor='Black')
 
     pyplot.close(f1)
 
 
     #PLOT merger timescale distros here?
 
-    plot_filen = plotdir+'/'+rflabel+'_mergertimes_'+sk+'_'+fku+'.pdf'
-    f2 = pyplot.figure(figsize=(3.5,3.0), dpi=300)
-    pyplot.subplots_adjust(left=0.18, right=0.98, bottom=0.15, top=0.98,wspace=0.0,hspace=0.0)
-    ax=f2.add_subplot(111)
 
-
-
-    t_next_merger=np.minimum(rf_t_nextMaj,rf_t_nextMin)
-    gti=(t_next_merger < 15.0)
-
-    t_last_merger=np.maximum(rf_t_lastMaj,rf_t_lastMin)
-    gti2=(t_last_merger > 0.0)
-
-
-    t_fp = np.concatenate((t_next_merger[fpi*gti]-t_sk,t_last_merger[fpi*gti2]-t_sk))
-    t_fn = np.concatenate((t_next_merger[fni*gti]-t_sk,t_last_merger[fni*gti2]-t_sk))
-    print(t_fp)
-    print(t_fn)
-    
-    sns.distplot(t_fp,color='Orange',bins=50)
-    sns.distplot(t_fn,color='Black',bins=50)
-    
-    ax.set_xlim(-1.0,2.0)
-    
-    f2.savefig(plot_filen,dpi=300)
-    pyplot.close(f2)
-    
     return sk, tp_id, tp_cam, fp_id, fp_cam, tn_id, tn_cam, fn_id, fn_cam
 
 
@@ -3026,7 +3337,7 @@ def make_all_structures(msF,merF,sku,fku,dz1,dz2,rf_labelfunc,rflabel,style,sour
     return
 
 
-def make_filter_images(msF,merF,snapkey='snapshot_068',sfid=105747,alph=2.0,Q=2.0,cams='00'):
+def make_filter_images(msF,merF,snapkey='snapshot_068',sfid=105747,alph=2.0,Q=2.0,cams='00',invert=False):
     filen='images/'+snapkey+'/filter_images_'+snapkey+'_'+str(sfid)+'_'+cams+'.pdf'
     if not os.path.lexists('images/'+snapkey):
         os.mkdir('images/'+snapkey)
@@ -3067,19 +3378,25 @@ def make_filter_images(msF,merF,snapkey='snapshot_068',sfid=105747,alph=2.0,Q=2.
             if np.sum(imski[imfki2])==1.0:
                 spinec='Orange'
                 zo=99
-                spinelw=3
+                spinelw=5
             elif np.sum(imski[imfki])==1.0:
                 spinec='DodgerBlue'
                 zo=55
-                spinelw=1
+                spinelw=4
             elif np.sum(imski[imfkihst])==1.0:
-                spinec='Gray'
+                if invert is True:
+                    spinec='Green'
+                else:
+                    spinec='Gray'
                 zo=2
-                spinelw=1
+                spinelw=4
             elif np.sum(imski[imfkihst2])==1.0:
-                spinec='Gray'
+                if invert is True:
+                    spinec='Green'
+                else:
+                    spinec='Gray'
                 zo=2
-                spinelw=3    
+                spinelw=4    
             else:
                 spinec='Black'
                 zo=1
@@ -3104,7 +3421,7 @@ def make_filter_images(msF,merF,snapkey='snapshot_068',sfid=105747,alph=2.0,Q=2.
             print(ask, snap_int, search_sfid, np.sum(in_sample) )
             if np.sum(in_sample)==1:
                 #axi,snapkey,subfindID,camera,filters=['NC-F115W','NC-F150W','NC-F200W'],alph=0.2,Q=8.0,Npix=400,sb='SB25',rfkey=None,dx=0,dy=0
-                showgalaxy.showgalaxy(axi,ask,search_sfid,cams,filters=[afk,afk,afk],alph=alph,Q=Q,Npix=None,ckpcz=75.0,sb='SB25',rfkey=None)
+                showgalaxy.showgalaxy(axi,ask,search_sfid,cams,filters=[afk,afk,afk],alph=alph,Q=Q,Npix=None,ckpcz=75.0,sb='SB25',rfkey=None,invert=invert)
 
             if j==1:
                 #display redshift at top
@@ -3112,17 +3429,23 @@ def make_filter_images(msF,merF,snapkey='snapshot_068',sfid=105747,alph=2.0,Q=2.
                     zs='z='
                 else:
                     zs=''
-                axi.annotate(zs+'{:3.1f}'.format(this_z),(0.5,0.85),xycoords='axes fraction',color='White',ha='center',va='center',fontsize=14)
+                if invert is True:
+                    zcolor='Black'
+                else:
+                    zcolor='White'
+                    
+                axi.annotate(zs+'{:3.1f}'.format(this_z),(0.5,0.85),xycoords='axes fraction',color=zcolor,ha='center',va='center',fontsize=18)
             if i%nx==0:
                 anfk=afk.split('-')[-1]
                 anik=afk.split('-')[0]
                 if anik=='ACS':
-                    anc='Blue'
+                    anc='LightBlue'
                 if anik=='WFC3':
                     anc='White'
                 if anik=='NC':
                     anc='Red'
-                axi.annotate(anfk,(0.5,0.15),xycoords='axes fraction',color=anc,ha='center',va='center',fontsize=12,backgroundcolor='Black')
+                axi.annotate(anik,(0.5,0.50),xycoords='axes fraction',color=anc,ha='center',va='center',fontsize=16,backgroundcolor='Black')
+                axi.annotate(anfk,(0.5,0.15),xycoords='axes fraction',color=anc,ha='center',va='center',fontsize=16,backgroundcolor='Black')
     
     f1.savefig(filen,dpi=600)
     pyplot.close(f1)
@@ -3276,7 +3599,7 @@ def do_rf_result_grid(snap_keys_par,fil_keys_par,rflabel='paramsmod',rf_labelfun
 
 
 
-def print_tables(msF,merF,fil_keys,rf_labelfuncs=['label_merger_window500_both_new','label_merger_forward250_both_new'],rflabel='paramsmod2',rf_masscut=10.0**(10.5),seed=0):
+def print_tables(msF,merF,fil_keys,rf_labelfuncs=['label_merger_window500_both_new','label_merger_window500_major_new'],rflabel='twofiltersnewf',rf_masscut=10.0**(10.5),seed=0):
 
     print(r'\begin{table*}')
     print(r'\centering')
@@ -3321,16 +3644,17 @@ def print_tables(msF,merF,fil_keys,rf_labelfuncs=['label_merger_window500_both_n
 
 
 
-
+    fo=open('illustris_morphs_rf.txt','w')
+    
     
     print(r'\begin{table*}')
     print(r'\centering')
-    print(r'\caption{Simulation morphology catalog, example entries, first 14 columns. We include the full catalog as online-only supplementary material.}')
-    print(r'\label{tab:morphcatalog}')
-    print(r'\begin{tabular}{cc ccc ccccc ccccc}')
-    print(r'Snapshot & Subhalo ID & $log_{10} M_*/M_{\odot}$ & Merger? & $P_{RF}$ & A_I & C_I & G_I & M_{20,I} & D_I & A_H & C_H & G_H & M_{20,H} & D_H  \\')
+    print(r'\caption{Simulation morphology catalog, example entries, first 16 columns and 42 rows. We include the full catalog as online-only supplementary material.}')
+    print(r'\label{tab:sim_morph_stats}')
+    print(r'\begin{tabular}{cc cccc ccccc ccccc}')
+    print(r'Snap & Sub ID & $log_{10} \frac{M_*}{M_{\odot}}$ & Cam & Merger & $P_{RF}$ & $A_I$ & $C_I$ & $G_I$ & $M_{20,I}$ & $D_I$ & $A_H$ & $C_H$ & $G_H$ & $M_{20,H}$ & $D_H$  \\')
 
-    snapshots=['103','085','075','068','064','060','054','049','045','041','038','035']
+    snapshots=['103','085','075','068','064','060','054']
     for sn in snapshots:
         sk='snapshot_'+sn
 
@@ -3343,8 +3667,8 @@ def print_tables(msF,merF,fil_keys,rf_labelfuncs=['label_merger_window500_both_n
         
         redshift = msF['nonparmorphs'][sk]['NC-F200W']['CAMERA0']['REDSHIFT'].value[0]
 
-        boolean_flag1,number1,x,x,x,x = eval(rf_labelfuncs[0]+'(merF,sk)')
-        boolean_flag2,number2,x,x,x,x = eval(rf_labelfuncs[1]+'(merF,sk)')
+        boolean_flag1,number1,t_lastmaj,t_lastmin,t_nextmaj,t_nextmin = eval(rf_labelfuncs[0]+'(merF,sk)')
+        #boolean_flag2,number2,x,x,x,x = eval(rf_labelfuncs[1]+'(merF,sk)')
 
         morphdict_I=get_morphs(msF,sk,'ACS-F814W')
         morphdict_H=get_morphs(msF,sk,'WFC3-F160W')
@@ -3359,7 +3683,7 @@ def print_tables(msF,merF,fil_keys,rf_labelfuncs=['label_merger_window500_both_n
         data_file = rfdata+rflabel+'_data_{}_{}_{}.pkl'.format(sk,'ACS-F814W',seed)
         prob_file = rfdata+rflabel+'_probability_{}_{}_{}.pkl'.format(sk,'ACS-F814W',seed)
     
-        rf_data = np.load(data_file,encoding='bytes')
+        rf_data = np.load(data_file)
         imfiles=rf_data['IMFILE'].values
         
         rf_flag = rf_data['mergerFlag'].values
@@ -3374,26 +3698,37 @@ def print_tables(msF,merF,fil_keys,rf_labelfuncs=['label_merger_window500_both_n
         average_prob=probstuff[0].values
         rf_prob=average_prob
         rf_sfids=probstuff['SubfindID'].values
-
-        print(imfiles[0:100:7])
-        print(rf_sfids[0:100:7])
-
+        rf_thresh=probstuff['BestThresh'].values
+        
         pvals=[]
+        camera=[]
+        rfis=[]
         
-        for sid in subhalo_id:
+        for imf in morphdict_I['IMFILES']:
+
+            mcf = str(imf,'ascii')
             
-            rfi=np.where(rf_sfids==sid)[0]
-            if rfi.shape[0] > 0:
-                pvals.append(rf_prob[rfi])
+            if mcf != '':
+                camera.append(int( ((mcf.split('/'))[-1]).split('cam')[-1][0:2]))
             else:
-                pvals.append([None,None])
+                camera.append(None)
+            #print(np.sum(imfiles==mcf))
+            
+            
+            rfi=np.where(imfiles==mcf)[0]
+            
+            if rfi.shape[0]==1:
+                pvals.append(round(rf_prob[rfi][0],3))
+            else:
+                pvals.append(None)
 
         
-        for i in si[0:12]:
+        for i in si[100:124:4]:
+
             
-            print('{:5s}  {:10d}  {:6.2f}  {:6s}  {:6.3f}'\
-                  '{:8.4f} {:8.4f} {:8.4f} {:8.4f} {:8.4f} '\
-                  '{:8.4f} {:8.4f} {:8.4f} {:8.4f} {:8.4f} '.format(sn,subhalo_id[i],np.log10(mstar_all[i]),str(boolean_flag1[i]), pvals[i],
+            print('{:5s}  &{:10d}  &{:6.2f}  &{:3d}  &{:6s}  &{!s:6s} '
+                  '&{:6.2f} &{:6.2f} &{:6.2f} &{:6.2f} &{:6.2f} '
+                  '&{:6.2f} &{:6.2f} &{:6.2f} &{:6.2f} &{:8.4f} \\\ '.format(sn,subhalo_id[i],np.log10(mstar_all[i]),camera[i],str(boolean_flag1[i]), pvals[i],
                                                          morphdict_I['ASYM'][i],
                                                          morphdict_I['CC'][i],
                                                          morphdict_I['GINI'][i],
@@ -3405,9 +3740,40 @@ def print_tables(msF,merF,fil_keys,rf_labelfuncs=['label_merger_window500_both_n
                                                          morphdict_H['M20'][i],
                                                          np.log10(morphdict_H['MID1_DSTAT'][i])))
 
+        #now print all to a file
+        sk_t = gsu.age_at_snap(int(sk[-3:]))
+        
+        
+
+        for i in si:
+            if camera[i] is not None:
+                t1=max(t_lastmaj[i]-sk_t,-50.0)
+                t2=max(t_lastmin[i]-sk_t,-50.0)
+                t3=min(t_nextmaj[i]-sk_t,50.0)
+                t4=min(t_nextmin[i]-sk_t,50.0)
+                thing='{:5s}  {:10d}  {:6.2f}  {:6d}  {:6s}  {!s:6s} '\
+                       '{:8.4f} {:8.4f} {:8.4f} {:8.4f} {:8.4f} '\
+                       '{:8.4f} {:8.4f} {:8.4f} {:8.4f} {:8.4f} '\
+                       '{:8.4f} {:8.4f} {:8.4f} {:8.4f}\n'.format(sn,subhalo_id[i],np.log10(mstar_all[i]),camera[i],str(boolean_flag1[i]), pvals[i],
+                                                                  morphdict_I['ASYM'][i],
+                                                                  morphdict_I['CC'][i],
+                                                                  morphdict_I['GINI'][i],
+                                                                  morphdict_I['M20'][i],
+                                                                  np.log10(morphdict_I['MID1_DSTAT'][i]),
+                                                                  morphdict_H['ASYM'][i],
+                                                                  morphdict_H['CC'][i],
+                                                                  morphdict_H['GINI'][i],
+                                                                  morphdict_H['M20'][i],
+                                                                  np.log10(morphdict_H['MID1_DSTAT'][i]),
+                                                                  t1,t2,t3,t4)
+
+                fo.write(thing)
+
+            
     print(r'\end{tabular}')
     print(r'\end{table*}')
 
+    fo.close()
 
 
 
@@ -3430,14 +3796,14 @@ def print_tables(msF,merF,fil_keys,rf_labelfuncs=['label_merger_window500_both_n
         
         redshift = msF['nonparmorphs'][sk]['NC-F200W']['CAMERA0']['REDSHIFT'].value[0]
 
-        boolean_flag1,number1,x,x,x,x = eval(rf_labelfuncs[0]+'(merF,sk)')
-        boolean_flag2,number2,x,x,x,x = eval(rf_labelfuncs[1]+'(merF,sk)')
+        #boolean_flag1,number1,x,x,x,x = eval(rf_labelfuncs[0]+'(merF,sk)')
+        #boolean_flag2,number2,x,x,x,x = eval(rf_labelfuncs[1]+'(merF,sk)')
 
 
     print(r'\end{tabular}')
     print(r'\end{table*}')
     
-def get_morphs(msF,sk,fk,morphkeys=['ASYM','CC','GINI','M20', 'MID1_DSTAT']):
+def get_morphs(msF,sk,fk,morphkeys=['ASYM','CC','GINI','M20', 'MID1_DSTAT','IMFILES']):
 
     md={}
     for mk in morphkeys:
@@ -3453,7 +3819,8 @@ def do_snapshot_evolution(msF,merF,
                           dz1 =[0.1, 0.75,1.25,1.75,2.25,2.75,3.5,4.5],
                           dz2 =[0.75,1.25,1.75,2.25,2.75,3.5 ,4.5,5.9],
                           mln =[25,25,25,25,25,25,25,25],
-                          labelfunc='label_merger_window500_both',skipcalc=False,rfthresh=0.2,skipstruct=False,skipdata=False,style='fix',skipevo=False,seed=0):
+                          labelfunc='label_merger_window500_both',skipcalc=False,rfthresh=0.2,skipstruct=False,
+                          skipdata=False,style='fix',skipevo=False,skip_images=False,seed=0,force_balanced=False):
 
 
     threshes=[]
@@ -3477,22 +3844,23 @@ def do_snapshot_evolution(msF,merF,
                                                              rf_masscut=10.0**(10.5),labelfunc=labelfunc,skipcalc=skipcalc,style=style,seed=seed)
         '''
         
-        rflabel,cols,plotlabels,best_th=simple_random_forest(msF,merF,sk,fk,fil2_key=fk2, paramsetting='twofilters',max_leaf_nodes=mlnu,
-                                                             rf_masscut=10.0**(10.5),labelfunc=labelfunc,skipcalc=skipcalc,style=style,seed=seed)
+        rflabel,cols,plotlabels,best_th=simple_random_forest(msF,merF,sk,fk,fil2_key=fk2, paramsetting='twofiltersnewf',max_leaf_nodes=mlnu,
+                                                             rf_masscut=10.0**(10.5),labelfunc=labelfunc,skipcalc=skipcalc,style=style,seed=seed,force_balanced=force_balanced)
 
         if skipdata is False:
 
-            sk,tp_id,tp_cam,fp_id,fp_cam,tn_id,tn_cam,fn_id,fn_cam = make_merger_images(msF,merF,sk,fk,rflabel=rflabel,rf_masscut=10.0**(10.5),labelfunc=labelfunc,omd=True,seed=seed)
-            make_merger_images(msF,merF,sk,fk,fil2_key=fk2,rflabel=rflabel,rf_masscut=10.0**(10.5),labelfunc=labelfunc,omd=True,seed=seed)
-
-            plot_mass_history_all(sk,tp_id,tp_cam,fp_id,fp_cam,tn_id,tn_cam,fn_id,fn_cam)
+            sk,tp_id,tp_cam,fp_id,fp_cam,tn_id,tn_cam,fn_id,fn_cam = make_merger_images(msF,merF,sk,fk,rflabel=rflabel,rf_masscut=10.0**(10.5),
+                                                                                        labelfunc=labelfunc,omd=True,seed=seed,skip_images=skip_images)
+            #make_merger_images(msF,merF,sk,fk,fil2_key=fk2,rflabel=rflabel,rf_masscut=10.0**(10.5),labelfunc=labelfunc,omd=True,seed=seed,skip_images=skip_images)
+            #if skip_images is False:
+            #    plot_mass_history_all(sk,tp_id,tp_cam,fp_id,fp_cam,tn_id,tn_cam,fn_id,fn_cam)
 
     if skipevo is False:
         res = make_rf_evolution_plots(sku,fku,dz1,dz2,cols,plotlabels,rf_labelfunc=labelfunc,rflabel=rflabel,style=style,seed=seed)
 
 
 
-        
+    '''
     for sk,fk,fk2,dz1u,dz2u,mlnu in zip(sku,fku,f2ku,dz1,dz2,mln):
 
 
@@ -3500,7 +3868,7 @@ def do_snapshot_evolution(msF,merF,
         if redshift > 4.2:
             threshes.append(0.0)
             continue           
-        '''
+
         rflabel,cols,plotlabels,best_th=simple_random_forest(msF,merF,sk,fk, paramsetting='onefilter_snp',max_leaf_nodes=mlnu,
                                                              rf_masscut=10.0**(10.5),labelfunc=labelfunc,skipcalc=skipcalc,style=style,seed=seed)
         rflabel,cols,plotlabels,best_th=simple_random_forest(msF,merF,sk,fk2, paramsetting='onefilter_snp',max_leaf_nodes=mlnu,
@@ -3510,9 +3878,8 @@ def do_snapshot_evolution(msF,merF,
 
         rflabel,cols,plotlabels,best_th=simple_random_forest(msF,merF,sk,fk,fil2_key=fk2, paramsetting='twofilters_snp_mi',max_leaf_nodes=mlnu,
                                                              rf_masscut=10.0**(10.5),labelfunc=labelfunc,skipcalc=skipcalc,seed=seed)
-        '''
         
-        rflabel,cols,plotlabels,best_th=simple_random_forest(msF,merF,sk,fk,fil2_key=fk2, paramsetting='twofilters_snp',max_leaf_nodes=mlnu,
+        rflabel,cols,plotlabels,best_th=simple_random_forest(msF,merF,sk,fk,fil2_key=fk2, paramsetting='twofilters',max_leaf_nodes=mlnu,
                                                              rf_masscut=10.0**(10.5),labelfunc=labelfunc,skipcalc=skipcalc,seed=seed)
 
             
@@ -3520,23 +3887,20 @@ def do_snapshot_evolution(msF,merF,
 
         if skipdata is False:
 
-            sk,tp_id,tp_cam,fp_id,fp_cam,tn_id,tn_cam,fn_id,fn_cam = make_merger_images(msF,merF,sk,fk,rflabel=rflabel,rf_masscut=10.0**(10.5),labelfunc=labelfunc,omd=True,seed=seed)
-            make_merger_images(msF,merF,sk,fk,fil2_key=fk2,rflabel=rflabel,rf_masscut=10.0**(10.5),labelfunc=labelfunc,omd=True,seed=seed)
+            sk,tp_id,tp_cam,fp_id,fp_cam,tn_id,tn_cam,fn_id,fn_cam = make_merger_images(msF,merF,sk,fk,rflabel=rflabel,rf_masscut=10.0**(10.5),
+                                                                                        labelfunc=labelfunc,omd=True,seed=seed,skip_images=skip_images)
+            make_merger_images(msF,merF,sk,fk,fil2_key=fk2,rflabel=rflabel,rf_masscut=10.0**(10.5),labelfunc=labelfunc,omd=True,seed=seed,skip_images=skip_images)
+            if skip_images is False:
+                plot_mass_history_all(sk,tp_id,tp_cam,fp_id,fp_cam,tn_id,tn_cam,fn_id,fn_cam)
 
-            plot_mass_history_all(sk,tp_id,tp_cam,fp_id,fp_cam,tn_id,tn_cam,fn_id,fn_cam)
-
-
-
-            
     if skipstruct is False:
         res = make_all_structures(msF,merF,sku,fku,dz1,dz2,rf_labelfunc=labelfunc,rflabel=rflabel,style=style+'1',source='sim',seed=seed)
         res = make_all_structures(msF,merF,sku,f2ku,dz1,dz2,rf_labelfunc=labelfunc,rflabel='onefilter_snp',style=style+'2',source='sim',seed=seed)
 
-
     if skipevo is False:
         res = make_rf_evolution_plots(sku,fku,dz1,dz2,cols,plotlabels,rf_labelfunc=labelfunc,rflabel=rflabel,style=style,seed=seed)
-
-
+  
+    '''
 
     
         
@@ -3547,23 +3911,80 @@ def do_snapshot_evolution(msF,merF,
 
 
 
-def do_filter_images():
+def do_filter_images(invert=False):
 
-    morph_stat_file = os.path.expandvars('$HOME/Dropbox/Workspace/Papers_towrite/Illustris_ObservingMergers/CATALOGS/nonparmorphs_SB25_12filters_all_FILES.hdf5')
+    morph_stat_file = os.path.expandvars('$HOME/Dropbox/Professional/Papers_towrite/Illustris_ObservingMergers/CATALOGS/nonparmorphs_SB25_12filters_all_FILES.hdf5')
 
-    merger_file = os.path.expandvars('$HOME/Dropbox/Workspace/Papers_towrite/Illustris_ObservingMergers/CATALOGS/imagedata_mergerinfo_SB25_2017May08.hdf5')
-    merger_file_500 = os.path.expandvars('$HOME/Dropbox/Workspace/Papers_towrite/Illustris_ObservingMergers/CATALOGS/imagedata_mergerinfo_SB25_2017March3.hdf5')
+    merger_file = os.path.expandvars('$HOME/Dropbox/Professional/Papers_towrite/Illustris_ObservingMergers/CATALOGS/imagedata_mergerinfo_SB25_2017May08.hdf5')
+    merger_file_500 = os.path.expandvars('$HOME/Dropbox/Professional/Papers_towrite/Illustris_ObservingMergers/CATALOGS/imagedata_mergerinfo_SB25_2017March3.hdf5')
 
 
     with h5py.File(morph_stat_file,'r') as msF:
         with h5py.File(merger_file,'r') as merF:
             with h5py.File(merger_file_500,'r') as merF500:
     
-                res=make_filter_images(msF,merF,sfid=202,cams='00',snapkey='snapshot_035',alph=0.5,Q=5.0)
+                res=make_filter_images(msF,merF,sfid=202,cams='00',snapkey='snapshot_035',alph=0.5,Q=5.0,invert=invert)
+                res=make_filter_images(msF,merF,sfid=58,cams='00',snapkey='snapshot_035',alph=0.5,Q=7.0,invert=invert)
 
     
     return
 
+
+def do_pastfuture_compare():
+
+    past=os.path.expandvars('$HOME/Dropbox/Workspace/Papers_towrite/Illustris_ObservingMergers/'\
+                                 'PLOTS/rfoutput/label_merger_past250_both_new/twofiltersnewf_importances_snapshot_075_ACS-F814W_0.npy')
+    future=os.path.expandvars('$HOME/Dropbox/Workspace/Papers_towrite/Illustris_ObservingMergers/'\
+                                 'PLOTS/rfoutput/label_merger_forward250_both_new/twofiltersnewf_importances_snapshot_075_ACS-F814W_0.npy')
+    
+
+    past_data=np.asarray( np.load(past))
+    future_data =np.asarray( np.load(future))
+
+
+    past_data=past_data/past_data.max()
+    future_data=future_data/future_data.max()
+    
+    fk='I' ; fk2='H'
+    
+    plotlabels=np.asarray([r'$S(G,M_{20})_{'+fk+'}$',
+                           r'$F(G,M_{20})_{'+fk+'}$',
+                           r'$A_{'+fk+'}$',
+                           r'$D_{'+fk+'}$',
+                           r'$C_{'+fk+'}$',
+                           r'$S(G,M_{20})_{'+fk2+'}$',
+                           r'$F(G,M_{20})_{'+fk2+'}$',
+                           r'$A_{'+fk2+'}$',
+                           r'$D_{'+fk2+'}$',
+                           r'$C_{'+fk2+'}$']) 
+
+    plot_filen = 'pastfuture_importances.pdf'
+    
+    f2 = pyplot.figure(figsize=(3.5,3.0), dpi=300)
+    pyplot.subplots_adjust(left=0.15, right=0.98, bottom=0.15, top=0.98,wspace=0.0,hspace=0.0)
+    
+    ax=f2.add_subplot(111)
+    marks=['*','o','^','d','s','*','o','^','d','s']
+    colors=['DodgerBlue','DodgerBlue','DodgerBlue','DodgerBlue','DodgerBlue',
+            'Orange','Orange','Orange','Orange','Orange']
+    
+    for i in range(10):
+        ax.plot(future_data[i],past_data[i],marker=marks[i],markersize=8,markerfacecolor=colors[i],markeredgecolor='None',linestyle='None')
+        
+    ax.legend(plotlabels,loc='lower left',ncol=2,fontsize=7)
+
+    #ax.legend(('True Positives','True Negatives'),loc='upper right',fontsize=9,title=r'$M_2/M_1 > 0.25$')
+
+    
+    ax.set_xlim(-0.05,1.05) ; ax.set_ylim(-0.05,1.05)
+    ax.set_xlabel('Importance for future mergers')
+    ax.set_ylabel('Importance for past mergers')
+    
+    f2.savefig(plot_filen,dpi=300)
+    pyplot.close(f2)
+    
+    
+    return
 
 
 
@@ -3575,15 +3996,15 @@ if __name__=="__main__":
     #morph_stat_file = '/astro/snyder_lab2/Illustris/MorphologyAnalysis/nonparmorphs_SB25_12filters_all_NEW.hdf5'
     #morph_stat_file = '/astro/snyder_lab2/Illustris/MorphologyAnalysis/nonparmorphs_SB25_12filters_all_FILES.hdf5'
     #morph_stat_file = '/astro/snyder_lab2/Illustris/MorphologyAnalysis/nonparmorphs_SB27_12filters_all_NEW.hdf5'
-    morph_stat_file = os.path.expandvars('$HOME/Dropbox/Workspace/Papers_towrite/Illustris_ObservingMergers/CATALOGS/nonparmorphs_SB25_12filters_all_FILES.hdf5')
+    morph_stat_file = os.path.expandvars('$HOME/Dropbox/Professional/Papers_towrite/Illustris_ObservingMergers/CATALOGS/nonparmorphs_SB25_12filters_all_FILES.hdf5')
 
 
 
     #merger_file = '/astro/snyder_lab2/Illustris/MorphologyAnalysis/imagedata_mergerinfo.hdf5'
     #merger_file = '/astro/snyder_lab2/Illustris/MorphologyAnalysis/imagedata_mergerinfo_SB27.hdf5'
     #merger_file = '/astro/snyder_lab2/Illustris/MorphologyAnalysis/imagedata_mergerinfo_SB25.hdf5'
-    merger_file = os.path.expandvars('$HOME/Dropbox/Workspace/Papers_towrite/Illustris_ObservingMergers/CATALOGS/imagedata_mergerinfo_SB25_2017May08.hdf5')
-    merger_file_500 = os.path.expandvars('$HOME/Dropbox/Workspace/Papers_towrite/Illustris_ObservingMergers/CATALOGS/imagedata_mergerinfo_SB25_2017March3.hdf5')
+    merger_file = os.path.expandvars('$HOME/Dropbox/Professional/Papers_towrite/Illustris_ObservingMergers/CATALOGS/imagedata_mergerinfo_SB25_2017May08.hdf5')
+    merger_file_500 = os.path.expandvars('$HOME/Dropbox/Professional/Papers_towrite/Illustris_ObservingMergers/CATALOGS/imagedata_mergerinfo_SB25_2017March3.hdf5')
 
 
     with h5py.File(morph_stat_file,'r') as msF:
@@ -3596,7 +4017,7 @@ if __name__=="__main__":
 
                 fil_keys_use=fil_keys_hst2   #  fil_keys #
                 
-                rflabel='twofilters'
+                rflabel='twofiltersnewf'
                 skipmi=True
 
 
@@ -3605,15 +4026,15 @@ if __name__=="__main__":
                 seed=0
 
                 
-                
-                #print_tables(msF,merF,fil_keys_use,rf_labelfuncs=['label_merger_window500_both_new','label_merger_window500_major_new'],rflabel=rflabel,seed=seed)
+                #do_pastfuture_compare()
+                #print_tables(msF,merF,fil_keys_use,rf_labelfuncs=['label_merger_window500_both_new','label_merger_window500_major_new'],rflabel=rflabel,seed=seed,rf_masscut=1.0e6)
                 #exit()
 
 
 
 
                 labelfunc='label_merger_window500_both_new'
-
+                force_balanced=False
                 
                 do_snapshot_evolution(msF,merF,
                                       sku =['snapshot_103','snapshot_085','snapshot_075','snapshot_068','snapshot_064','snapshot_060','snapshot_054','snapshot_049'],
@@ -3622,9 +4043,54 @@ if __name__=="__main__":
                                       dz1 =[0.1, 0.75,1.25,1.75,2.25,2.75,3.5,4.5],
                                       dz2 =[0.75,1.25,1.75,2.25,2.75,3.5 ,4.5,5.9],
                                       mln =[50,50,25,25,20,20,10,10],
-                                      labelfunc=labelfunc,skipcalc=False,skipdata=True,skipstruct=True,style='fix',seed=seed)
+                                      labelfunc=labelfunc,skipcalc=False,skipevo=False,skipdata=False,skip_images=True,skipstruct=True,style='fix',seed=seed,
+                                      force_balanced=force_balanced)
 
+                sys.stdout.flush()
+                
+                labelfunc='label_merger_window500_both_new2'
+                force_balanced=True
 
+                #generally similar results with forced balanced training set.  same ROC curves but with substantial over-training -- try reducing max leaf nodes?
+                #broadly similar merger rates too!
+
+                #try tuning MLN variable, and trying the sklearn version of balanced... make new TPR/PPV plots and merger rate plots to show it's not affecting this directly.
+
+                do_snapshot_evolution(msF,merF,
+                                      sku =['snapshot_103','snapshot_085','snapshot_075','snapshot_068','snapshot_064','snapshot_060','snapshot_054','snapshot_049'],
+                                      fku =['ACS-F814W'   ,'ACS-F814W'   ,'ACS-F814W'   ,'ACS-F814W'   ,'ACS-F814W'   ,'ACS-F814W'   ,'ACS-F814W'   ,'ACS-F814W'   ],
+                                      f2ku=['WFC3-F160W'  ,'WFC3-F160W'  ,'WFC3-F160W'  ,'WFC3-F160W'  ,'WFC3-F160W'  ,'WFC3-F160W'  ,'WFC3-F160W'  ,'WFC3-F160W'  ],
+                                      dz1 =[0.1, 0.75,1.25,1.75,2.25,2.75,3.5,4.5],
+                                      dz2 =[0.75,1.25,1.75,2.25,2.75,3.5 ,4.5,5.9],
+                                      mln =[30,30,15,15,12,12,6,6],
+                                      labelfunc=labelfunc,skipcalc=False,skipevo=False,skipdata=False,skip_images=True,skipstruct=True,style='fix',seed=seed,
+                                      force_balanced=force_balanced)
+
+                sys.stdout.flush()
+                
+                
+                labelfunc='label_merger_window500_both_new3'
+                force_balanced=False
+
+                #generally similar results with forced balanced training set.  same ROC curves but with substantial over-training -- try reducing max leaf nodes?
+                #broadly similar merger rates too!
+
+                #try tuning MLN variable, and trying the sklearn version of balanced... make new TPR/PPV plots and merger rate plots to show it's not affecting this directly.
+
+                do_snapshot_evolution(msF,merF,
+                                      sku =['snapshot_103','snapshot_085','snapshot_075','snapshot_068','snapshot_064','snapshot_060','snapshot_054','snapshot_049'],
+                                      fku =['ACS-F814W'   ,'ACS-F814W'   ,'ACS-F814W'   ,'ACS-F814W'   ,'ACS-F814W'   ,'ACS-F814W'   ,'ACS-F814W'   ,'ACS-F814W'   ],
+                                      f2ku=['WFC3-F160W'  ,'WFC3-F160W'  ,'WFC3-F160W'  ,'WFC3-F160W'  ,'WFC3-F160W'  ,'WFC3-F160W'  ,'WFC3-F160W'  ,'WFC3-F160W'  ],
+                                      dz1 =[0.1, 0.75,1.25,1.75,2.25,2.75,3.5,4.5],
+                                      dz2 =[0.75,1.25,1.75,2.25,2.75,3.5 ,4.5,5.9],
+                                      mln =[30,30,15,15,12,12,6,6],
+                                      labelfunc=labelfunc,skipcalc=False,skipevo=False,skipdata=False,skip_images=True,skipstruct=True,style='fix',seed=seed,
+                                      force_balanced=force_balanced)
+    
+
+                
+                
+                '''
                 do_snapshot_evolution(msF,merF,
                                       sku =['snapshot_103','snapshot_085','snapshot_075','snapshot_068','snapshot_064','snapshot_060','snapshot_054','snapshot_049'],
                                       fku =['ACS-F435W'   ,'ACS-F606W'   ,'ACS-F606W'   ,'NC-F115W'   ,'NC-F115W'    ,'NC-F115W'    ,'NC-F115W'    ,'NC-F200W'    ],
@@ -3632,9 +4098,8 @@ if __name__=="__main__":
                                       dz1 =[0.1, 0.75,1.25,1.75,2.25,2.75,3.5,4.5],
                                       dz2 =[0.75,1.25,1.75,2.25,2.75,3.5 ,4.5,5.9],
                                       mln =[50,50,25,25,20,20,10,10],
-                                      labelfunc=labelfunc,skipcalc=True,skipdata=True,skipstruct=True,style='evo',seed=seed)
-                
-                
+                                      labelfunc=labelfunc,skipcalc=True,skipevo=True,skipdata=True,skip_images=True,skipstruct=True,style='evo',seed=seed)
+                '''
 
 
 

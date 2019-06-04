@@ -16,15 +16,17 @@ import numpy.random as rand
 
 
 if __name__=="__main__":
-    out_files = np.sort(np.asarray(glob.glob("/Users/gsnyder/Dropbox/Workspace/Computing/XSEDE/JULY2016/group_15??_pbs.out")))
+    out_files = np.sort(np.asarray(glob.glob("/Users/gsnyder/Dropbox/Professional/Computing/XSEDE/JULY2016/group_15??_pbs.out")))
     total_wall_time_mins=0.0
     total_cpu_time_mins=0.0
     SUs_list = []
     eff_list = []
     cpu_mins_list = []
     wall_mins_list = []
+    print out_files
     
     for of in out_files:
+        print of
         with open(of,'r') as F:
             for line in F:
                 if line.find('Resources Used') is not -1:
@@ -47,7 +49,7 @@ if __name__=="__main__":
                     print of, SUs, eff, cpu_mins, wall_mins
                     
 
-    print "Mean efficiency: ", total_cpu_time_mins/(total_wall_time_mins*16.0)
+    #print "Mean efficiency: ", total_cpu_time_mins/(total_wall_time_mins*16.0)
     print "Mean SU: ", np.mean(np.asarray(SUs_list))
     print "Median SU: ", np.median(np.asarray(SUs_list))
     print "MAD SU: ", msbs.MAD(np.asarray(SUs_list))
@@ -86,8 +88,8 @@ if __name__=="__main__":
     axi.errorbar([100],[SUpergal_100],yerr=msbs.MAD(np.asarray(SUs_list)),color='black')
     axi.set_xlim(0.5,2e5)
     axi.set_ylim(2.1,3.1)
-    axi.annotate('trivial extrapolation\n (1 galaxy per job)',(6.0e3,SUpergal_100-0.5*msbs.MAD(np.asarray(SUs_list))),xycoords='data',ha='center',va='center',color='black',size=12)
-    axi.arrow(120.0,SUpergal_100+msbs.MAD(np.asarray(SUs_list)),5.0e4,0.0,shape='full',width=0.007,color='black',length_includes_head=True,head_length=3.0e4,overhang=0.3)
+    axi.annotate('trivial extrapolation\n (1 galaxy per job)',(6.0e3,SUpergal_100-1.3*msbs.MAD(np.asarray(SUs_list))),xycoords='data',ha='center',va='center',color='black',size=12)
+    axi.arrow(120.0,SUpergal_100,5.0e4,0.0,shape='full',width=0.007,color='black',length_includes_head=True,head_length=3.0e4,overhang=0.3)
     axi.set_xticklabels([])
     axi.set_ylabel('median SU/galaxy')
     axi.plot([170,170],[0.0,5.0],color='gray',linestyle='dashed',lw=3)
@@ -96,11 +98,11 @@ if __name__=="__main__":
     #axi.plot([1.14e5],[SUpergal_100+msbs.MAD(np.asarray(SUs_list))],'o',color='blue',markersize=8)
 
     axi.plot([1.05e5,1.05e5],[0.0,5.0],color='orange',linestyle='dotted',lw=3)
-    axi.plot([1.05e5],[SUpergal_100+msbs.MAD(np.asarray(SUs_list))],'o',color='orange',markersize=8)
+    axi.plot([1.05e5],[SUpergal_100],'o',color='orange',markersize=8)
 
     
-    axi.annotate("GCN tests",(10.0,2.9),xycoords='data',ha='center',va='center',color='gray',size=12)
-    axi.annotate("Project I request\n 105,000 galaxies\n 277,200 SUs",(6.0e3,2.9),xycoords='data',ha='center',va='center',color='orange',size=12)
+    #axi.annotate("GCN tests",(10.0,2.9),xycoords='data',ha='center',va='center',color='gray',size=12)
+    #axi.annotate("Project I request\n 105,000 galaxies\n 277,200 SUs",(6.0e3,2.9),xycoords='data',ha='center',va='center',color='orange',size=12)
     #axi.annotate("Project III request\n 87,000x1.31 galaxies\n 277,200 SUs",(6.0e3,2.9),xycoords='data',ha='center',va='center',color='orange',size=12)
 
     

@@ -165,7 +165,7 @@ def masshistory(snapkey,subfindID,camnum=0,basepath='/astro/snyder_lab2/Illustri
 
     bhm_msun = bhm*(1.0e10)/ilh
     
-    fig=pyplot.figure(figsize=(size*2.05,size),dpi=500) 
+    fig=pyplot.figure(figsize=(size*2.05,size),dpi=50) 
     pyplot.subplots_adjust(wspace=0.0,hspace=0.0,top=0.99,right=0.99,left=0.13,bottom=0.16)
     
     #mass history plot
@@ -301,7 +301,7 @@ def masshistory(snapkey,subfindID,camnum=0,basepath='/astro/snyder_lab2/Illustri
         axi2.annotate('AB mag = {:4.2f}'.format(headers_rgb[0]['SUNAPMAG']),(0.5,0.10),ha='center',xycoords='axes fraction', color='white', fontsize=ls)
         
     if savefile is not None:
-        fig.savefig(savefile,dpi=500)
+        fig.savefig(savefile,dpi=50)
     else:
         pyplot.show()
         

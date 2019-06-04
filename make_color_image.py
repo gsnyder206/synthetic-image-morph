@@ -357,7 +357,7 @@ def make_interactive_nasa(b,g,r,alph,Q,inches=5.0,dpi=72,fwhm_pixels=[0.0,0.0,0.
                 b = b + noise
 
                 
-        b[sp.where(b <= 0.0)]=0.0 ; g[sp.where(g <= 0.0)]=0.0 ; r[sp.where(r <= 0.0)]=0.0
+        b[b <= 0.0]=0.0 ; g[g <= 0.0]=0.0 ; r[r <= 0.0]=0.0
 	
         I = (b+g+r)/3.0 + 1.0e-20
 	
@@ -378,14 +378,14 @@ def make_interactive_nasa(b,g,r,alph,Q,inches=5.0,dpi=72,fwhm_pixels=[0.0,0.0,0.
 	
         maxrgbval = np.amax(imarray, axis=0)
 	
-        changeind = np.where(maxrgbval > 1.0)
+        changeind = maxrgbval > 1.0
         R[changeind] = R[changeind]/maxrgbval[changeind]
         G[changeind] = G[changeind]/maxrgbval[changeind]
         B[changeind] = B[changeind]/maxrgbval[changeind]
 	
 	
 		
-        ind = sp.where(I < 1.0e-10)
+        ind = I < 1.0e-10
         R[ind]=0.0 ; G[ind]=0.0 ; B[ind]=0.0
 
 
