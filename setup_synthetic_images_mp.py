@@ -4,7 +4,7 @@ import math
 import string
 import struct
 import matplotlib
-matplotlib.use('Agg')
+#matplotlib.use('Agg')
 import matplotlib.pyplot as pyplot
 import matplotlib.colors as pycolors
 import matplotlib.cm as cm
@@ -714,6 +714,7 @@ def process_single_broadband(bbfile,analysis_object,bbase='broadband_red_',clobb
             smclab='smc'
         else:
             smclab='mw'
+
             
         if analysis_object.use_nonscatter is True:
             snap_prefix = os.path.basename(os.path.dirname(os.path.dirname(os.path.abspath(bbfile))))+'_nonscatter'
@@ -814,7 +815,9 @@ def process_single_broadband(bbfile,analysis_object,bbase='broadband_red_',clobb
     for camindex,ci in enumerate(use_camind):
         camstring = '{:02}'.format(ci)
 
-
+        if analyze is False:
+            continue
+        
         for mag_i,maglim in enumerate(analysis_object.magsb_limits):
 
             #segmap is well defined now, find and load it here
