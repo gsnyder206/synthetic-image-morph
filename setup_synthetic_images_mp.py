@@ -686,7 +686,7 @@ def process_mag(analysis_object,bb_dir,snap_prefix,camstring,maglim,analyze,
 
 
 
-def process_single_broadband(bbfile,analysis_object,bbase='broadband_red_',clobber=False, analyze=True, do_idl=False, Np=2,maxq=10000,lim=None,zip_after=True):
+def process_single_broadband(bbfile,analysis_object,bbase='broadband_red_',clobber=False, analyze=True, do_idl=False, Np=2,maxq=10000,lim=None,zip_after=True,smc=False):
     #create subdirectory to hold mock images and analyses
     end = bbfile[-3:]
     if end=='.gz':
@@ -710,11 +710,17 @@ def process_single_broadband(bbfile,analysis_object,bbase='broadband_red_',clobb
         snapnum=None
         subdirnum=None
         sh_id=None
+        if smc is True:
+            smclab='smc'
+        else:
+            smclab='mw'
+            
         if analysis_object.use_nonscatter is True:
-            snap_prefix = os.path.basename(os.path.dirname(os.path.dirname(os.path.abspath(bbfile))))+'_nonscatter_'
+            snap_prefix = os.path.basename(os.path.dirname(os.path.dirname(os.path.abspath(bbfile))))+'_nonscatter'
+            bb_dir = 'images_'+snap_prefix
         else:
             snap_prefix = os.path.basename(os.path.dirname(os.path.dirname(os.path.abspath(bbfile))))+'_'
-        bb_dir = 'images_'+snap_prefix.rstrip('_')
+            bb_dir = 'images_'+snap_prefix+smclab
 
     print(bb_dir)
     if not os.path.lexists(bb_dir):
@@ -869,9 +875,9 @@ def process_single_broadband(bbfile,analysis_object,bbase='broadband_red_',clobb
         subprocess.call(['bash', runscript])
 
 
-    if bbase is 'broadbandz':
-        subprocess.call(['tar','cf',bb_dir+'.tar',bb_dir])
-        subprocess.call(['rm','-rf',bb_dir])
+    #if bbase is 'broadbandz':
+    #    subprocess.call(['tar','cf',bb_dir+'.tar',bb_dir])
+    #    subprocess.call(['rm','-rf',bb_dir])
         
     return bb_dir
 
