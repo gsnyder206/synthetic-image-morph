@@ -339,15 +339,15 @@ def make_interactive_nasa(b,g,r,alph,Q,inches=5.0,dpi=72,fwhm_pixels=[0.0,0.0,0.
                 r = sR
 
         if sigma_tuple[0] > 1.0e-8:
-                print("Adding noise to b image: sigma = {:12.6f}".format(sigma_tuple[0]))
+                #print("Adding noise to b image: sigma = {:12.6f}".format(sigma_tuple[0]))
                 b = b + sigma_tuple[0]*np.random.standard_normal(b.shape)
 
         if sigma_tuple[1] > 1.0e-8:
-                print("Adding noise to g image: sigma = {:12.6f}".format(sigma_tuple[1]))
+                #print("Adding noise to g image: sigma = {:12.6f}".format(sigma_tuple[1]))
                 g = g + sigma_tuple[1]*np.random.standard_normal(g.shape)
 
         if sigma_tuple[2] > 1.0e-8:
-                print("Adding noise to r image: sigma = {:12.6f}".format(sigma_tuple[2]))
+                #print("Adding noise to r image: sigma = {:12.6f}".format(sigma_tuple[2]))
                 r = r + sigma_tuple[2]*np.random.standard_normal(r.shape)
 
         if sigma_same > 1.0e-8:

@@ -773,8 +773,15 @@ def process_single_broadband(bbfile,analysis_object,bbase='broadband_red_',clobb
             #SB00 noiseless
             custom_filename_sb00 = os.path.join(bb_dir,snap_prefix+'cam'+camstring+'_'+filter_label+'_SB00.fits')
 
-            openlist = generate_filter_images(bbfile,snapnum,subdirnum,sh_id,ci,custom_filename_sb00, analysis_object, i, clobber=clobber,analyze=analyze,openlist=openlist,snprefix=snap_prefix)
-            #~ try:
+            try:
+                openlist = generate_filter_images(bbfile,snapnum,subdirnum,sh_id,ci,custom_filename_sb00, analysis_object, i, clobber=clobber,analyze=analyze,openlist=openlist,snprefix=snap_prefix)
+            except ValueError as e:
+                #catch problem with NAN's in high-z/blue filter case.  keep going though!
+                print(e)
+                print(sys.exc_info()[0])
+                continue
+                
+                #~ try:
                 #~ openlist = generate_filter_images(bbfile,snapnum,subdirnum,sh_id,ci,custom_filename_sb00, analysis_object, i, clobber=clobber,analyze=analyze,openlist=openlist,snprefix=snap_prefix)
             #~ except (KeyboardInterrupt,NameError,AttributeError,TypeError,IndexError,KeyError) as e:
                 #~ print(e)
