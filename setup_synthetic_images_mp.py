@@ -38,7 +38,7 @@ from astropy.convolution import Gaussian2DKernel
 from astropy.visualization.mpl_normalize import ImageNormalize
 from astropy.visualization import *
 import astropy.io.fits as pyfits
-import statmorph
+import statmorph_gfs
 import datetime
 from multiprocessing import Process, Queue, current_process
 import time
@@ -92,7 +92,7 @@ segment_props_card = ['area',
                       'xmin','xmax','ymin','ymax']
 
 
-common_args = { 
+common_args = {
                 'add_background':       False,          # default option = False, turn on one-by-one
                 'add_noise':            False,
                 'add_psf':              True,
@@ -106,9 +106,9 @@ common_args = {
                 'psf_fwhm_arcsec':      1.0,
                 'sn_limit':             None,           # super low noise value, dominated by background
                 'sky_sig':              None,           #
-                'redshift':             0.05,           # 
-                'b_fac':                1.1, 
-                'g_fac':                1.0, 
+                'redshift':             0.05,           #
+                'b_fac':                1.1,
+                'g_fac':                1.0,
                 'r_fac':                0.9,
                 'camera':               3,
                 'seed_boost':           1.0,
@@ -192,7 +192,7 @@ def generate_filter_images(bbfile, snapnum,subdirnum,sh_id,ci,custom_filename_sb
     psf_hdu = analysis_object.psf_hdu_num[i]
     photfnu_Jy_i = analysis_object.photfnu_Jy[i]
     use_nonscatter = analysis_object.use_nonscatter
-    
+
     common_args['pixelsize_arcsec'] = analysis_object.pixsize_arcsec[i]
 
     #print(filter_index, filter_label, i, type(filter_index), type(int(filter_index)))
@@ -203,7 +203,7 @@ def generate_filter_images(bbfile, snapnum,subdirnum,sh_id,ci,custom_filename_sb
         print(custom_filename_sb00, filter_index, filter_label, psf_file, psf_pix_arcsec, psf_hdu, psf_truncate)
         cam_0_raw, rp, the_used_seed,this_fail_flag,fitsfn,openlist   = sunpy__synthetic_image.build_synthetic_image(bbfile, int(filter_index),
                                                                                                             seed=0,
-                                                                                                            r_petro_kpc=None, 
+                                                                                                            r_petro_kpc=None,
                                                                                                             fix_seed=False,
                                                                                                             custom_fitsfile=custom_filename_sb00,
                                                                                                             psf_fits=psf_file,
@@ -211,7 +211,8 @@ def generate_filter_images(bbfile, snapnum,subdirnum,sh_id,ci,custom_filename_sb
                                                                                                             psf_truncate_pixels = psf_truncate,
                                                                                                             psf_hdu_num = psf_hdu,
                                                                                                             openlist=openlist,
-                                                                                                            use_nonscatter=use_nonscatter,         
+                                                                                                            use_nonscatter=use_nonscatter,
+                                                                                                            rebin_phys=False,
                                                                                                             **common_args)
         assert (os.path.lexists(custom_filename_sb00))
 
@@ -263,9 +264,9 @@ def generate_filter_images(bbfile, snapnum,subdirnum,sh_id,ci,custom_filename_sb
             npix = noiseless_image.shape[0]
             noise_image = sigma_muJyAs*np.random.randn(npix,npix)
             #assumes t -> infinity, effective_gain -> infinity, i.e. very long integration times
-            
+
             new_image = noiseless_image+noise_image
-            
+
             primhdu = pyfits.PrimaryHDU(np.float32(new_image),header=noiseless_header)
             primhdu.header['SBMAGLIM']=(round(maglim,6),'mag/SqArcsec')
             primhdu.header['RMS']=(round(sigma_muJyAs,6),'muJy/SqArcsec')
@@ -275,15 +276,15 @@ def generate_filter_images(bbfile, snapnum,subdirnum,sh_id,ci,custom_filename_sb
             newmag = -1
             if newflux > 0.0:
                 newmag = -2.5*np.log10(newflux) + noiseless_header.get('ABZP')
-                        
-                        
+
+
             primhdu.header['NEWMAG']=(round(newmag,6),'includes noise, -1 bad')
-                        
+
             #nhdu = pyfits.ImageHDU(np.float32(noise_image))
             #nhdu.update_ext_name('NOISE')
-                        
+
             hdulist = pyfits.HDUList([primhdu])
-                        
+
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 #save container to file, overwriting as needed
@@ -302,7 +303,7 @@ def generate_filter_images(bbfile, snapnum,subdirnum,sh_id,ci,custom_filename_sb
 
                 res = segment_image(custom_filename,filter_label = filter_label)
                 #do initial plotting/saving inside this routine?
-                
+
 
 
     return openlist
@@ -333,7 +334,7 @@ def analyze_image_morphology(custom_filename,filter_index,segmap_filename,
         #perform aperture photometry based on relevant filter segmentation... one per redshift
         radii_arcsec = radii_kpc/pscale
         radii_pixels = radii_arcsec/pix_arcsec
-                    
+
         #for simplicity, clobber old file, otherwise this becomes nuts
         new_hdulist = pyfits.HDUList([image_hdu])
 
@@ -352,7 +353,7 @@ def analyze_image_morphology(custom_filename,filter_index,segmap_filename,
             rebinned_segmap = seg_image
             #saveseg_hdu = segmap_hdu  #don't want to pass segmap_hdu because it is an object (unpickleable for child process maybe?)
             saveseg_hdu = pyfits.ImageHDU(rebinned_segmap,header=seg_header)
-            
+
 
         #save segmap
         new_hdulist.append(saveseg_hdu)
@@ -375,17 +376,17 @@ def analyze_image_morphology(custom_filename,filter_index,segmap_filename,
                     theta = center_prop.orientation.value
                     aperture = photutils.EllipticalAperture(position, a, b, theta=theta)
                     apertures.append(aperture)
-                    
+
                     tbhdu = do_aperture_photometry(data,radii_pixels,radii_kpc,radii_arcsec,position_fixed,rms,abzp,extname='PhotUtilsMeasurements')
                     tbhdu.header['a']=(a,'isophotal semimajor axis sigma from photutils')
                     tbhdu.header['b']=(b,'isophotal semiminor axis sigma from photutils')
                     tbhdu.header['r']=(r,'isophotal radius assumed for semi-axes in photutils')
                     tbhdu.header['theta']=(theta,'photutils orientation parameter')
                     tbhdu = save_photutils_props(tbhdu,center_prop)
-                    
+
                     segment_npix = tbhdu.header['AREA']
                     segment_flux = tbhdu.header['SEG_SUM']
-                    
+
                     segment_fluxerr = 0
                     segment_mag = -1
                     segment_magerr = -1
@@ -428,7 +429,7 @@ def analyze_image_morphology(custom_filename,filter_index,segmap_filename,
                             #~ new_hdulist.append(mhdu)
                             #~ if ap_seghdu is not None:
                                 #~ new_hdulist.append(ap_seghdu)
-                            
+
                         print('        ')
 
                     else:
@@ -443,7 +444,7 @@ def analyze_image_morphology(custom_filename,filter_index,segmap_filename,
                     #result = plot_test_stamp(image_hdu,saveseg_hdu,tbhdu,cmhdu,mhdu,ap_seghdu,figure,nx,ny,totalcount)
 
                     assert (nc<=1)
-                        
+
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             #save container to file, overwriting as needed
@@ -456,12 +457,12 @@ def analyze_image_morphology(custom_filename,filter_index,segmap_filename,
     #return_dict['cmhdu']=cmhdu
     #return_dict['mhdu']=mhdu
     #return_dict['ap_seghdu']=ap_seghdu
-    
+
     return custom_filename
 
 #def plot_test_stamp(image_hdu,saveseg_hdu,tbhdu,cmhdu,mhdu,ap_seghdu,figure,nx,ny,totalcount):
 def plot_test_stamp(filename,figure,nx,ny,totalcount):
-    
+
     #these must exist, I think
     hlist = pyfits.open(filename)
     image_hdu = hlist['SYNTHETIC_IMAGE']
@@ -473,7 +474,7 @@ def plot_test_stamp(filename,figure,nx,ny,totalcount):
         saveseg_hdu = hlist['SEGMAP']
     except KeyError as e:
         saveseg_hdu = None
-        
+
     try:
         tbhdu = hlist['PhotUtilsMeasurements']
     except KeyError as e:
@@ -489,9 +490,9 @@ def plot_test_stamp(filename,figure,nx,ny,totalcount):
     except KeyError as e:
         ap_seghdu = None
 
-        
+
     #initialize axis
-    axi = figure.add_subplot(ny,nx,totalcount+1) 
+    axi = figure.add_subplot(ny,nx,totalcount+1)
     axi.set_xticks([]) ; axi.set_yticks([])
 
     #plot grayscale galaxy image
@@ -544,7 +545,7 @@ def morphology_loop(custom_filename,filter_index,segmap_filename,
                     seg_image,seg_header,seg_npix,seg_filter_label,clabel,cpos0,cpos1,
                     figure,nx,ny,filter_lambda_order,analyze_this,clobber,
                     idl_input_file,py_output_file):
-    
+
     filename='empty'
 
     filename = analyze_image_morphology(custom_filename,filter_index,segmap_filename,
@@ -566,7 +567,7 @@ def morphology_loop(custom_filename,filter_index,segmap_filename,
     #~ else:
         #~ pass
 
-        
+
     return custom_filename,filter_lambda_order
 
 def test_task(custom_filename,filter_index,segmap_filename,
@@ -594,7 +595,7 @@ def process_mag(analysis_object,bb_dir,snap_prefix,camstring,maglim,analyze,
                 segmap_filename,seg_image,seg_header,seg_npix,seg_filter_label,
                 clabel,cpos0,cpos1,figure,nx,ny,clobber,idl_input_file,py_output_file,
                 Np=2,maxq=10000,lim=None):
-    
+
     N_filters = len(analysis_object.filter_labels)
 
     NUMBER_OF_PROCESSES=Np
@@ -613,10 +614,10 @@ def process_mag(analysis_object,bb_dir,snap_prefix,camstring,maglim,analyze,
 
     print('maxq ', maxq)
     print('np   ', Np)
-    
+
     for i,filter_label in enumerate(analysis_object.filter_labels):
         sys.stdout.flush()
-        
+
         filter_index = analysis_object.filter_indices[i]
         filter_lambda_order = analysis_object.filter_lambda_order[i]
         custom_filename_sb00 = os.path.join(bb_dir,snap_prefix+'cam'+camstring+'_'+filter_label+'_SB00.fits')
@@ -632,7 +633,7 @@ def process_mag(analysis_object,bb_dir,snap_prefix,camstring,maglim,analyze,
                   seg_image,seg_header,seg_npix,seg_filter_label,clabel,cpos0,cpos1,
                   figure,nx,ny,filter_lambda_order,analyze_this,clobber,
                   idl_input_file,py_output_file)
-        
+
         if not os.path.lexists(custom_filename):
             print("Missing a file, skipping... ", custom_filename)
         else:
@@ -644,13 +645,13 @@ def process_mag(analysis_object,bb_dir,snap_prefix,camstring,maglim,analyze,
 
             #now successfully entering code loop, but similar failure. some edge case when objects get returned/passed?
             #yup -- seems impossible to pass astropy fits HDU objects in OR out of child process
-            
+
             #task = (test_task,(filter_index,))
             task = (morphology_loop,(custom_filename,filter_index,segmap_filename,
                                seg_image,seg_header,seg_npix,seg_filter_label,clabel,cpos0,cpos1,
                                figure,nx,ny,filter_lambda_order,analyze_this,clobber,
                                idl_input_file,py_output_file))
-            
+
             if i <= maxq:
                 task_queue.put(task)
                 TASKS.append(task)
@@ -658,13 +659,13 @@ def process_mag(analysis_object,bb_dir,snap_prefix,camstring,maglim,analyze,
                 TASKS_LEFT.append(task)
 
 
-        
+
 
     for p in range(NUMBER_OF_PROCESSES):
         Process(target=worker,args=(task_queue,done_queue)).start()
 
     finished_objs = []
-        
+
     while len(TASKS_LEFT) > 0:
         finished_objs.append(done_queue.get())
         newtask = TASKS_LEFT.pop()
@@ -699,7 +700,7 @@ def process_single_broadband(bbfile,analysis_object,bbase='broadband_red_',clobb
             sh_id = bbfile[len(bbase):].rstrip('.fits')
         else:
             sh_id = bbfile[len(bbase):].rstrip('.fits.gz')
-            
+
         bb_dir = 'images_subhalo_'+sh_id
         subdir_path = os.path.dirname(os.path.abspath(bbfile))
         subdirnum = subdir_path[-3:]
@@ -715,7 +716,7 @@ def process_single_broadband(bbfile,analysis_object,bbase='broadband_red_',clobb
         else:
             smclab='mw'
 
-            
+
         if analysis_object.use_nonscatter is True:
             snap_prefix = os.path.basename(os.path.dirname(os.path.dirname(os.path.abspath(bbfile))))+'_nonscatter'
             bb_dir = 'images_'+snap_prefix
@@ -748,7 +749,7 @@ def process_single_broadband(bbfile,analysis_object,bbase='broadband_red_',clobb
             custom_filename_sb00 = os.path.join(bb_dir,snap_prefix+'cam'+camstring+'_'+filter_label+'_SB00.fits')
             if not os.path.lexists(custom_filename_sb00):
                 all_files_exist=False
-    
+
     print("All files exist? ", all_files_exist)
 
     if (not is_unzipped and not all_files_exist) or (not is_unzipped and clobber is True):
@@ -780,7 +781,7 @@ def process_single_broadband(bbfile,analysis_object,bbase='broadband_red_',clobb
                 print(e)
                 print(sys.exc_info()[0])
                 continue
-                
+
                 #~ try:
                 #~ openlist = generate_filter_images(bbfile,snapnum,subdirnum,sh_id,ci,custom_filename_sb00, analysis_object, i, clobber=clobber,analyze=analyze,openlist=openlist,snprefix=snap_prefix)
             #~ except (KeyboardInterrupt,NameError,AttributeError,TypeError,IndexError,KeyError) as e:
@@ -793,7 +794,7 @@ def process_single_broadband(bbfile,analysis_object,bbase='broadband_red_',clobb
 
     if openlist is not None:
         openlist.close()
-    
+
 
     #compress when finished with broadband.fits file
     if zip_after is True:
@@ -818,13 +819,13 @@ def process_single_broadband(bbfile,analysis_object,bbase='broadband_red_',clobb
     if os.path.lexists(py_output_file):
         os.remove(py_output_file)
 
-    
+
     for camindex,ci in enumerate(use_camind):
         camstring = '{:02}'.format(ci)
 
         if analyze is False:
             continue
-        
+
         for mag_i,maglim in enumerate(analysis_object.magsb_limits):
 
             #segmap is well defined now, find and load it here
@@ -839,7 +840,7 @@ def process_single_broadband(bbfile,analysis_object,bbase='broadband_red_',clobb
             cpos0 = segmap_hdu.header['POS0']
             cpos1 = segmap_hdu.header['POS1']
             print('   loaded segmentation map with properties ', segmap_filename, seg_npix, clabel, cpos0, cpos1)
-            
+
             #one figure per depth and viewing angle -- all filters
             outfigname = os.path.join(bb_dir,snap_prefix+'cam'+camstring+'_'+'SB{:2.0f}'.format(maglim)+'_test.pdf')
             figure,deltax,deltay,nx,ny = initialize_test_figure()
@@ -854,7 +855,7 @@ def process_single_broadband(bbfile,analysis_object,bbase='broadband_red_',clobb
             for i,seq in enumerate(finished_objs):
                 print(seq)
                 res = plot_test_stamp(seq[0],figure,nx,ny,seq[1])
-                
+
 
             #save test figure, one for each depth
             figure.savefig(outfigname,dpi=imdpi)
@@ -869,7 +870,7 @@ def process_single_broadband(bbfile,analysis_object,bbase='broadband_red_',clobb
     ro.write('export IDL_PATH=$IDL_PATH:$HOME/Dropbox/Projects/IDL_code/pro/morphs_illustris_comparison/idlpros\n')
     ro.write('idl '+bb_dir+'/morphscript.pro > '+bb_dir+'/run_morph.out 2> '+bb_dir+'/run_morph.err\n')
     ro.close()
-    
+
     morphscript = os.path.join(bb_dir,'morphscript.pro')
     mo = open(morphscript,'w')
     mo.write('domorphs_gfs, "'+idl_input_file+'", "'+idl_output_file+'", 0, start=0, finish=1000\n')
@@ -888,7 +889,7 @@ def process_single_broadband(bbfile,analysis_object,bbase='broadband_red_',clobb
     #if bbase is 'broadbandz':
     #    subprocess.call(['tar','cf',bb_dir+'.tar',bb_dir])
     #    subprocess.call(['rm','-rf',bb_dir])
-        
+
     return bb_dir
 
 
@@ -896,7 +897,7 @@ def process_single_broadband(bbfile,analysis_object,bbase='broadband_red_',clobb
 
 
 def segment_image(filename,filter_label='None'):
-    existing_hdulist = pyfits.open(filename,mode='append',memmap=True) 
+    existing_hdulist = pyfits.open(filename,mode='append',memmap=True)
 
     segmap_exists=False
     if len(existing_hdulist)>1:
@@ -974,7 +975,7 @@ def segment_image(filename,filter_label='None'):
     cpos1 = 0.0
 
     apertures = []
-    if max_label > 0:   
+    if max_label > 0:
         r = 3.    # approximate isophotal extent
         colors = ['DodgerBlue','Yellow','ForestGreen','GoldenRod','Pink','Red','White','Turquoise']
 
@@ -991,7 +992,7 @@ def segment_image(filename,filter_label='None'):
             colori = min(label-1,7)
             #axi.contour(segmap_masked, (label-0.0001,), linewidths=0.3, colors=colors[colori])
 
-        
+
             if center_label != None:
                 if label==center_label:
                     #aperture.plot(color=colors[colori], alpha=1.0, ax=axi,linestyle='dashed',linewidth=0.5)
@@ -1040,7 +1041,7 @@ def do_aperture_photometry(data,radii_pixels,radii_kpc,radii_arcsec,position,rms
         else:
             mag.append(-1.0)
             mag_err.append(-1.0)
-    
+
 
     tbhdu = pyfits.BinTableHDU.from_columns([pyfits.Column(name='radii_kpc', format='F', array=radii_kpc),
                                                              pyfits.Column(name='radii_arcsec', format='F', array=radii_arcsec),
@@ -1077,7 +1078,7 @@ def process_subdir(subdirpath='.',mockimage_parameters=None,clobber=False, max=N
     print(tf['SFRHIST'].header.get('star_radius_factor'))
 
     #this is critical for later
-    
+
     fils = tf['FILTERS'].data.field('filter')
     print(fils)
 
@@ -1102,7 +1103,7 @@ def process_subdir(subdirpath='.',mockimage_parameters=None,clobber=False, max=N
                           'NIRCAM_prelimfiltersonly_F277W',
                           'NIRCAM_prelimfiltersonly_F356W',
                           'NIRCAM_prelimfiltersonly_F444W',
-                          'f140w.IR.res', 
+                          'f140w.IR.res',
                           'f275w.UVIS1.res',
                           'f336w.UVIS1.res',
                           'F814W_WFC.res']
@@ -1129,7 +1130,7 @@ def process_subdir(subdirpath='.',mockimage_parameters=None,clobber=False, max=N
 
 
     print(filters_to_analyze)
-    
+
     pixsize_arcsec = [0.03,0.03,0.03,0.03,0.06,0.06,0.06,0.032,0.032,0.032,0.032,0.032,0.065,0.065,0.065,0.06,0.03,0.03,0.03]
 
     filter_labels = ['ACS-F435W','ACS-F606W','ACS-F775W','ACS-F850LP','WFC3-F105W','WFC3-F125W','WFC3-F160W',
@@ -1227,11 +1228,11 @@ def process_subdir(subdirpath='.',mockimage_parameters=None,clobber=False, max=N
 
     print(mockimage_parameters.segment_filter_label)
     print(mockimage_parameters.segment_filter_index)
-    
+
     assert(len(psf_pix_arcsec)==len(pixsize_arcsec))
     assert(len(filter_labels)==len(mockimage_parameters.psf_files))
 
-    
+
     for i,bbfile in enumerate(bbfile_list):
 
         process_single_broadband(bbfile,mockimage_parameters,clobber=clobber,do_idl=do_idl,analyze=analyze)
@@ -1273,7 +1274,7 @@ def process_snapshot(snap_path='.',clobber=False,max=None,maxper=None,starti=0,s
             #~ print("Error:", sys.exc_info()[0])
         #~ else:
             #~ print("Successfully processed subdir: ", sub)
-    
+
 
     os.chdir(cwd)
     return 1
