@@ -96,7 +96,7 @@ common_args = {
                 'add_background':       False,          # default option = False, turn on one-by-one
                 'add_noise':            False,
                 'add_psf':              True,
-                'rebin_phys':           False,
+                'rebin_phys':           True,
                 'resize_rp':            False,
                 'rebin_gz':             False,           # always true, all pngs 424x424
                 'scale_min':            1e-10,          # was 1e-4
