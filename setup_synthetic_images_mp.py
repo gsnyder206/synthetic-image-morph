@@ -96,7 +96,7 @@ common_args = {
                 'add_background':       False,          # default option = False, turn on one-by-one
                 'add_noise':            False,
                 'add_psf':              True,
-                'rebin_phys':           True,
+                'rebin_phys':           False,
                 'resize_rp':            False,
                 'rebin_gz':             False,           # always true, all pngs 424x424
                 'scale_min':            1e-10,          # was 1e-4
@@ -212,7 +212,6 @@ def generate_filter_images(bbfile, snapnum,subdirnum,sh_id,ci,custom_filename_sb
                                                                                                             psf_hdu_num = psf_hdu,
                                                                                                             openlist=openlist,
                                                                                                             use_nonscatter=use_nonscatter,
-                                                                                                            rebin_phys=False,
                                                                                                             **common_args)
         assert (os.path.lexists(custom_filename_sb00))
 
